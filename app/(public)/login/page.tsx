@@ -2,7 +2,7 @@
 
 import { FC, useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Trophy, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 
 interface LoginProps {
   setIsLoggedIn?: (value: boolean) => void;
@@ -83,9 +83,19 @@ const Login: FC<LoginProps> = ({ setIsLoggedIn, setUserRole }) => {
   const handleRegisterClick = (): void => {
     router.push('/register');
   };
-
+  const handleHomeClick = () => {
+    router.push('/');
+  };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center px-4 relative">
+      <button
+        onClick={handleHomeClick}
+        className="absolute top-6 left-6 flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+        aria-label="Go back home"
+      >
+        <ArrowLeft size={20} />
+        <span className="text-sm font-medium">Kembali</span>
+      </button>
       <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
