@@ -46,20 +46,22 @@ const Login: FC<LoginProps> = ({ setIsLoggedIn, setUserRole }) => {
     e.preventDefault();
     setError('');
 
-    const account = dummyAccounts.find(
-      (acc: DummyAccount) =>
-        acc.username === formData.username &&
-        acc.password === formData.password &&
-        acc.role === selectedRole
-    );
+    // const account = dummyAccounts.find(
+    //   (acc: DummyAccount) =>
+    //     acc.username === formData.username &&
+    //     acc.password === formData.password &&
+    //     acc.role === selectedRole
+    // );
 
-    if (account) {
-      setIsLoggedIn?.(true);
-      setUserRole?.(selectedRole);
-      router.push('/dashboard');
-    } else {
-      setError('Username, password, atau role tidak sesuai');
-    }
+    // if (account) {
+    //   setIsLoggedIn?.(true);
+    //   setUserRole?.(selectedRole);
+    //   router.push('/dashboard');
+    // } else {
+    //   setError('Username, password, atau role tidak sesuai');
+    // }
+
+    router.push('/admin');
   };
 
   const handleRoleChange = (e: ChangeEvent<HTMLSelectElement>): void => {
