@@ -17,7 +17,7 @@ interface DataModalProps {
   data?: any;
   mode: 'create' | 'edit' | 'view';
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave?: (data: any) => void;
 }
 
 const DataModal: FC<DataModalProps> = ({
@@ -49,9 +49,10 @@ const DataModal: FC<DataModalProps> = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
-    onSave(formData);
+  const handleSubmit = (): void => {
+    if (onSave) {
+      onSave(formData);
+    }
   };
 
   const isViewMode = mode === 'view';
@@ -71,8 +72,8 @@ const DataModal: FC<DataModalProps> = ({
         </div>
 
         {/* Form - Scrollable */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
-          {fields.map(field => (
+        <form className="flex-1 overflow-y-auto p-6 space-y-4">
+          {fields && fields.map(field => (
             <div key={field.name}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {field.label}

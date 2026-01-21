@@ -2,7 +2,7 @@
 
 import React, { FC, useState } from 'react';
 import { Plus, Edit, Trash2, Database, Settings, MapPin, Trophy, Users, Building } from 'lucide-react';
-import DataModal from '../../../../components/admin/DataModal';
+import DataModal from '../../../../lib/admin/DataModal';
 
 const MasterData: FC = () => {
   const [activeTab, setActiveTab] = useState<'cabang' | 'tipe' | 'organisasi' | 'wilayah' | 'status'>('cabang');
@@ -74,37 +74,37 @@ const MasterData: FC = () => {
     }
   };
 
-  const getCurrentFields = () => {
+  const getCurrentFields = (): any[] => {
     switch (activeTab) {
       case 'cabang':
         return [
-          { name: 'nama', label: 'Nama Cabang', type: 'text', required: true },
-          { name: 'kode', label: 'Kode', type: 'text', required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea', required: false }
+          { name: 'nama', label: 'Nama Cabang', type: 'text' as const, required: true },
+          { name: 'kode', label: 'Kode', type: 'text' as const, required: true },
+          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
         ];
       case 'tipe':
         return [
-          { name: 'nama', label: 'Nama Tipe', type: 'text', required: true },
-          { name: 'kategori', label: 'Kategori', type: 'select', options: ['Lapangan', 'Gedung', 'Kolam', 'Lainnya'], required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea', required: false }
+          { name: 'nama', label: 'Nama Tipe', type: 'text' as const, required: true },
+          { name: 'kategori', label: 'Kategori', type: 'select' as const, options: ['Lapangan', 'Gedung', 'Kolam', 'Lainnya'], required: true },
+          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
         ];
       case 'organisasi':
         return [
-          { name: 'nama', label: 'Nama Singkat', type: 'text', required: true },
-          { name: 'namaLengkap', label: 'Nama Lengkap', type: 'text', required: true },
-          { name: 'tipe', label: 'Tipe', type: 'select', options: ['Nasional', 'Pelajar', 'Masyarakat'], required: true }
+          { name: 'nama', label: 'Nama Singkat', type: 'text' as const, required: true },
+          { name: 'namaLengkap', label: 'Nama Lengkap', type: 'text' as const, required: true },
+          { name: 'tipe', label: 'Tipe', type: 'select' as const, options: ['Nasional', 'Pelajar', 'Masyarakat'], required: true }
         ];
       case 'wilayah':
         return [
-          { name: 'kecamatan', label: 'Nama Kecamatan', type: 'text', required: true },
-          { name: 'jumlahDesa', label: 'Jumlah Desa', type: 'number', required: true },
-          { name: 'luasWilayah', label: 'Luas Wilayah', type: 'text', required: true }
+          { name: 'kecamatan', label: 'Nama Kecamatan', type: 'text' as const, required: true },
+          { name: 'jumlahDesa', label: 'Jumlah Desa', type: 'number' as const, required: true },
+          { name: 'luasWilayah', label: 'Luas Wilayah', type: 'text' as const, required: true }
         ];
       case 'status':
         return [
-          { name: 'nama', label: 'Nama Status', type: 'text', required: true },
-          { name: 'warna', label: 'Warna', type: 'select', options: ['Hijau', 'Biru', 'Kuning', 'Merah'], required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea', required: false }
+          { name: 'nama', label: 'Nama Status', type: 'text' as const, required: true },
+          { name: 'warna', label: 'Warna', type: 'select' as const, options: ['Hijau', 'Biru', 'Kuning', 'Merah'], required: true },
+          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
         ];
       default:
         return [];
