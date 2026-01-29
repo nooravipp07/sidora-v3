@@ -10,6 +10,7 @@ import {
   MapPin, 
   Calendar, 
   ChevronRight,
+  ChevronLeft,
   Play,
   Download,
   Mail,
@@ -27,7 +28,8 @@ import {
   User,
   BarChart3,
   PieChart,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,6 +42,237 @@ export default function Home() {
   const [activeSportsBranch, setActiveSportsBranch] = useState(null);
   const [activeCommunityProgram, setActiveCommunityProgram] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentGallerySlide, setCurrentGallerySlide] = useState(0);
+  const [selectedFacilityDistrict, setSelectedFacilityDistrict] = useState(null);
+
+  // Website Analytics Data
+  const analyticsData = {
+    totalVisitors: 24587,
+    visitorsToday: 156,
+    previousPeriodVisitors: 22150,
+    change: 11.3,
+    isPositive: true,
+    lastUpdated: 'Hari ini',
+    weeklyVisitors: [3200, 2900, 3400, 3100, 2800, 3600, 4587],
+    deviceBreakdown: [
+      { device: 'Desktop', count: 14752, percentage: 60 },
+      { device: 'Mobile', count: 7376, percentage: 30 },
+      { device: 'Tablet', count: 2459, percentage: 10 }
+    ]
+  };
+
+  // Gallery Data
+  const galleryData = [
+    {
+      id: 1,
+      title: "Kejuaraan Renang Daerah",
+      image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "20 Desember 2023",
+      description: "Dokumentasi kegiatan kejuaraan renang tingkat daerah dengan partisipasi 200 atlet dari berbagai kecamatan. Event ini menampilkan berbagai nomor renang mulai dari gaya bebas, gaya punggung, hingga gaya kupu-kupu."
+    },
+    {
+      id: 2,
+      title: "Turnamen Basket Antar Sekolah",
+      image: "https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "18 Desember 2023",
+      description: "Turnamen basket antar sekolah menengah atas se-kabupaten dengan 32 tim peserta. Kompetisi berlangsung sengit dengan menampilkan bakat-bakat muda basket daerah."
+    },
+    {
+      id: 3,
+      title: "Pelatihan Atletik Usia Dini",
+      image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "15 Desember 2023",
+      description: "Program pelatihan atletik untuk anak-anak usia dini sebagai bibit atlet masa depan. Program ini fokus pada pengembangan kemampuan dasar atletik dan pembentukan karakter."
+    }
+  ];
+
+  // Gallery Auto-Rotation Effect
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentGallerySlide((prev) => (prev + 1) % galleryData.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [galleryData.length]);
+
+  // Slider Data and State
+  const sliderData = [
+    {
+      image: "https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      title: "Selamat Datang di SIDORA",
+      description: "Platform data olahraga, atlet, dan prestasi daerah yang terintegrasi."
+    },
+    {
+      image: "https://images.pexels.com/photos/9072316/pexels-photo-9072316.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      title: "Data Atlet & Klub Terlengkap",
+      description: "Kelola dan pantau perkembangan atlet serta klub olahraga di daerah Anda."
+    },
+    {
+      image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      title: "Prestasi & Event Terkini",
+      description: "Dapatkan informasi terbaru tentang prestasi dan agenda olahraga daerah."
+    }
+  ];
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderData.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [sliderData.length]);
+
+  // Calendar State and Event Data
+  const [currentMonth, setCurrentMonth] = React.useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
+  const [selectedCalendarDate, setSelectedCalendarDate] = React.useState(null);
+  const [selectedDateEvents, setSelectedDateEvents] = React.useState([]);
+
+  const eventCalendarData = [
+    // January 2026 events
+    {
+      id: 1,
+      date: new Date(2026, 0, 5),
+      name: "Kejuaraan Tenis Meja Regional",
+      category: "Kompetisi",
+      location: "GOR Tenis Meja Utama",
+      level: "Regional",
+      status: "Active",
+      time: "08:00 - 17:00"
+    },
+    {
+      id: 2,
+      date: new Date(2026, 0, 5),
+      name: "Pelatihan Wasit Badminton",
+      category: "Pelatihan",
+      location: "Stadion Utama",
+      level: "Daerah",
+      status: "Active",
+      time: "09:00 - 16:00"
+    },
+    {
+      id: 3,
+      date: new Date(2026, 0, 12),
+      name: "Pelatihan Wasit Sepak Bola",
+      category: "Pelatihan",
+      location: "Stadion Utama",
+      level: "Nasional",
+      status: "Active",
+      time: "09:00 - 16:00"
+    },
+    {
+      id: 4,
+      date: new Date(2026, 0, 15),
+      name: "Lomba Lari Marathon",
+      category: "Event Komunitas",
+      location: "Alun-alun Kota",
+      level: "Lokal",
+      status: "Active",
+      time: "06:00 - 12:00"
+    },
+    {
+      id: 5,
+      date: new Date(2026, 0, 20),
+      name: "Turnamen Basket Antar Klub",
+      category: "Kompetisi",
+      location: "GOR Basket",
+      level: "Regional",
+      status: "Active",
+      time: "15:00 - 21:00"
+    },
+    {
+      id: 6,
+      date: new Date(2026, 0, 25),
+      name: "Kejuaraan Renang Daerah",
+      category: "Kompetisi",
+      location: "Kolam Renang Olimpik",
+      level: "Daerah",
+      status: "Inactive",
+      time: "08:00 - 15:00"
+    },
+    // February 2026 events
+    {
+      id: 7,
+      date: new Date(2026, 1, 8),
+      name: "Pembukaan Musim Olahraga 2026",
+      category: "Acara",
+      location: "Stadion Utama",
+      level: "Nasional",
+      status: "Active",
+      time: "10:00 - 12:00"
+    },
+    {
+      id: 8,
+      date: new Date(2026, 1, 14),
+      name: "Workshop Pelatih Muda",
+      category: "Pelatihan",
+      location: "Gedung Olahraga",
+      level: "Regional",
+      status: "Active",
+      time: "09:00 - 17:00"
+    },
+    // March 2026 events
+    {
+      id: 9,
+      date: new Date(2026, 2, 8),
+      name: "Piala Walikota Sepak Bola",
+      category: "Kompetisi",
+      location: "Stadion Kota",
+      level: "Lokal",
+      status: "Active",
+      time: "14:00 - 21:00"
+    },
+    {
+      id: 10,
+      date: new Date(2026, 2, 15),
+      name: "Kejuaraan Voli Putri",
+      category: "Kompetisi",
+      location: "GOR Voli",
+      level: "Daerah",
+      status: "Active",
+      time: "08:00 - 18:00"
+    }
+  ];
+
+  // Helper function to get events for a specific date
+  const getEventsForDate = (date) => {
+    return eventCalendarData.filter(event => {
+      return (
+        event.date.getDate() === date.getDate() &&
+        event.date.getMonth() === date.getMonth() &&
+        event.date.getFullYear() === date.getFullYear()
+      );
+    });
+  };
+
+  // Handle date click
+  const handleDateClick = (day) => {
+    const clickedDate = new Date(currentYear, currentMonth, day);
+    const eventsOnDate = getEventsForDate(clickedDate);
+    if (eventsOnDate.length > 0) {
+      setSelectedCalendarDate(clickedDate);
+      setSelectedDateEvents(eventsOnDate);
+    }
+  };
+
+  // Get calendar days
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month, year) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+  const monthName = new Date(currentYear, currentMonth).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+
+  const calendarDays = [];
+  for (let i = 0; i < firstDay; i++) {
+    calendarDays.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push(i);
+  }
 
   const statsData = [
     {
@@ -53,7 +286,7 @@ export default function Home() {
     },
     {
       icon: Users,
-      title: "Klub Olahraga",
+      title: "Prestasi Atlet",
       value: "156",
       subtitle: "Klub Terverifikasi",
       color: "bg-gradient-to-r from-blue-500 to-blue-700",
@@ -71,7 +304,7 @@ export default function Home() {
     },
     {
       icon: Calendar,
-      title: "Event Terjadwal",
+      title: "Parasarana Olahraga",
       value: "23",
       subtitle: "Kegiatan Mendatang",
       color: "bg-gradient-to-r from-purple-500 to-purple-700",
@@ -145,30 +378,6 @@ export default function Home() {
     }
   ];
 
-  const galleryData = [
-    {
-      id: 1,
-      title: "Kejuaraan Renang Daerah",
-      image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400",
-      date: "20 Desember 2023",
-      description: "Dokumentasi kegiatan kejuaraan renang tingkat daerah dengan partisipasi 200 atlet dari berbagai kecamatan. Event ini menampilkan berbagai nomor renang mulai dari gaya bebas, gaya punggung, hingga gaya kupu-kupu."
-    },
-    {
-      id: 2,
-      title: "Turnamen Basket Antar Sekolah",
-      image: "https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg?auto=compress&cs=tinysrgb&w=400",
-      date: "18 Desember 2023",
-      description: "Turnamen basket antar sekolah menengah atas se-kabupaten dengan 32 tim peserta. Kompetisi berlangsung sengit dengan menampilkan bakat-bakat muda basket daerah."
-    },
-    {
-      id: 3,
-      title: "Pelatihan Atletik Usia Dini",
-      image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
-      date: "15 Desember 2023",
-      description: "Program pelatihan atletik untuk anak-anak usia dini sebagai bibit atlet masa depan. Program ini fokus pada pengembangan kemampuan dasar atletik dan pembentukan karakter."
-    }
-  ];
-
   const agendaData = [
     {
       id: 1,
@@ -217,18 +426,14 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">SIDORA</h1>
-                <p className="text-xs text-gray-500">Sistem Informasi Data Keolahragaan</p>
               </div>
             </div>
             
             <nav className="hidden md:flex space-x-8">
               <a href="#home" className="text-gray-700 hover:text-green-600 transition-colors">Home</a>
-              <a href="#info" className="text-gray-700 hover:text-green-600 transition-colors">Info</a>
-              <a href="#data" className="text-gray-700 hover:text-green-600 transition-colors">Data</a>
-              <a href="#cabang-olahraga" className="text-gray-700 hover:text-green-600 transition-colors">Cabang Olahraga</a>
-              <a href="#olahraga-masyarakat" className="text-gray-700 hover:text-green-600 transition-colors">Olahraga Masyarakat</a>
-              <a href="#kegiatan" className="text-gray-700 hover:text-green-600 transition-colors">Kegiatan</a>
-              <a href="#kontak" className="text-gray-700 hover:text-green-600 transition-colors">Kontak</a>
+              <a href="#info" className="text-gray-700 hover:text-green-600 transition-colors">Cabang Olahraga</a>
+              <a href="#data" className="text-gray-700 hover:text-green-600 transition-colors">Olahraga Masyarakat</a>
+              <a href="#kegiatan" className="text-gray-700 hover:text-green-600 transition-colors">Agenda</a>
             </nav>
 
             <div className="flex items-center space-x-4">
@@ -255,8 +460,6 @@ export default function Home() {
               <a href="#home" className="block px-3 py-2 text-gray-700 hover:text-green-600">Home</a>
               <a href="#info" className="block px-3 py-2 text-gray-700 hover:text-green-600">Info</a>
               <a href="#data" className="block px-3 py-2 text-gray-700 hover:text-green-600">Data</a>
-              <a href="#cabang-olahraga" className="block px-3 py-2 text-gray-700 hover:text-green-600">Cabang Olahraga</a>
-              <a href="#olahraga-masyarakat" className="block px-3 py-2 text-gray-700 hover:text-green-600">Olahraga Masyarakat</a>
               <a href="#kegiatan" className="block px-3 py-2 text-gray-700 hover:text-green-600">Kegiatan</a>
               <a href="#kontak" className="block px-3 py-2 text-gray-700 hover:text-green-600">Kontak</a>
             </div>
@@ -264,52 +467,63 @@ export default function Home() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <section id="home" className="relative bg-gradient-to-br from-green-900 via-green-800 to-green-700 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-green-900/50 to-transparent"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-center lg:text-left">
-              <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
-                Sistem Informasi
-                <span className="block text-yellow-400">Data Keolahragaan</span>
-              </h1>
-              <p className="text-xl lg:text-2xl mb-8 text-green-100">
-                Platform terpadu untuk mengelola data olahraga, atlet, dan prestasi daerah
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link
-                  href="/register"
-                  className="bg-yellow-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-700 transition-colors flex items-center justify-center"
-                >
-                  Daftar Sekarang
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                <div className="grid grid-cols-2 gap-6">
-                  {statsData.map((stat, index) => (
-                    <div key={index} className="text-center">
-                      <div className={`w-16 h-16 ${stat.color} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                        <stat.icon className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-white">{stat.value}</h3>
-                      <p className="text-blue-100 text-sm">{stat.subtitle}</p>
-                      <div className={`flex items-center justify-center mt-1 text-xs ${stat.positive ? 'text-green-300' : 'text-red-300'}`}>
-                        <TrendingUp className="w-3 h-3 mr-1" />
-                        {stat.change}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      {/* Hero Slider Section */}
+      <section id="home" className="relative h-screen sm:h-[600px] md:h-[700px] lg:h-[750px] flex items-center overflow-hidden">
+        {sliderData.map((slide, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === idx ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            style={{
+              backgroundImage: `url(${slide.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+            aria-hidden={currentSlide !== idx}
+          >
+            <div className="absolute inset-0 bg-black/50" />
+            <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center text-white">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">{slide.title}</h1>
+              <p className="text-sm sm:text-lg md:text-2xl mb-6 md:mb-8 drop-shadow-lg max-w-2xl">{slide.description}</p>
+              <Link
+                href="/register"
+                className="inline-flex items-center bg-yellow-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-yellow-700 transition-colors shadow-lg"
+              >
+                Daftar Sekarang
+                <ArrowRight className="ml-2 w-4 sm:w-5 h-4 sm:h-5" />
+              </Link>
             </div>
           </div>
+        ))}
+        
+        {/* Left Navigation Arrow */}
+        <button
+          onClick={() => setCurrentSlide((prev) => (prev - 1 + sliderData.length) % sliderData.length)}
+          className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white p-2 sm:p-3 rounded-full transition-all duration-300 group"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-5 sm:w-6 h-5 sm:h-6 group-hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Right Navigation Arrow */}
+        <button
+          onClick={() => setCurrentSlide((prev) => (prev + 1) % sliderData.length)}
+          className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white p-2 sm:p-3 rounded-full transition-all duration-300 group"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-5 sm:w-6 h-5 sm:h-6 group-hover:scale-110 transition-transform" />
+        </button>
+
+        {/* Slider Controls - Dots */}
+        <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex space-x-2 sm:space-x-3 z-20">
+          {sliderData.map((_, idx) => (
+            <button
+              key={idx}
+              className={`rounded-full border-2 border-white transition-all duration-300 ${currentSlide === idx ? 'bg-yellow-400 border-yellow-400 scale-125 w-4 h-4' : 'bg-white/40 w-3 h-3'}`}
+              onClick={() => setCurrentSlide(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -318,380 +532,496 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Data Keolahragaan Terkini
+              Data Keolahragaan
             </h2>
             <p className="text-xl text-gray-600">
               Informasi lengkap tentang perkembangan olahraga di daerah
             </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            {statsData.map((stat, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
-                  <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className={`flex items-center text-sm ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
-                    <TrendingUp className="w-4 h-4 mr-1" />
-                    {stat.change}
-                  </div>
-                </div>
-                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</h3>
-                <p className="text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-sm text-gray-500">{stat.subtitle}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Data Tables and Charts */}
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Sarana Prasarana Table */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                  <Building className="w-6 h-6 mr-2 text-blue-600" />
-                  Data Sarana Prasarana
-                </h3>
-                <button
-                  onClick={() => setActiveDataTable({ type: 'sarana', data: saranaData })}
-                  className="text-green-600 hover:text-green-800 font-semibold flex items-center"
-                >
-                  Lihat Detail
-                  <ChevronRight className="ml-1 w-4 h-4" />
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Kecamatan</th>
-                      <th className="text-center py-2">Lapangan</th>
-                      <th className="text-center py-2">Gedung</th>
-                      <th className="text-center py-2">Kondisi Baik</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {saranaData.slice(0, 3).map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="py-2 font-medium">{item.kecamatan}</td>
-                        <td className="text-center py-2">{item.lapangan}</td>
-                        <td className="text-center py-2">{item.gedung}</td>
-                        <td className="text-center py-2">
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                            {item.kondisiBaik}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 flex justify-between items-center">
-                <button
-                  onClick={() => setActiveChart({ type: 'sarana', data: chartData.sarana })}
-                  className="text-green-600 hover:text-green-800 flex items-center"
-                >
-                  <PieChart className="w-4 h-4 mr-1" />
-                  Lihat Grafik
-                </button>
-                <span className="text-sm text-gray-500">Total: 89 Fasilitas</span>
-              </div>
-            </div>
-
-            {/* Prestasi Atlet Table */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                  <Award className="w-6 h-6 mr-2 text-yellow-600" />
-                  Prestasi Terkini
-                </h3>
-                <button
-                  onClick={() => setActiveDataTable({ type: 'prestasi', data: prestasiData })}
-                  className="text-green-600 hover:text-green-800 font-semibold flex items-center"
-                >
-                  Lihat Detail
-                  <ChevronRight className="ml-1 w-4 h-4" />
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Nama</th>
-                      <th className="text-left py-2">Cabor</th>
-                      <th className="text-center py-2">Kategori</th>
-                      <th className="text-center py-2">Medali</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {prestasiData.slice(0, 3).map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="py-2 font-medium">{item.nama}</td>
-                        <td className="py-2">{item.cabor}</td>
-                        <td className="text-center py-2">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            item.kategori === 'Atlet' ? 'bg-blue-100 text-blue-800' :
-                            item.kategori === 'Pelatih' ? 'bg-green-100 text-green-800' :
-                            'bg-purple-100 text-purple-800'
-                          }`}>
-                            {item.kategori}
-                          </span>
-                        </td>
-                        <td className="text-center py-2">
-                          {item.medali !== '-' ? (
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              item.medali === 'Emas' ? 'bg-yellow-100 text-yellow-800' :
-                              item.medali === 'Perak' ? 'bg-gray-100 text-gray-800' :
-                              'bg-orange-100 text-orange-800'
-                            }`}>
-                              {item.medali}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 flex justify-between items-center">
-                <button
-                  onClick={() => setActiveChart({ type: 'prestasi', data: chartData.prestasi })}
-                  className="text-green-600 hover:text-green-800 flex items-center"
-                >
-                  <BarChart3 className="w-4 h-4 mr-1" />
-                  Lihat Grafik
-                </button>
-                <span className="text-sm text-gray-500">Total: 105 Prestasi</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Cabang Olahraga Section */}
-      <section id="cabang-olahraga" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Cabang Olahraga
-            </h2>
-            <p className="text-xl text-gray-600">
-              Berbagai cabang olahraga yang dikembangkan di daerah
+            <p className="text-sm text-gray-500 mt-3">
+              Data diperbarui per 29 Januari 2026
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                name: 'Sepak Bola',
-                icon: '⚽',
-                athletes: 245,
-                clubs: 28,
-                facilities: 15,
-                achievements: 'Juara 1 POPDA 2023',
-                description: 'Cabang olahraga paling populer dengan partisipasi terbanyak'
-              },
-              {
-                name: 'Bulu Tangkis',
-                icon: '🏸',
-                athletes: 189,
-                clubs: 22,
-                facilities: 12,
-                achievements: 'Juara 2 PORDA 2023',
-                description: 'Olahraga prestasi dengan banyak atlet berbakat'
-              },
-              {
-                name: 'Basket',
-                icon: '🏀',
-                athletes: 156,
-                clubs: 18,
-                facilities: 8,
-                achievements: 'Juara 3 O2SN 2023',
-                description: 'Berkembang pesat di kalangan pelajar dan mahasiswa'
-              },
-              {
-                name: 'Voli',
-                icon: '🏐',
-                athletes: 134,
-                clubs: 16,
-                facilities: 10,
-                achievements: 'Juara 1 Liga Daerah',
-                description: 'Olahraga tim yang populer di berbagai kalangan'
-              },
-              {
-                name: 'Renang',
-                icon: '🏊',
-                athletes: 98,
-                clubs: 12,
-                facilities: 4,
-                achievements: 'Juara 2 Kejuaraan Daerah',
-                description: 'Olahraga individual dengan prestasi membanggakan'
-              },
-              {
-                name: 'Atletik',
-                icon: '🏃',
-                athletes: 87,
-                clubs: 10,
-                facilities: 6,
-                achievements: 'Juara 1 Marathon Daerah',
-                description: 'Induk dari semua cabang olahraga'
-              }
-            ].map((sport, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
-                <div className="text-center mb-6">
-                  <div className="text-6xl mb-4">{sport.icon}</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{sport.name}</h3>
-                  <p className="text-gray-600 text-sm">{sport.description}</p>
-                </div>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Atlet</span>
-                    <span className="font-semibold text-green-600">{sport.athletes}</span>
+          {/* KPI Summary Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {statsData.map((stat, index) => (
+              <Link href={`/data/${stat.title.toLowerCase().replace(/\s+/g, '-')}`} key={index}>
+                <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 border border-gray-100 cursor-pointer group">
+                  {/* Icon and Change */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <stat.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className={`flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
+                      stat.positive 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      {stat.change}
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Klub</span>
-                    <span className="font-semibold text-green-600">{sport.clubs}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Fasilitas</span>
-                    <span className="font-semibold text-green-600">{sport.facilities}</span>
+
+                  {/* Main Value */}
+                  <h3 className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</h3>
+                  <p className="text-gray-700 font-semibold mb-1">{stat.title}</p>
+                  <p className="text-sm text-gray-500">{stat.subtitle}</p>
+
+                  {/* Context Info */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 group-hover:text-green-600 transition-colors">
+                      Lihat Detail →
+                    </p>
                   </div>
                 </div>
-                
-                <div className="bg-green-50 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-green-900 mb-2">Prestasi Terbaru</h4>
-                  <p className="text-green-800 text-sm">{sport.achievements}</p>
+              </Link>
+            ))}
+          </div>
+
+          {/* Key Insights Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-500 p-6 mb-12">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <Trophy className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Insight Utama</h3>
+                <div className="space-y-1 text-sm text-gray-700">
+                  <p>
+                    <span className="font-semibold">📈 Pertumbuhan Atlet:</span> Peningkatan 12% atlet terdaftar bulan ini, dengan fokus pada kategori usia muda.
+                  </p>
+                  <p>
+                    <span className="font-semibold">🏆 Prestasi Terdepan:</span> Kecamatan Selatan memimpin dengan 20 fasilitas dalam kondisi baik.
+                  </p>
+                  <p>
+                    <span className="font-semibold">📅 Aktivitas Mendatang:</span> 23 kegiatan olahraga dijadwalkan untuk kuartal ini.
+                  </p>
                 </div>
-                
-                <button 
-                  onClick={() => setActiveSportsBranch(sport)}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+              </div>
+            </div>
+          </div>
+
+          {/* Data Tables and Analytics */}
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Sarana Prasarana Section */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <Building className="w-6 h-6 mr-2 text-blue-600" />
+                    Data Sarana Prasarana
+                  </h3>
+                  <button
+                    onClick={() => setActiveDataTable({ type: 'sarana', data: saranaData })}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold transition-colors"
+                  >
+                    Analisis Data
+                  </button>
+                </div>
+
+                {/* District Filter */}
+                <div className="flex flex-wrap gap-2">
+                  {['Semua', ...saranaData.map(d => d.kecamatan)].map((district) => (
+                    <button
+                      key={district}
+                      onClick={() => setSelectedFacilityDistrict(district === 'Semua' ? null : district)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                        selectedFacilityDistrict === (district === 'Semua' ? null : district)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {district}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Kecamatan</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Lapangan</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Gedung</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Kondisi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {saranaData
+                      .filter(item => !selectedFacilityDistrict || item.kecamatan === selectedFacilityDistrict)
+                      .map((item, index) => {
+                        const totalFacilities = item.lapangan + item.gedung;
+                        const conditionPercentage = Math.round((item.kondisiBaik / totalFacilities) * 100);
+                        return (
+                          <tr key={index} className="border-b hover:bg-blue-50 transition-colors">
+                            <td className="py-3 px-4 font-medium text-gray-900">{item.kecamatan}</td>
+                            <td className="text-center py-3 px-4">
+                              <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                {item.lapangan}
+                              </span>
+                            </td>
+                            <td className="text-center py-3 px-4">
+                              <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                {item.gedung}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-full bg-gray-200 rounded-full h-2 max-w-xs">
+                                  <div
+                                    className={`h-2 rounded-full transition-all ${
+                                      conditionPercentage >= 80
+                                        ? 'bg-green-500'
+                                        : conditionPercentage >= 60
+                                        ? 'bg-yellow-500'
+                                        : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${conditionPercentage}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-semibold text-gray-700 min-w-fit">
+                                  {conditionPercentage}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer Stats */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Total Fasilitas</p>
+                    <p className="text-lg font-bold text-gray-900">89</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Kondisi Baik</p>
+                    <p className="text-lg font-bold text-green-600">83</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Perlu Perbaikan</p>
+                    <p className="text-lg font-bold text-orange-600">6</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Prestasi Atlet Section */}
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <Award className="w-6 h-6 mr-2 text-yellow-600" />
+                    Prestasi Terkini
+                  </h3>
+                  <button
+                    onClick={() => setActiveDataTable({ type: 'prestasi', data: prestasiData })}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-semibold transition-colors"
+                  >
+                    Lihat Semua
+                  </button>
+                </div>
+              </div>
+
+              {/* Medal Type Breakdown */}
+              <div className="p-6 border-b border-gray-100 bg-gray-50">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-600 mb-1">28</div>
+                    <p className="text-xs font-semibold text-gray-700">
+                      <Medal className="w-4 h-4 inline-block mr-1 text-yellow-600" />
+                      Emas
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-500 mb-1">35</div>
+                    <p className="text-xs font-semibold text-gray-700">
+                      <Medal className="w-4 h-4 inline-block mr-1 text-gray-500" />
+                      Perak
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600 mb-1">42</div>
+                    <p className="text-xs font-semibold text-gray-700">
+                      <Medal className="w-4 h-4 inline-block mr-1 text-orange-600" />
+                      Perunggu
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Achievement Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Atlet</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Cabor</th>
+                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Medali</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prestasiData
+                      .sort((a, b) => {
+                        const medalOrder = { 'Emas': 0, 'Perak': 1, 'Perunggu': 2 };
+                        return (medalOrder[a.medali] || 999) - (medalOrder[b.medali] || 999);
+                      })
+                      .slice(0, 4)
+                      .map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-yellow-50 transition-colors">
+                          <td className="py-3 px-4 font-medium text-gray-900">{item.nama}</td>
+                          <td className="py-3 px-4 text-gray-600">
+                            <span className="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                              {item.cabor}
+                            </span>
+                          </td>
+                          <td className="text-center py-3 px-4">
+                            {item.medali !== '-' ? (
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                item.medali === 'Emas'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : item.medali === 'Perak'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : 'bg-orange-100 text-orange-700'
+                              }`}>
+                                {item.medali === 'Emas' ? '🥇' : item.medali === 'Perak' ? '🥈' : '🥉'} {item.medali}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer CTA */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <button
+                  onClick={() => setActiveDataTable({ type: 'prestasi', data: prestasiData })}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors font-semibold text-sm"
                 >
-                  Lihat Detail
+                  Lihat Semua Prestasi ({prestasiData.length})
                 </button>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Olahraga Masyarakat Section */}
-      <section id="olahraga-masyarakat" className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Olahraga Masyarakat
+              Agenda Kegiatan
             </h2>
-          </div>
-          {/* Community Sports Statistics */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Statistik Partisipasi Masyarakat</h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { label: 'Total Peserta Aktif', value: '5,420', icon: Users, color: 'text-green-600' },
-                { label: 'Program Berjalan', value: '28', icon: Activity, color: 'text-blue-600' },
-                { label: 'Lokasi Kegiatan', value: '67', icon: MapPin, color: 'text-orange-600' }
-              ].map((stat, index) => (
-                <div key={index} className="text-center p-6 bg-gray-50 rounded-lg">
-                  <div className={`w-12 h-12 ${stat.color.replace('text-', 'bg-').replace('-600', '-100')} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                  <p className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</p>
-                  <p className="text-gray-600 text-sm">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-xl text-gray-600">
+              Lihat jadwal lengkap event dan kompetisi olahraga daerah
+            </p>
           </div>
 
-          {/* Community Programs */}
-          <div className="mt-12">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Program Olahraga Masyarakat</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  name: 'Yoga Pagi',
-                  schedule: 'Senin, Rabu, Jumat - 06:00',
-                  location: 'Taman Kota',
-                  participants: 85,
-                  level: 'Pemula - Menengah'
-                },
-                {
-                  name: 'Zumba Dance',
-                  schedule: 'Selasa, Kamis - 17:00',
-                  location: 'GOR Kecamatan',
-                  participants: 120,
-                  level: 'Semua Level'
-                },
-                {
-                  name: 'Tai Chi',
-                  schedule: 'Sabtu, Minggu - 06:30',
-                  location: 'Alun-alun',
-                  participants: 65,
-                  level: 'Lansia'
-                },
-                {
-                  name: 'Aerobik',
-                  schedule: 'Senin, Kamis - 17:30',
-                  location: 'Lapangan Desa',
-                  participants: 95,
-                  level: 'Semua Level'
-                },
-                {
-                  name: 'Lari Pagi',
-                  schedule: 'Setiap Hari - 05:30',
-                  location: 'Berbagai Rute',
-                  participants: 200,
-                  level: 'Semua Level'
-                },
-                {
-                  name: 'Senam Lansia',
-                  schedule: 'Rabu, Jumat - 08:00',
-                  location: 'Puskesmas',
-                  participants: 45,
-                  level: 'Lansia'
-                }
-              ].map((program, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <h4 className="text-lg font-bold text-gray-900 mb-3">{program.name}</h4>
-                  <div className="space-y-2 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2 text-green-600" />
-                      <span>{program.schedule}</span>
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Calendar */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                {/* Month Navigation */}
+                <div className="flex items-center justify-between mb-8">
+                  <button
+                    onClick={() => {
+                      setCurrentMonth(currentMonth === 0 ? 11 : currentMonth - 1);
+                      if (currentMonth === 0) setCurrentYear(currentYear - 1);
+                      setSelectedCalendarDate(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-gray-700" />
+                  </button>
+                  <h3 className="text-2xl font-bold text-gray-900">{monthName}</h3>
+                  <button
+                    onClick={() => {
+                      setCurrentMonth(currentMonth === 11 ? 0 : currentMonth + 1);
+                      if (currentMonth === 11) setCurrentYear(currentYear + 1);
+                      setSelectedCalendarDate(null);
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Next month"
+                  >
+                    <ChevronRight className="w-6 h-6 text-gray-700" />
+                  </button>
+                </div>
+
+                {/* Weekday Headers */}
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((day) => (
+                    <div key={day} className="text-center font-semibold text-gray-700 py-2">
+                      {day}
                     </div>
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-2 text-green-600" />
-                      <span>{program.location}</span>
+                  ))}
+                </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-2">
+                  {calendarDays.map((day, index) => {
+                    const hasEvents = day && getEventsForDate(new Date(currentYear, currentMonth, day)).length > 0;
+                    const isSelected = selectedCalendarDate && day === selectedCalendarDate.getDate();
+                    
+                    return (
+                      <div key={index}>
+                        {day ? (
+                          <button
+                            onClick={() => handleDateClick(day)}
+                            className={`w-full aspect-square flex items-center justify-center rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base ${
+                              hasEvents
+                                ? isSelected
+                                  ? 'bg-green-600 text-white shadow-lg scale-105'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200 border-2 border-green-400'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="flex flex-col items-center gap-1">
+                              <span>{day}</span>
+                              {hasEvents && (
+                                <div className="flex gap-1">
+                                  {[...Array(Math.min(getEventsForDate(new Date(currentYear, currentMonth, day)).length, 3))].map((_, i) => (
+                                    <div key={i} className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-green-600'}`} />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ) : (
+                          <div className="aspect-square" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Keterangan:</p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-green-100 border-2 border-green-400 rounded" />
+                      <span className="text-sm text-gray-600">Ada Event</span>
                     </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2 text-green-600" />
-                      <span>{program.participants} peserta</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gray-50 rounded" />
+                      <span className="text-sm text-gray-600">Tidak Ada Event</span>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                      {program.level}
-                    </span>
-                    <button 
-                      onClick={() => setActiveCommunityProgram(program)}
-                      className="text-green-600 hover:text-green-800 font-semibold text-sm"
-                    >
-                      Detail Program
-                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
+
+            {/* Event Details Panel */}
+            <div className="lg:col-span-1">
+              {selectedCalendarDate && selectedDateEvents.length > 0 ? (
+                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 sticky top-24 max-h-[calc(100vh-150px)] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-sm text-gray-500 font-semibold uppercase">Event pada tanggal</p>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {selectedCalendarDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedCalendarDate(null);
+                        setSelectedDateEvents([]);
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {selectedDateEvents.map((event, idx) => (
+                      <div key={event.id} className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r-lg">
+                        {selectedDateEvents.length > 1 && (
+                          <div className="text-xs font-semibold text-green-700 mb-2 uppercase">Event {idx + 1}</div>
+                        )}
+                        
+                        <h4 className="font-bold text-gray-900 mb-3">{event.name}</h4>
+                        
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-start gap-2">
+                            <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-gray-600">{event.time}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Location className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-gray-600">{event.location}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              event.category === 'Kompetisi' ? 'bg-blue-100 text-blue-700' :
+                              event.category === 'Pelatihan' ? 'bg-purple-100 text-purple-700' :
+                              event.category === 'Event Komunitas' ? 'bg-orange-100 text-orange-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {event.category}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              event.level === 'Internasional' ? 'bg-red-100 text-red-700' :
+                              event.level === 'Nasional' ? 'bg-blue-100 text-blue-700' :
+                              event.level === 'Regional' ? 'bg-green-100 text-green-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {event.level}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              event.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {event.status === 'Active' ? '✓ Aktif' : '✗ Tidak Aktif'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {idx < selectedDateEvents.length - 1 && (
+                          <div className="mt-4 pt-4 border-t border-green-200" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="w-full mt-6 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                    Daftar Event
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 text-center sticky top-24">
+                  <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 font-medium">
+                    Pilih tanggal dengan event untuk melihat detail
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {/* News Section */}
-      <section id="info" className="py-20 bg-white">
+      <section id="info" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-12">
             <div>
@@ -745,171 +1075,114 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Gallery Section */}
-      <section className="py-20 bg-gray-50">
+      {/* Gallery Section - Grid Carousel */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Galeri Kegiatan
-            </h2>
-            <p className="text-xl text-gray-600">
-              Dokumentasi kegiatan olahraga dan prestasi atlet
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {galleryData.map((item) => (
-              <div key={item.id} className="group cursor-pointer" onClick={() => setActiveGallery(item)}>
-                <div className="relative overflow-hidden rounded-xl shadow-lg">
-                  <img 
-                    src={item.image} 
-                    alt={item.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-4 left-4 right-4 text-white">
-                      <h3 className="text-lg font-semibold mb-1">{item.title}</h3>
-                      <p className="text-sm opacity-90">{item.date}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Agenda Section */}
-      <section id="kegiatan" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Agenda Kegiatan
-            </h2>
-            <p className="text-xl text-gray-600">
-              Jadwal kegiatan dan event olahraga mendatang
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {agendaData.map((agenda) => (
-              <div key={agenda.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow border border-gray-100">
-                <div className="relative">
-                  <img 
-                    src={agenda.image} 
-                    alt={agenda.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      agenda.category === 'Trending' ? 'bg-red-500 text-white' :
-                      agenda.category === 'Latest' ? 'bg-blue-500 text-white' :
-                      'bg-yellow-500 text-white'
-                    }`}>
-                      {agenda.category}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>{agenda.date} • {agenda.time}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500 mb-4">
-                    <Location className="w-4 h-4 mr-2" />
-                    <span>{agenda.location}</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{agenda.title}</h3>
-                  <p className="text-gray-600 mb-4">{agenda.description}</p>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => setActiveAgenda(agenda)}
-                      className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-center"
-                    >
-                      Detail
-                    </button>
-                    <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors">
-                      Daftar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="kontak" className="py-20 bg-green-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="flex justify-between items-center mb-12">
             <div>
-              <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-                Hubungi Kami
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Galeri Kegiatan
               </h2>
-              <p className="text-xl text-green-100 mb-8">
-                Memiliki pertanyaan atau ingin bergabung? Hubungi tim SIDORA sekarang juga.
+              <p className="text-xl text-gray-600">
+                Dokumentasi kegiatan olahraga dan prestasi atlet
               </p>
-              
-              <div className="space-y-6">
-                <div className="flex items-center">
-                  <Mail className="w-6 h-6 mr-4 text-green-300" />
-                  <div>
-                    <p className="font-semibold">Email</p>
-                    <p className="text-green-100">info@sidora.go.id</p>
-                  </div>
+            </div>
+            <button className="hidden md:flex items-center text-green-600 hover:text-green-800 font-semibold">
+              Lihat Semua
+              <ChevronRight className="ml-1 w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Gallery Grid Carousel */}
+          <div className="relative w-full">
+            {/* Carousel Container - with proper responsive padding for navigation controls */}
+            <div className="relative w-full mx-auto px-0 sm:px-2 lg:px-0">
+              {/* Carousel Wrapper */}
+              <div className="overflow-hidden rounded-2xl">
+                <div
+                  className="flex transition-transform duration-500 ease-out gap-4 sm:gap-6"
+                  style={{
+                    transform: `translateX(calc(-${currentGallerySlide} * (100% / 1 + (${currentGallerySlide === 0 ? 0 : 1} * 16px / 1))))`,
+                  }}
+                >
+                  {galleryData.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3"
+                    >
+                      <div className="relative h-72 sm:h-80 md:h-96 rounded-xl overflow-hidden shadow-lg group">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Dark Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                        {/* Title Overlay - Top Left */}
+                        <div className="absolute top-3 sm:top-4 md:top-6 left-3 sm:left-4 md:left-6 z-20">
+                          <p className="text-xs sm:text-sm text-gray-200 mb-1">
+                            {item.date}
+                          </p>
+                          <h3 className="text-base sm:text-lg md:text-2xl font-bold text-white drop-shadow-lg max-w-xs leading-tight">
+                            {item.title}
+                          </h3>
+                        </div>
+
+                        {/* Description - Bottom (Hidden on Mobile, Visible on Larger Screens) */}
+                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 z-20 hidden sm:block">
+                          <p className="text-xs sm:text-sm text-gray-100 drop-shadow-lg line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center">
-                  <Phone className="w-6 h-6 mr-4 text-green-300" />
-                  <div>
-                    <p className="font-semibold">Telepon</p>
-                    <p className="text-green-100">(021) 123-4567</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Location className="w-6 h-6 mr-4 text-green-300" />
-                  <div>
-                    <p className="font-semibold">Alamat</p>
-                    <p className="text-green-100">Jl. Olahraga No. 123, Kota, Provinsi</p>
-                  </div>
-                </div>
+
+                {/* Navigation Controls - Overlaid on Carousel */}
+                {/* Left Navigation Arrow */}
+                <button
+                  onClick={() =>
+                    setCurrentGallerySlide((prev) =>
+                      prev === 0 ? galleryData.length - 1 : prev - 1
+                    )
+                  }
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-white text-gray-900 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-300 group hover:shadow-xl"
+                  aria-label="Previous gallery items"
+                >
+                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                </button>
+
+                {/* Right Navigation Arrow */}
+                <button
+                  onClick={() =>
+                    setCurrentGallerySlide((prev) =>
+                      prev === galleryData.length - 1 ? 0 : prev + 1
+                    )
+                  }
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-white text-gray-900 p-2 sm:p-3 rounded-full shadow-lg transition-all duration-300 group hover:shadow-xl"
+                  aria-label="Next gallery items"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:scale-110 transition-transform" />
+                </button>
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-              <h3 className="text-2xl font-bold mb-6">Kirim Pesan</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Nama</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    placeholder="Nama lengkap"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    placeholder="email@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Pesan</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-green-400"
-                    placeholder="Tulis pesan Anda..."
-                  ></textarea>
-                </div>
+            {/* Carousel Indicators - Below Carousel */}
+            <div className="flex justify-center gap-2 mt-6 sm:mt-8">
+              {galleryData.map((_, idx) => (
                 <button
-                  type="submit"
-                  className="w-full bg-yellow-600 text-white py-3 px-6 rounded-lg hover:bg-yellow-700 transition-colors font-semibold"
-                >
-                  Kirim Pesan
-                </button>
-              </form>
+                  key={idx}
+                  onClick={() => setCurrentGallerySlide(idx)}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentGallerySlide === idx
+                      ? 'bg-gray-900 w-8 h-3'
+                      : 'bg-gray-400 w-3 h-3 hover:bg-gray-600'
+                  }`}
+                  aria-label={`Go to gallery item ${idx + 1}`}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -918,7 +1191,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-5 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-yellow-600 rounded-full flex items-center justify-center">
@@ -926,7 +1199,6 @@ export default function Home() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">SIDORA</h3>
-                  <p className="text-sm text-gray-400">Data Keolahragaan</p>
                 </div>
               </div>
               <p className="text-gray-400">
@@ -958,10 +1230,28 @@ export default function Home() {
               <h4 className="text-lg font-semibold mb-4">Kontak</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>info@sidora.go.id</li>
-                <li>(021) 123-4567</li>
-                <li>Jl. Olahraga No. 123</li>
-                <li>Kota, Provinsi</li>
+                <li>(022) 5895643</li>
+                <li>Pamekaran, Soreang, Bandung Regency, West Java 40912</li>
+                <li>Kab.Bandung, Jawa Barat</li>
               </ul>
+            </div>
+
+            <div>
+              <h4 className="text-lg font-semibold mb-4">👥 Pengunjung</h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Total Pengunjung</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {analyticsData.totalVisitors.toLocaleString('id-ID')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Hari Ini</p>
+                  <p className="text-2xl font-bold text-blue-400">
+                    {analyticsData.visitorsToday}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
           
