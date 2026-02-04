@@ -107,22 +107,20 @@ const Page: FC = () => {
   ======================== */
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <button
+        onClick={handleBackClick}
+        className="absolute top-6 left-6 flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+        aria-label="Go back home"
+      >
+        <ArrowLeft size={20} />
+        <span className="text-sm font-medium">Kembali</span>
+      </button>
+      <div className="max-w-2xl mx-auto pt-12">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
 
           {/* HEADER */}
           <div className="flex items-center mb-8">
-            <button
-              onClick={handleBackClick}
-              className="mr-4 p-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-yellow-600 rounded-full flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-white" />
-              </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   Pendaftaran Kecamatan

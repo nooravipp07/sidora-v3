@@ -42,13 +42,13 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-    { id: 'sarana', label: 'Data Sarana', icon: Building2, href: '/admin/data-sarana' },
-    { id: 'prasarana', label: 'Data Prasarana', icon: Hammer, href: '/admin/data-prasarana' },
-    { id: 'klub', label: 'Data Klub', icon: Users, href: '/admin/data-klub' },
-    { id: 'atlet', label: 'Data Atlet', icon: UserCheck, href: '/admin/data-atlet' },
-    { id: 'kegiatan', label: 'Olahraga Masyarakat', icon: Calendar, href: '/admin/kegiatan' },
-    { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
-    { id: 'user', label: 'User Management', icon: Users, href: '/admin/user-management' },
+    { id: 'sarana', label: 'Keolahragaan', icon: Building2, href: '/admin/data-sarana' },
+    { id: 'prasarana', label: 'Atlet dan Prestasi', icon: Hammer, href: '/admin/data-prasarana' },
+    { id: 'klub', label: 'Berita', icon: Users, href: '/admin/data-klub' },
+    { id: 'atlet', label: 'Galeri', icon: UserCheck, href: '/admin/data-atlet' },
+    { id: 'kegiatan', label: 'Agenda', icon: Calendar, href: '/admin/kegiatan' },
+    { id: 'verifikasi', label: 'Verifikasi Data & Akun', icon: CheckCircle, href: '/admin/verifikasi' },
+    { id: 'user', label: 'Pengaturan', icon: Users, href: '/admin/user-management' },
     { id: 'master', label: 'Master Data', icon: Database, href: '/admin/master-data' }
   ];
 

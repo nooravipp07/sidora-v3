@@ -43,7 +43,7 @@ export default function Home() {
   const [activeCommunityProgram, setActiveCommunityProgram] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentGallerySlide, setCurrentGallerySlide] = useState(0);
-  const [selectedFacilityDistrict, setSelectedFacilityDistrict] = useState(null);
+  const [searchFacilityDistrict, setSearchFacilityDistrict] = useState('');
 
   // Website Analytics Data
   const analyticsData = {
@@ -79,6 +79,27 @@ export default function Home() {
     },
     {
       id: 3,
+      title: "Pelatihan Atletik Usia Dini",
+      image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "15 Desember 2023",
+      description: "Program pelatihan atletik untuk anak-anak usia dini sebagai bibit atlet masa depan. Program ini fokus pada pengembangan kemampuan dasar atletik dan pembentukan karakter."
+    },
+    {
+      id: 4,
+      title: "Kejuaraan Renang Daerah",
+      image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "20 Desember 2023",
+      description: "Dokumentasi kegiatan kejuaraan renang tingkat daerah dengan partisipasi 200 atlet dari berbagai kecamatan. Event ini menampilkan berbagai nomor renang mulai dari gaya bebas, gaya punggung, hingga gaya kupu-kupu."
+    },
+    {
+      id: 5,
+      title: "Turnamen Basket Antar Sekolah",
+      image: "https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg?auto=compress&cs=tinysrgb&w=400",
+      date: "18 Desember 2023",
+      description: "Turnamen basket antar sekolah menengah atas se-kabupaten dengan 32 tim peserta. Kompetisi berlangsung sengit dengan menampilkan bakat-bakat muda basket daerah."
+    },
+    {
+      id: 6,
       title: "Pelatihan Atletik Usia Dini",
       image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
       date: "15 Desember 2023",
@@ -421,9 +442,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-red-600 rounded-full flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-white" />
-              </div>
+              <img 
+                src="/dispora-logo.png" 
+                alt="SIDORA Logo" 
+                className="w-10 h-10 object-contain"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">SIDORA</h1>
               </div>
@@ -431,9 +454,12 @@ export default function Home() {
             
             <nav className="hidden md:flex space-x-8">
               <a href="#home" className="text-gray-700 hover:text-green-600 transition-colors">Home</a>
-              <a href="#info" className="text-gray-700 hover:text-green-600 transition-colors">Cabang Olahraga</a>
+              <a href="#info" className="text-gray-700 hover:text-green-600 transition-colors">Infrastruktur Keolahragaan</a>
+              <a href="#data" className="text-gray-700 hover:text-green-600 transition-colors">Olahraga Prestasi</a>
               <a href="#data" className="text-gray-700 hover:text-green-600 transition-colors">Olahraga Masyarakat</a>
-              <a href="#kegiatan" className="text-gray-700 hover:text-green-600 transition-colors">Agenda</a>
+              <a href="#agenda" className="text-gray-700 hover:text-green-600 transition-colors">Berita</a>
+              <a href="#agenda" className="text-gray-700 hover:text-green-600 transition-colors">Galeri</a>
+              <a href="#agenda" className="text-gray-700 hover:text-green-600 transition-colors">Agenda</a>
             </nav>
 
             <div className="flex items-center space-x-4">
@@ -458,10 +484,12 @@ export default function Home() {
           <div className="md:hidden bg-white border-t">
             <div className="px-4 pt-2 pb-3 space-y-1">
               <a href="#home" className="block px-3 py-2 text-gray-700 hover:text-green-600">Home</a>
-              <a href="#info" className="block px-3 py-2 text-gray-700 hover:text-green-600">Info</a>
-              <a href="#data" className="block px-3 py-2 text-gray-700 hover:text-green-600">Data</a>
-              <a href="#kegiatan" className="block px-3 py-2 text-gray-700 hover:text-green-600">Kegiatan</a>
-              <a href="#kontak" className="block px-3 py-2 text-gray-700 hover:text-green-600">Kontak</a>
+              <a href="#info" className="block px-3 py-2 text-gray-700 hover:text-green-600">Infrastruktur Keolahragaan</a>
+              <a href="#data" className="block px-3 py-2 text-gray-700 hover:text-green-600">Olahraga Prestasi</a>
+              <a href="#data" className="block px-3 py-2 text-gray-700 hover:text-green-600">Olahraga Masyarakat</a>
+              <a href="#agenda" className="block px-3 py-2 text-gray-700 hover:text-green-600">Berita</a>
+              <a href="#agenda" className="block px-3 py-2 text-gray-700 hover:text-green-600">Galeri</a>
+              <a href="#agenda" className="block px-3 py-2 text-gray-700 hover:text-green-600">Agenda</a>
             </div>
           </div>
         )}
@@ -485,13 +513,13 @@ export default function Home() {
             <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-center items-center text-center text-white">
               <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold mb-4 drop-shadow-lg">{slide.title}</h1>
               <p className="text-sm sm:text-lg md:text-2xl mb-6 md:mb-8 drop-shadow-lg max-w-2xl">{slide.description}</p>
-              <Link
-                href="/register"
-                className="inline-flex items-center bg-yellow-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg text-sm sm:text-lg font-semibold hover:bg-yellow-700 transition-colors shadow-lg"
-              >
-                Daftar Sekarang
-                <ArrowRight className="ml-2 w-4 sm:w-5 h-4 sm:h-5" />
-              </Link>
+              <Image
+                  src="/kab-bandung-logo.png"
+                  alt="Kabupaten Bandung Logo"
+                  width={200}
+                  height={80}
+                  className="hover:opacity-80 transition-opacity drop-shadow-lg"
+              />
             </div>
           </div>
         ))}
@@ -578,29 +606,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Key Insights Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-l-4 border-blue-500 p-6 mb-12">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <Trophy className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Insight Utama</h3>
-                <div className="space-y-1 text-sm text-gray-700">
-                  <p>
-                    <span className="font-semibold">📈 Pertumbuhan Atlet:</span> Peningkatan 12% atlet terdaftar bulan ini, dengan fokus pada kategori usia muda.
-                  </p>
-                  <p>
-                    <span className="font-semibold">🏆 Prestasi Terdepan:</span> Kecamatan Selatan memimpin dengan 20 fasilitas dalam kondisi baik.
-                  </p>
-                  <p>
-                    <span className="font-semibold">📅 Aktivitas Mendatang:</span> 23 kegiatan olahraga dijadwalkan untuk kuartal ini.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Data Tables and Analytics */}
           <div className="grid lg:grid-cols-2 gap-8">
             {/* Sarana Prasarana Section */}
@@ -609,7 +614,7 @@ export default function Home() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-gray-900 flex items-center">
                     <Building className="w-6 h-6 mr-2 text-blue-600" />
-                    Data Sarana Prasarana
+                    Sarana & Prasarana
                   </h3>
                   <button
                     onClick={() => setActiveDataTable({ type: 'sarana', data: saranaData })}
@@ -619,21 +624,41 @@ export default function Home() {
                   </button>
                 </div>
 
-                {/* District Filter */}
-                <div className="flex flex-wrap gap-2">
-                  {['Semua', ...saranaData.map(d => d.kecamatan)].map((district) => (
+                <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Total Fasilitas</p>
+                      <p className="text-lg font-bold text-gray-900">89</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Kondisi Baik</p>
+                      <p className="text-lg font-bold text-green-600">83</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-1">Perlu Perbaikan</p>
+                      <p className="text-lg font-bold text-orange-600">6</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* District Search Filter */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cari kecamatan..."
+                    value={searchFacilityDistrict}
+                    onChange={(e) => setSearchFacilityDistrict(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                  />
+                  {searchFacilityDistrict && (
                     <button
-                      key={district}
-                      onClick={() => setSelectedFacilityDistrict(district === 'Semua' ? null : district)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-                        selectedFacilityDistrict === (district === 'Semua' ? null : district)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      onClick={() => setSearchFacilityDistrict('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Clear search"
                     >
-                      {district}
+                      ✕
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
 
@@ -650,7 +675,7 @@ export default function Home() {
                   </thead>
                   <tbody>
                     {saranaData
-                      .filter(item => !selectedFacilityDistrict || item.kecamatan === selectedFacilityDistrict)
+                      .filter(item => item.kecamatan.toLowerCase().includes(searchFacilityDistrict.toLowerCase()))
                       .map((item, index) => {
                         const totalFacilities = item.lapangan + item.gedung;
                         const conditionPercentage = Math.round((item.kondisiBaik / totalFacilities) * 100);
@@ -691,24 +716,6 @@ export default function Home() {
                       })}
                   </tbody>
                 </table>
-              </div>
-
-              {/* Footer Stats */}
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Total Fasilitas</p>
-                    <p className="text-lg font-bold text-gray-900">89</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Kondisi Baik</p>
-                    <p className="text-lg font-bold text-green-600">83</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Perlu Perbaikan</p>
-                    <p className="text-lg font-bold text-orange-600">6</p>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -816,7 +823,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-white">
+      <section id="agenda" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -1194,9 +1201,13 @@ export default function Home() {
           <div className="grid md:grid-cols-5 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-yellow-600 rounded-full flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
+                <Image
+                  src="/dispora-logo.png"
+                  alt="Kabupaten Bandung Logo"
+                  width={200}
+                  height={80}
+                  className="w-10 h-10 object-contain"
+                />
                 <div>
                   <h3 className="text-xl font-bold">SIDORA</h3>
                 </div>
@@ -1231,7 +1242,7 @@ export default function Home() {
               <ul className="space-y-2 text-gray-400">
                 <li>info@sidora.go.id</li>
                 <li>(022) 5895643</li>
-                <li>Pamekaran, Soreang, Bandung Regency, West Java 40912</li>
+                <li>Pamekaran, Soreang, Bandung Regency 40912</li>
                 <li>Kab.Bandung, Jawa Barat</li>
               </ul>
             </div>
