@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AgendaEvent } from '@/lib/agenda/types';
-import { Calendar, MapPin, Clock, Badge } from 'lucide-react';
+import { Calendar, MapPin, Clock, Badge, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AgendaTableProps {
   events: AgendaEvent[];
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  itemsPerPage?: number;
 }
 
 const getCategoryColor = (category: string) => {
@@ -46,7 +49,13 @@ const getStatusColor = (status: string) => {
     : 'bg-red-100 text-red-700';
 };
 
-export default function AgendaTable({ events }: AgendaTableProps) {
+export default function AgendaTable({ events, currentPage = 1, onPageChange, itemsPerPage = 10 }: AgendaTableProps) {
+  const totalPages = Math.ceil(events.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEvents = useMemo(() => {
+    return events.slice(startIndex, startIndex + itemsPerPage);
+  }, [events, startIndex, itemsPerPage]);
+
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-12 text-center border border-gray-200">
@@ -73,7 +82,7 @@ export default function AgendaTable({ events }: AgendaTableProps) {
             </tr>
           </thead>
           <tbody>
-            {events.map((event, idx) => (
+            {paginatedEvents.map((event, idx) => (
               <tr
                 key={event.id}
                 className={`border-b border-gray-200 hover:bg-green-50 transition-colors ${
@@ -129,7 +138,7 @@ export default function AgendaTable({ events }: AgendaTableProps) {
       {/* Mobile Card View */}
       <div className="md:hidden">
         <div className="divide-y divide-gray-200">
-          {events.map((event) => (
+          {paginatedEvents.map((event) => (
             <div key={event.id} className="p-4 hover:bg-green-50 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
@@ -170,11 +179,48 @@ export default function AgendaTable({ events }: AgendaTableProps) {
         </div>
       </div>
 
-      {/* Summary */}
+      {/* Summary and Pagination */}
       <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
-        <p className="text-sm text-gray-600">
-          Menampilkan <span className="font-semibold text-gray-900">{events.length}</span> dari <span className="font-semibold text-gray-900">10</span> agenda kegiatan
-        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-gray-600">
+            Menampilkan {startIndex + 1}-{Math.min(startIndex + itemsPerPage, events.length)} dari <span className="font-semibold text-gray-900">{events.length}</span> agenda kegiatan
+          </p>
+          {onPageChange && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-1 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => onPageChange(page)}
+                    className={`w-8 h-8 rounded text-xs font-semibold transition-colors ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 text-gray-700 hover:bg-white'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-1 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,18 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Club } from '@/lib/sports/types';
 import { filterClubs, getSportCategories, getDistricts } from '@/lib/sports/data';
-import { Filter, X, CheckCircle, Clock } from 'lucide-react';
+import { Filter, X, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ClubTableProps {
   clubs: Club[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ClubTable({ clubs }: ClubTableProps) {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredClubs = filterClubs(
     selectedDistrict || undefined,
@@ -20,7 +23,20 @@ export default function ClubTable({ clubs }: ClubTableProps) {
     selectedStatus || undefined
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredClubs.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedClubs = useMemo(() => {
+    return filteredClubs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredClubs, startIndex]);
+
   const hasActiveFilters = selectedDistrict || selectedCategory || selectedStatus;
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -38,7 +54,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
             </label>
             <select
               value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              onChange={(e) => {
+                setSelectedDistrict(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Kecamatan</option>
@@ -56,7 +75,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
             </label>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Cabang</option>
@@ -74,7 +96,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
             </label>
             <select
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Status</option>
@@ -90,7 +115,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
             <div className="flex flex-wrap gap-2">
               {selectedDistrict && (
                 <button
-                  onClick={() => setSelectedDistrict('')}
+                  onClick={() => {
+                    setSelectedDistrict('');
+                    setCurrentPage(1);
+                  }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedDistrict}
@@ -99,7 +127,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
               )}
               {selectedCategory && (
                 <button
-                  onClick={() => setSelectedCategory('')}
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setCurrentPage(1);
+                  }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedCategory}
@@ -108,7 +139,10 @@ export default function ClubTable({ clubs }: ClubTableProps) {
               )}
               {selectedStatus && (
                 <button
-                  onClick={() => setSelectedStatus('')}
+                  onClick={() => {
+                    setSelectedStatus('');
+                    setCurrentPage(1);
+                  }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedStatus === 'verified' ? 'Terverifikasi' : 'Menunggu Verifikasi'}
@@ -122,8 +156,8 @@ export default function ClubTable({ clubs }: ClubTableProps) {
 
       {/* Clubs Grid - Mobile Cards */}
       <div className="grid grid-cols-1 gap-4 lg:hidden">
-        {filteredClubs.length > 0 ? (
-          filteredClubs.map((club) => (
+        {paginatedClubs.length > 0 ? (
+          paginatedClubs.map((club) => (
             <div
               key={club.id}
               className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow"
@@ -167,6 +201,48 @@ export default function ClubTable({ clubs }: ClubTableProps) {
         )}
       </div>
 
+      {/* Pagination - Mobile and Desktop */}
+      {filteredClubs.length > 0 && (
+        <div className="mt-4 p-4 lg:hidden bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <p className="text-xs sm:text-sm text-gray-600">
+              Menampilkan {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredClubs.length)} dari {filteredClubs.length} klub
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              </button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-2 py-1 rounded text-xs transition-colors ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white font-medium'
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Clubs Table - Desktop */}
       <div className="hidden lg:block rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -197,8 +273,8 @@ export default function ClubTable({ clubs }: ClubTableProps) {
               </tr>
             </thead>
             <tbody>
-              {filteredClubs.length > 0 ? (
-                filteredClubs.map((club) => (
+              {paginatedClubs.length > 0 ? (
+                paginatedClubs.map((club) => (
                   <tr
                     key={club.id}
                     className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
@@ -247,11 +323,48 @@ export default function ClubTable({ clubs }: ClubTableProps) {
           </table>
         </div>
 
-        {filteredClubs.length > 0 && (
-          <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
-              Menampilkan {filteredClubs.length} dari {clubs.length} klub
-            </p>
+        {paginatedClubs.length > 0 ? (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <p className="text-sm text-gray-600">
+                Menampilkan {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredClubs.length)} dari {filteredClubs.length} klub
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-2 py-1 rounded text-sm transition-colors ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white font-medium'
+                          : 'text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-6 py-8 bg-gray-50 border-t border-gray-200 text-center">
+            <p className="text-sm text-gray-500">Tidak ada klub ditemukan</p>
           </div>
         )}
       </div>

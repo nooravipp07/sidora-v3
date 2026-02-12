@@ -27,6 +27,10 @@ export default function InfrastructureKeolahraganPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
+  const [districtTablePage, setDistrictTablePage] = useState(1);
+  const [facilityListPage, setFacilityListPage] = useState(1);
+
+  const ITEMS_PER_PAGE = 10;
 
   const stats = getInfrastructureStats();
   const districtData = getDistrictInfrastructure();
@@ -38,14 +42,32 @@ export default function InfrastructureKeolahraganPage() {
     return districtData.filter(d => d.district === selectedDistrict);
   }, [selectedDistrict, districtData]);
 
+  // Pagination for district table
+  const districtTableTotalPages = Math.ceil(filteredDistricts.length / ITEMS_PER_PAGE);
+  const districtTableStartIndex = (districtTablePage - 1) * ITEMS_PER_PAGE;
+  const paginatedDistricts = useMemo(() => {
+    return filteredDistricts.slice(districtTableStartIndex, districtTableStartIndex + ITEMS_PER_PAGE);
+  }, [filteredDistricts, districtTableStartIndex]);
+
+  // Pagination for facility list
+  const facilityListTotalPages = Math.ceil(filteredFacilities.length / ITEMS_PER_PAGE);
+  const facilityListStartIndex = (facilityListPage - 1) * ITEMS_PER_PAGE;
+  const paginatedFacilities = useMemo(() => {
+    return filteredFacilities.slice(facilityListStartIndex, facilityListStartIndex + ITEMS_PER_PAGE);
+  }, [filteredFacilities, facilityListStartIndex]);
+
   const handleReset = () => {
     setSelectedDistrict('');
     setSelectedCondition('');
     setSelectedType('');
+    setDistrictTablePage(1);
+    setFacilityListPage(1);
   };
 
   const handleViewDetail = (district: string) => {
     setSelectedDistrict(district);
+    setDistrictTablePage(1);
+    setFacilityListPage(1);
     // Scroll to filter section
     const filtersElement = document.getElementById('filters-section');
     filtersElement?.scrollIntoView({ behavior: 'smooth' });
@@ -114,9 +136,47 @@ export default function InfrastructureKeolahraganPage() {
             )}
           </div>
           <InfrastructureTable
-            districts={filteredDistricts}
+            districts={paginatedDistricts}
             onViewDetail={handleViewDetail}
           />
+
+          {/* Pagination for District Table */}
+          <div className="mt-6 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Menampilkan {districtTableStartIndex + 1}-{Math.min(districtTableStartIndex + ITEMS_PER_PAGE, filteredDistricts.length)} dari {filteredDistricts.length} kecamatan
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDistrictTablePage(prev => Math.max(1, prev - 1))}
+                disabled={districtTablePage === 1}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Sebelumnya
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: districtTableTotalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setDistrictTablePage(page)}
+                    className={`w-8 h-8 rounded text-sm font-semibold transition-colors ${
+                      districtTablePage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setDistrictTablePage(prev => Math.min(districtTableTotalPages, prev + 1))}
+                disabled={districtTablePage === districtTableTotalPages}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Facility List if District Selected */}
@@ -126,7 +186,7 @@ export default function InfrastructureKeolahraganPage() {
               Daftar Fasilitas - {selectedDistrict}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredFacilities.map((facility) => (
+              {paginatedFacilities.map((facility) => (
                 <div
                   key={facility.id}
                   className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all"
@@ -158,6 +218,44 @@ export default function InfrastructureKeolahraganPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Pagination for Facility List */}
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Menampilkan {facilityListStartIndex + 1}-{Math.min(facilityListStartIndex + ITEMS_PER_PAGE, filteredFacilities.length)} dari {filteredFacilities.length} fasilitas
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setFacilityListPage(prev => Math.max(1, prev - 1))}
+                  disabled={facilityListPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Sebelumnya
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: facilityListTotalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setFacilityListPage(page)}
+                      className={`w-8 h-8 rounded text-sm font-semibold transition-colors ${
+                        facilityListPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setFacilityListPage(prev => Math.min(facilityListTotalPages, prev + 1))}
+                  disabled={facilityListPage === facilityListTotalPages}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Selanjutnya
+                </button>
+              </div>
             </div>
           </div>
         )}

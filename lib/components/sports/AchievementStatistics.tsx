@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Achievement } from '@/lib/sports/types';
 import { filterAchievements, getSports, getDistricts, getYears } from '@/lib/sports/data';
-import { Medal, Filter, X } from 'lucide-react';
+import { Medal, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AchievementStatisticsProps {
   achievements: Achievement[];
 }
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AchievementStatistics({ achievements }: AchievementStatisticsProps) {
   const [selectedMedal, setSelectedMedal] = useState<string>('');
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [selectedYear, setSelectedYear] = useState<string>('');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredAchievements = filterAchievements(
     selectedMedal || undefined,
@@ -22,27 +25,27 @@ export default function AchievementStatistics({ achievements }: AchievementStati
     selectedDistrict || undefined
   );
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAchievements.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedAchievements = useMemo(() => {
+    return filteredAchievements.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAchievements, startIndex]);
+
   const goldCount = filteredAchievements.filter(a => a.medal === 'gold').length;
   const silverCount = filteredAchievements.filter(a => a.medal === 'silver').length;
   const bronzeCount = filteredAchievements.filter(a => a.medal === 'bronze').length;
 
   const hasActiveFilters = selectedMedal || selectedSport || selectedYear || selectedDistrict;
 
-  const getMedalColor = (medal: string) => {
-    switch (medal) {
-      case 'gold':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'silver':
-        return 'bg-slate-100 text-slate-800 border-slate-300';
-      case 'bronze':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
-  const getMedalLabel = (medal: string) => {
-    switch (medal) {
+  const getMedalLabel = (medal: string): string => {
+    switch(medal) {
       case 'gold':
         return 'Emas';
       case 'silver':
@@ -51,6 +54,19 @@ export default function AchievementStatistics({ achievements }: AchievementStati
         return 'Perunggu';
       default:
         return medal;
+    }
+  };
+
+  const getMedalColor = (medal: string): string => {
+    switch(medal) {
+      case 'gold':
+        return 'bg-yellow-50 border-yellow-200 text-yellow-700';
+      case 'silver':
+        return 'bg-gray-50 border-gray-300 text-gray-700';
+      case 'bronze':
+        return 'bg-orange-50 border-orange-200 text-orange-700';
+      default:
+        return 'bg-gray-50 border-gray-300 text-gray-700';
     }
   };
 
@@ -103,7 +119,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
             </label>
             <select
               value={selectedMedal}
-              onChange={(e) => setSelectedMedal(e.target.value)}
+              onChange={(e) => { setSelectedMedal(e.target.value); setCurrentPage(1); }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Medali</option>
@@ -119,7 +135,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
             </label>
             <select
               value={selectedSport}
-              onChange={(e) => setSelectedSport(e.target.value)}
+              onChange={(e) => { setSelectedSport(e.target.value); setCurrentPage(1); }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Cabang</option>
@@ -137,7 +153,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
             </label>
             <select
               value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Tahun</option>
@@ -155,7 +171,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
             </label>
             <select
               value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              onChange={(e) => { setSelectedDistrict(e.target.value); setCurrentPage(1); }}
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Kecamatan</option>
@@ -174,7 +190,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
             <div className="flex flex-wrap gap-2">
               {selectedMedal && (
                 <button
-                  onClick={() => setSelectedMedal('')}
+                  onClick={() => { setSelectedMedal(''); setCurrentPage(1); }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {getMedalLabel(selectedMedal)}
@@ -183,7 +199,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
               )}
               {selectedSport && (
                 <button
-                  onClick={() => setSelectedSport('')}
+                  onClick={() => { setSelectedSport(''); setCurrentPage(1); }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedSport}
@@ -192,7 +208,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
               )}
               {selectedYear && (
                 <button
-                  onClick={() => setSelectedYear('')}
+                  onClick={() => { setSelectedYear(''); setCurrentPage(1); }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedYear}
@@ -201,7 +217,7 @@ export default function AchievementStatistics({ achievements }: AchievementStati
               )}
               {selectedDistrict && (
                 <button
-                  onClick={() => setSelectedDistrict('')}
+                  onClick={() => { setSelectedDistrict(''); setCurrentPage(1); }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
                   {selectedDistrict}
@@ -237,8 +253,8 @@ export default function AchievementStatistics({ achievements }: AchievementStati
               </tr>
             </thead>
             <tbody>
-              {filteredAchievements.length > 0 ? (
-                filteredAchievements.map((achievement) => (
+              {paginatedAchievements.length > 0 ? (
+                paginatedAchievements.map((achievement) => (
                   <tr
                     key={achievement.id}
                     className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
@@ -281,10 +297,46 @@ export default function AchievementStatistics({ achievements }: AchievementStati
         </div>
 
         {filteredAchievements.length > 0 && (
-          <div className="px-3 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <p className="text-xs sm:text-sm text-gray-600">
-              Menampilkan {filteredAchievements.length} dari {achievements.length} pencapaian
-            </p>
+          <div className="px-3 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Menampilkan {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredAchievements.length)} dari {filteredAchievements.length} pencapaian
+              </p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-1 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-8 h-8 rounded text-xs font-semibold transition-colors ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-white'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-1 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

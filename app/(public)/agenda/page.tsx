@@ -5,9 +5,12 @@ import AgendaFilters from '../components/agenda/AgendaFilters';
 import AgendaTable from '../components/agenda/AgendaTable';
 import { filterAgendaEvents } from '@/lib/agenda/data';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AgendaPage() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredEvents = useMemo(() => {
     return filterAgendaEvents(selectedDate, selectedLocation);
@@ -16,6 +19,14 @@ export default function AgendaPage() {
   const handleReset = () => {
     setSelectedDate('');
     setSelectedLocation('');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   return (
@@ -41,7 +52,12 @@ export default function AgendaPage() {
         />
 
         {/* Table */}
-        <AgendaTable events={filteredEvents} />
+        <AgendaTable 
+          events={filteredEvents}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          itemsPerPage={ITEMS_PER_PAGE}
+        />
       </div>
     </main>
   );
