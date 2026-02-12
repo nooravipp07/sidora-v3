@@ -1,6 +1,7 @@
 'use client';
 
 import React, { FC, useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Users,
   Trophy,
@@ -12,7 +13,9 @@ import {
   ArrowRight,
   Eye,
   TrendingDown,
-  BarChart3
+  BarChart3,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 interface StatCard {
@@ -39,6 +42,18 @@ interface QuickAction {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   bgColor: string;
+}
+
+interface VerificationItem {
+  id: number;
+  namaLengkap: string;
+  email: string;
+  noTelepon: string;
+  jenisAkun: string;
+  kecamatan: string;
+  desaKelurahan: string;
+  status: 'Waiting For Approve' | 'Approved' | 'Rejected';
+  tanggalPendaftaran: string;
 }
 
 const Dashboard: FC = () => {
@@ -147,6 +162,75 @@ const Dashboard: FC = () => {
     }
   ];
 
+  const verificationData: VerificationItem[] = [
+    {
+      id: 1,
+      namaLengkap: 'aip hidayattuloh',
+      email: 'aiphidayattuloh4@gmail.com',
+      noTelepon: '081313384306',
+      jenisAkun: 'KONI',
+      kecamatan: '',
+      desaKelurahan: '',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-05-20 02:50:46'
+    },
+    {
+      id: 2,
+      namaLengkap: 'aip hidayattuloh',
+      email: 'aiphidayattuloh4@gmail.com',
+      noTelepon: '081313384306',
+      jenisAkun: 'KONI',
+      kecamatan: '',
+      desaKelurahan: '',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-06-18 07:35:12'
+    },
+    {
+      id: 3,
+      namaLengkap: 'dedi kusniadi',
+      email: 'theloner666@gmail.com',
+      noTelepon: '082117559399',
+      jenisAkun: 'KECAMATAN',
+      kecamatan: 'SOLOKANJERUK',
+      desaKelurahan: '',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-09-25 00:49:32'
+    },
+    {
+      id: 4,
+      namaLengkap: 'dedi kusniadi',
+      email: 'theloner666@gmail.com',
+      noTelepon: '082117559399',
+      jenisAkun: 'KECAMATAN',
+      kecamatan: 'SOLOKANJERUK',
+      desaKelurahan: 'PANYADAP',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-09-25 01:42:18'
+    },
+    {
+      id: 5,
+      namaLengkap: 'Kecamatan Cimenyan',
+      email: 'achiejulians79@gmail.com',
+      noTelepon: '081287972015',
+      jenisAkun: 'KECAMATAN',
+      kecamatan: 'CIMENYAN',
+      desaKelurahan: '',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-09-25 03:28:30'
+    },
+    {
+      id: 6,
+      namaLengkap: 'Nia Kurniawati',
+      email: 'Kurniawatiniania142@gmail.com',
+      noTelepon: '085624453335',
+      jenisAkun: 'KECAMATAN',
+      kecamatan: '',
+      desaKelurahan: '',
+      status: 'Waiting For Approve',
+      tanggalPendaftaran: '2025-09-25 03:56:44'
+    }
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -209,7 +293,76 @@ const Dashboard: FC = () => {
 
       {/* Visitor Counter Section */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Pengunjung</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Verifikasi Data Pendaftaran & Akun</h2>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-600" />
+              <span className="text-sm text-gray-600">
+                Total menunggu persetujuan: <span className="font-bold text-orange-600">{verificationData.filter(v => v.status === 'Waiting For Approve').length}</span>
+              </span>
+            </div>
+            <Link 
+              href="/admin/verifikasi"
+              className="inline-flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-medium"
+            >
+              Lihat Semua
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Verification Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b-2 border-gray-200">
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nama Lengkap</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">No. Telepon</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Jenis Akun</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Kecamatan</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Desa/Kelurahan</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tanggal Pendaftaran</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {verificationData.slice(0, 6).map((item) => (
+                  <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-gray-900">{item.namaLengkap}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{item.email}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{item.noTelepon}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        {item.jenisAkun}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{item.kecamatan || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{item.desaKelurahan || '-'}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                        {item.status === 'Waiting For Approve' ? 'Menunggu' : item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{item.tanggalPendaftaran}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <button className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Approve
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Visitor Counter Section */}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Statistik Pengunjung</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Total Visitors Card */}
           <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">

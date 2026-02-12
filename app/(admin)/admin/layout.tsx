@@ -42,6 +42,8 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
+    { id: 'dashboard-kecamatan', label: 'Dashboard Kecamatan', icon: LayoutDashboard, href: '/admin/dashboard-kecamatan' },
+    { id: 'dashboard-lembaga', label: 'Dashboard Lembaga', icon: LayoutDashboard, href: '/admin/dashboard-lembaga' },
     { id: 'sarana', label: 'Keolahragaan', icon: Building2, href: '/admin/data-sarana' },
     { id: 'prasarana', label: 'Atlet dan Prestasi', icon: Hammer, href: '/admin/data-prasarana' },
     { id: 'klub', label: 'Berita', icon: Users, href: '/admin/data-klub' },
