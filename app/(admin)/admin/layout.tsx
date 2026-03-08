@@ -19,7 +19,8 @@ import {
   Bell,
   LogOut,
   Search,
-  ChevronDown
+  ChevronDown,
+  Lock
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -250,8 +251,18 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
                     <p className="text-xs text-gray-500">{user?.email || 'admin@sidora.go.id'}</p>
                   </div>
                   <button
+                    onClick={() => {
+                      router.push('/admin/change-password');
+                      setUserDropdown(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors text-gray-700 text-sm"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>Ubah Password</span>
+                  </button>
+                  <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 text-sm"
+                    className="w-full flex items-center space-x-2 px-4 py-2 hover:bg-gray-100 transition-colors text-red-600 text-sm border-t border-gray-400"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Logout</span>
