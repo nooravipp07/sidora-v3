@@ -3,6 +3,7 @@
 import React, { FC, ReactNode, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth/useAuth';
 import {
   LayoutDashboard,
   Building2,
@@ -34,25 +35,64 @@ interface MenuItem {
 
 const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
   const router = useRouter();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [activeMenu, setActiveMenu] = useState<string>('dashboard');
   const [userDropdown, setUserDropdown] = useState<boolean>(false);
 
-  const menuItems: MenuItem[] = [
+  // Define all available menu items
+  const allMenuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
     { id: 'dashboard-kecamatan', label: 'Dashboard Kecamatan', icon: LayoutDashboard, href: '/admin/dashboard-kecamatan' },
     { id: 'dashboard-lembaga', label: 'Dashboard Lembaga', icon: LayoutDashboard, href: '/admin/dashboard-lembaga' },
-    { id: 'sarana', label: 'Keolahragaan', icon: Building2, href: '/admin/data-sarana' },
-    { id: 'prasarana', label: 'Atlet dan Prestasi', icon: Hammer, href: '/admin/data-prasarana' },
-    { id: 'klub', label: 'Berita', icon: Users, href: '/admin/data-klub' },
-    { id: 'atlet', label: 'Galeri', icon: UserCheck, href: '/admin/data-atlet' },
-    { id: 'kegiatan', label: 'Agenda', icon: Calendar, href: '/admin/kegiatan' },
+    { id: 'sarana', label: 'Data Sarana', icon: Building2, href: '/admin/sarana' },
+    { id: 'prasarana', label: 'Data Prasarana', icon: Hammer, href: '/admin/prasarana' },
+    { id: 'kelompok-olahraga', label: 'Kelompok Olahraga', icon: Users, href: '/admin/kelompok-olahraga' },
+    { id: 'olahraga-prestasi', label: 'Olahraga Prestasi', icon: Users, href: '/admin/olahraga-prestasi' },
+    { id: 'olahraga-masyarakat', label: 'Olahraga Masyarakat', icon: Users, href: '/admin/olahraga-masyarakat' },
+    { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
     { id: 'verifikasi', label: 'Verifikasi Data & Akun', icon: CheckCircle, href: '/admin/verifikasi' },
-    { id: 'user', label: 'Pengaturan', icon: Users, href: '/admin/user-management' },
-    { id: 'master', label: 'Master Data', icon: Database, href: '/admin/master-data' }
+    { id: 'user-management', label: 'User Management', icon: Users, href: '/admin/user-management' },
+    { id: 'master-data', label: 'Master Data', icon: Database, href: '/admin/master-data' }
   ];
+
+  // Filter menu items based on user role
+  const getMenuItemsByRole = (roleId: number | null): MenuItem[] => {
+    if (!roleId) return [];
+
+    const adminExceptions = ['dashboard-kecamatan', 'dashboard-lembaga']; // Roles that have access to admin menu
+
+    // Role 1: Admin - semua menu
+    if (roleId === 1) {
+      return allMenuItems.filter(item => !adminExceptions.includes(item.id));
+    }
+
+    // Role 2: Admin - Kecamatan
+    if (roleId === 2) {
+      return allMenuItems.filter(item => [
+        'dashboard-kecamatan',
+        'sarana',
+        'prasarana',
+        'kelompok-olahraga',
+      ].includes(item.id));
+    }
+
+    // Role 3: Admin - Lembaga (KONI, NPCI dna BAPOPSI)
+    if (roleId === 3) {
+      return allMenuItems.filter(item => [
+        'dashboard-lembaga',
+        'olahraga-prestasi',
+        'olahraga-masyarakat'
+      ].includes(item.id));
+    }
+
+    return [];
+  };
+
+  // Get filtered menu items based on user role
+  const menuItems: MenuItem[] = getMenuItemsByRole(user?.roleId ?? null);
 
   // Update active menu based on current pathname
   useEffect(() => {
@@ -60,16 +100,56 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     if (currentItem) {
       setActiveMenu(currentItem.id);
     }
-  }, [pathname]);
+  }, [pathname, menuItems]);
+
+  // Check authentication and authorization - redirect if needed
+  useEffect(() => {
+    if (!isLoading) {
+      // If not authenticated, redirect to login
+      if (!isAuthenticated) {
+        router.push('/login');
+        return;
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router]);
 
   const handleMenuClick = (href: string): void => {
     router.push(href);
     setIsMobileMenuOpen(false);
   };
 
-  const handleLogout = (): void => {
-    router.push('/login');
+  const handleLogout = async (): Promise<void> => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        console.error('Logout failed');
+        router.push('/login');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/login');
+    }
   };
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated or not authorized, don't render layout
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -80,11 +160,8 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
         } bg-white shadow-lg transition-all duration-300 hidden md:flex flex-col fixed left-0 h-full z-40`}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-20 px-6 border-b">
+        <div className="flex items-center justify-between h-20 px-6 border-b border-gray-400">
           <div className={`flex items-center space-x-3 ${isSidebarOpen ? '' : 'justify-center w-full'}`}>
-            <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
             {isSidebarOpen && <span className="text-xl font-bold text-gray-900">SIDORA</span>}
           </div>
         </div>
@@ -109,7 +186,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
         </nav>
 
         {/* Sidebar Toggle */}
-        <div className="border-t p-4">
+        <div className="border-t border-gray-400 p-4">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
@@ -122,7 +199,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
       {/* Main Content */}
       <div className={`${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'} flex-1 flex flex-col transition-all duration-300`}>
         {/* Header */}
-        <header className="bg-white shadow-md h-20 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header className="bg-white shadow-md h-20 flex items-center justify-between px-6 sticky top-0 z-30 border-b border-gray-400">
           <div className="flex items-center space-x-4 flex-1">
             {/* Mobile Menu Toggle */}
             <button
@@ -160,17 +237,17 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                  A
+                  {user?.name?.charAt(0).toUpperCase() || 'A'}
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-600 hidden md:block" />
               </button>
 
               {/* Dropdown Menu */}
               {userDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <div className="px-4 py-2 border-b">
-                    <p className="text-sm font-semibold text-gray-900">Admin</p>
-                    <p className="text-xs text-gray-500">superadmin@sidora.go.id</p>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-400 py-2 z-50">
+                  <div className="px-4 py-2 border-b border-gray-400">
+                    <p className="text-sm font-semibold text-gray-900">{user?.name || 'Admin'}</p>
+                    <p className="text-xs text-gray-500">{user?.email || 'admin@sidora.go.id'}</p>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -187,7 +264,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Mobile Sidebar Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-b shadow-lg">
+          <div className="md:hidden bg-white border-b border-gray-400 shadow-lg">
             <nav className="p-4 space-y-2">
               {menuItems.map((item) => (
                 <button

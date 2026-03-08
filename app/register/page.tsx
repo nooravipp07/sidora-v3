@@ -2,7 +2,7 @@
 
 import { FC, useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Upload, ArrowLeft, Check } from 'lucide-react';
+import { Upload, ArrowLeft, Check } from 'lucide-react';
 
 interface RegisterFormData {
   namaKecamatan: string;

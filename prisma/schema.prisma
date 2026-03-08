@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model
+model User {
+  id              Int         @id @default(autoincrement())
+  name            String
+  email           String      @unique
+  namaLengkap     String?
+  noTelepon       String?
+  emailVerifiedAt DateTime?
+  password        String
+  rememberToken   String?     @db.VarChar(100)
+  roleId          Int?
+  jenisAkun       Int?
+  kecamatanId     Int?
+  desaKelurahanId Int?
+  status          Int?        @default(0)
+  lastLogin       DateTime?
+  createdAt       DateTime?   @default(now())
+  updatedAt       DateTime?   @updatedAt
+
+  // Relations
+  role            Role?       @relation(fields: [roleId], references: [id])
+  refreshTokens   RefreshToken[]
+  loginHistory    LoginHistory[]
+
+  @@map("m_users")
+}
+
+// Role Model
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Relations
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("m_roles")
+}
+
+// Permission Model
+model Permission {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  // Relations
+  roles       RolePermission[]
+
+  @@map("m_permissions")
+}
+
+// Role Permission Pivot Model
+model RolePermission {
+  id           Int    @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+
+  // Relations
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("m_role_permissions")
+}
+
+// Refresh Token Model for token rotation
+model RefreshToken {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  token     String  @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  // Relations
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("m_refresh_tokens")
+}
+
+// Login History Model for audit trail
+model LoginHistory {
+  id           Int     @id @default(autoincrement())
+  userId       Int
+  ipAddress    String?
+  userAgent    String?
+  loginAt      DateTime @default(now())
+  logoutAt     DateTime?
+  status       String  @default("success") // success, failed, etc
+
+  // Relations
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("m_login_history")
+}

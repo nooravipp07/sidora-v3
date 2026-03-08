@@ -132,8 +132,7 @@ const MasterData: FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-6">
+    <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Master Data</h1>
           <p className="text-gray-600">Kelola data master sistem</p>
@@ -289,23 +288,22 @@ const MasterData: FC = () => {
             </table>
           </div>
         </div>
-      </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <DataModal
-          title={getModalTitle()}
-          fields={getCurrentFields()}
-          data={selectedData}
-          mode={modalMode}
-          onClose={() => setIsModalOpen(false)}
-          onSave={(data) => {
-            console.log('Save data:', data);
-            setIsModalOpen(false);
-          }}
-        />
-      )}
-    </div>
+        {/* Modal */}
+        {isModalOpen && (
+          <DataModal
+            title={getModalTitle()}
+            fields={getCurrentFields()}
+            data={selectedData}
+            mode={modalMode}
+            onClose={() => setIsModalOpen(false)}
+            onSave={(data) => {
+              console.log('Save data:', data);
+              setIsModalOpen(false);
+            }}
+          />
+        )}
+      </div>
   );
 };
 

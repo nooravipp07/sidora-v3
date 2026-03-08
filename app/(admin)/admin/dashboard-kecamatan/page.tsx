@@ -14,8 +14,7 @@ export default function DashboardKecamatanPage() {
   const allDistricts = getDistrictByKecamatan(''); // Get all districts
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="w-full space-y-6">
+    <div className="w-full space-y-6">
         {/* Header */}
         <div className="mb-6 pb-4 border-b border-gray-200">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -74,6 +73,5 @@ export default function DashboardKecamatanPage() {
           />
         </div>
       </div>
-    </div>
   );
 }
