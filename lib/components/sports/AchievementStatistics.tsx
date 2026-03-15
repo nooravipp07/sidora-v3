@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Achievement } from '@/lib/sports/types';
+import { Achievement } from '@/types/sports';
 import { filterAchievements, getSports, getDistricts, getYears } from '@/lib/sports/data';
 import { Medal, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 

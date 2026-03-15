@@ -1,147 +1,289 @@
 'use client';
 
-import React, { FC, useState } from 'react';
-import { Plus, Edit, Trash2, Database, Settings, MapPin, Trophy, Users, Building } from 'lucide-react';
+import React, { FC, useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, MapPin, Home, Hammer, Wrench, Trophy, ChevronLeft, ChevronRight, Search, Loader } from 'lucide-react';
 import DataModal from '../../../../lib/admin/DataModal';
 
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+interface ApiResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
 const MasterData: FC = () => {
-  const [activeTab, setActiveTab] = useState<'cabang' | 'tipe' | 'organisasi' | 'wilayah' | 'status'>('cabang');
+  const [activeTab, setActiveTab] = useState<'kecamatan' | 'desa-kelurahan' | 'sarana' | 'prasarana' | 'cabang-olahraga'>('kecamatan');
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasMore: false,
+  });
+  const [filters, setFilters] = useState<Record<string, any>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<any>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [kecamatanOptions, setKecamatanOptions] = useState<any[]>([]);
 
-  const cabangData = [
-    { id: 1, nama: 'Sepak Bola', kode: 'SB', deskripsi: 'Olahraga sepak bola' },
-    { id: 2, nama: 'Basket', kode: 'BS', deskripsi: 'Olahraga basket' },
-    { id: 3, nama: 'Voli', kode: 'VL', deskripsi: 'Olahraga voli' },
-    { id: 4, nama: 'Badminton', kode: 'BM', deskripsi: 'Olahraga badminton' },
-    { id: 5, nama: 'Tenis', kode: 'TN', deskripsi: 'Olahraga tenis' }
-  ];
+  const tabConfig = {
+    'kecamatan': {
+      label: 'Kecamatan',
+      icon: MapPin,
+      apiEndpoint: '/api/masterdata/kecamatan',
+      searchFields: ['nama'],
+      fields: [
+        { name: 'nama', label: 'Nama Kecamatan', type: 'text' as const, required: true },
+        { name: 'latitude', label: 'Latitude', type: 'text' as const, required: false },
+        { name: 'longitude', label: 'Longitude', type: 'text' as const, required: false },
+      ],
+      tableColumns: ['nama', 'latitude', 'longitude'],
+    },
+    'desa-kelurahan': {
+      label: 'Desa/Kelurahan',
+      icon: Home,
+      apiEndpoint: '/api/masterdata/desa-kelurahan',
+      searchFields: ['nama', 'tipe'],
+      fields: [
+        { name: 'kecamatanId', label: 'Kecamatan', type: 'select' as const, required: true, options: [] },
+        { name: 'nama', label: 'Nama Desa/Kelurahan', type: 'text' as const, required: true },
+        { name: 'tipe', label: 'Tipe', type: 'select' as const, required: true, options: ['desa', 'kelurahan'] },
+      ],
+      tableColumns: ['kecamatan.nama', 'nama', 'tipe'],
+    },
+    'sarana': {
+      label: 'Sarana',
+      icon: Hammer,
+      apiEndpoint: '/api/masterdata/sarana',
+      searchFields: ['nama', 'jenis'],
+      fields: [
+        { name: 'nama', label: 'Nama Sarana', type: 'text' as const, required: true },
+        { name: 'jenis', label: 'Jenis', type: 'text' as const, required: false },
+      ],
+      tableColumns: ['nama', 'jenis'],
+    },
+    'prasarana': {
+      label: 'Prasarana',
+      icon: Wrench,
+      apiEndpoint: '/api/masterdata/prasarana',
+      searchFields: ['nama', 'jenis'],
+      fields: [
+        { name: 'nama', label: 'Nama Prasarana', type: 'text' as const, required: true },
+        { name: 'jenis', label: 'Jenis', type: 'text' as const, required: false },
+      ],
+      tableColumns: ['nama', 'jenis'],
+    },
+    'cabang-olahraga': {
+      label: 'Cabang Olahraga',
+      icon: Trophy,
+      apiEndpoint: '/api/masterdata/cabang-olahraga',
+      searchFields: ['nama'],
+      fields: [
+        { name: 'nama', label: 'Nama Cabang Olahraga', type: 'text' as const, required: true },
+      ],
+      tableColumns: ['nama'],
+    },
+  };
 
-  const tipeData = [
-    { id: 1, nama: 'Lapangan Sepak Bola', kategori: 'Lapangan', deskripsi: 'Lapangan untuk sepak bola' },
-    { id: 2, nama: 'Gedung Olahraga', kategori: 'Gedung', deskripsi: 'Gedung serbaguna olahraga' },
-    { id: 3, nama: 'Kolam Renang', kategori: 'Kolam', deskripsi: 'Fasilitas renang' },
-    { id: 4, nama: 'Lapangan Basket', kategori: 'Lapangan', deskripsi: 'Lapangan khusus basket' }
-  ];
+  // Fetch data
+  const fetchData = async (page: number = 1, filterParams: Record<string, any> = {}) => {
+    try {
+      setLoading(true);
+      const config = tabConfig[activeTab];
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+        ...filterParams,
+      });
 
-  const organisasiData = [
-    { id: 1, nama: 'KONI', namaLengkap: 'Komite Olahraga Nasional Indonesia', tipe: 'Nasional' },
-    { id: 2, nama: 'NPCI', namaLengkap: 'National Paralympic Committee of Indonesia', tipe: 'Nasional' },
-    { id: 3, nama: 'BAPOPSI', namaLengkap: 'Badan Pembina Olahraga Pelajar Seluruh Indonesia', tipe: 'Pelajar' }
-  ];
+      const response = await fetch(`${config.apiEndpoint}?${queryParams}`);
+      
+      if (!response.ok) {
+        console.error('Failed to fetch data');
+        return;
+      }
 
-  const wilayahData = [
-    { id: 1, kecamatan: 'Kecamatan Utara', jumlahDesa: 12, luasWilayah: '25.5 km²' },
-    { id: 2, kecamatan: 'Kecamatan Selatan', jumlahDesa: 15, luasWilayah: '30.2 km²' },
-    { id: 3, kecamatan: 'Kecamatan Timur', jumlahDesa: 10, luasWilayah: '22.8 km²' },
-    { id: 4, kecamatan: 'Kecamatan Barat', jumlahDesa: 8, luasWilayah: '18.3 km²' }
-  ];
+      const result: ApiResponse<any> = await response.json();
+      setData(result.data);
+      setPagination(result.meta);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const statusData = [
-    { id: 1, nama: 'Sangat Baik', warna: 'Hijau', deskripsi: 'Kondisi fasilitas sangat baik' },
-    { id: 2, nama: 'Baik', warna: 'Biru', deskripsi: 'Kondisi fasilitas baik' },
-    { id: 3, nama: 'Rusak Ringan', warna: 'Kuning', deskripsi: 'Kondisi fasilitas rusak ringan' },
-    { id: 4, nama: 'Rusak Berat', warna: 'Merah', deskripsi: 'Kondisi fasilitas rusak berat' }
-  ];
+  // Initial load and when tab changes
+  useEffect(() => {
+    setFilters({});
+    setPagination(p => ({ ...p, page: 1 }));
+    fetchData(1, {});
 
+    // Fetch kecamatan options for desa-kelurahan
+    if (activeTab === 'desa-kelurahan') {
+      fetchKecamatanOptions();
+    }
+  }, [activeTab]);
+
+  // Fetch kecamatan for LOV
+  const fetchKecamatanOptions = async () => {
+    try {
+      const response = await fetch('/api/masterdata/kecamatan?limit=999');
+      if (response.ok) {
+        const result = await response.json();
+        setKecamatanOptions(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching kecamatan options:', error);
+    }
+  };
+
+  // Handle search/filter
+  const handleSearch = (searchValue: string) => {
+    const config = tabConfig[activeTab];
+    const filterParams: Record<string, any> = {};
+    
+    if (searchValue) {
+      config.searchFields.forEach(field => {
+        filterParams[field] = searchValue;
+      });
+    }
+
+    setFilters(filterParams);
+    fetchData(1, filterParams);
+  };
+
+  // Handle pagination
+  const handleNextPage = () => {
+    if (pagination.hasMore) {
+      const nextPage = pagination.page + 1;
+      setPagination(p => ({ ...p, page: nextPage }));
+      fetchData(nextPage, filters);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pagination.page > 1) {
+      const prevPage = pagination.page - 1;
+      setPagination(p => ({ ...p, page: prevPage }));
+      fetchData(prevPage, filters);
+    }
+  };
+
+  // Handle CRUD
   const handleCreate = () => {
     setSelectedData(null);
     setModalMode('create');
     setIsModalOpen(true);
   };
 
-  const handleEdit = (data: any) => {
-    setSelectedData(data);
+  const handleEdit = (item: any) => {
+    setSelectedData(item);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-      console.log('Delete data with id:', id);
+  const handleDelete = async (id: number) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
+
+    try {
+      const config = tabConfig[activeTab];
+      const response = await fetch(`${config.apiEndpoint}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchData(pagination.page, filters);
+      } else {
+        alert('Gagal menghapus data');
+      }
+    } catch (error) {
+      console.error('Error deleting data:', error);
+      alert('Terjadi kesalahan saat menghapus data');
     }
   };
 
-  const getCurrentData = () => {
-    switch (activeTab) {
-      case 'cabang': return cabangData;
-      case 'tipe': return tipeData;
-      case 'organisasi': return organisasiData;
-      case 'wilayah': return wilayahData;
-      case 'status': return statusData;
-      default: return [];
+  const handleSaveData = async (formData: any) => {
+    try {
+      const config = tabConfig[activeTab];
+      
+      // Convert string values to number for specific fields
+      const processedData = { ...formData };
+      if (processedData.kecamatanId) {
+        processedData.kecamatanId = parseInt(processedData.kecamatanId, 10);
+      }
+
+      const url = modalMode === 'create' 
+        ? config.apiEndpoint 
+        : `${config.apiEndpoint}/${selectedData.id}`;
+      
+      const method = modalMode === 'create' ? 'POST' : 'PUT';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(processedData),
+      });
+
+      if (response.ok) {
+        fetchData(pagination.page, filters);
+        setIsModalOpen(false);
+      } else {
+        alert('Gagal menyimpan data');
+      }
+    } catch (error) {
+      console.error('Error saving data:', error);
+      alert('Terjadi kesalahan saat menyimpan data');
     }
   };
 
-  const getCurrentFields = (): any[] => {
-    switch (activeTab) {
-      case 'cabang':
-        return [
-          { name: 'nama', label: 'Nama Cabang', type: 'text' as const, required: true },
-          { name: 'kode', label: 'Kode', type: 'text' as const, required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
-        ];
-      case 'tipe':
-        return [
-          { name: 'nama', label: 'Nama Tipe', type: 'text' as const, required: true },
-          { name: 'kategori', label: 'Kategori', type: 'select' as const, options: ['Lapangan', 'Gedung', 'Kolam', 'Lainnya'], required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
-        ];
-      case 'organisasi':
-        return [
-          { name: 'nama', label: 'Nama Singkat', type: 'text' as const, required: true },
-          { name: 'namaLengkap', label: 'Nama Lengkap', type: 'text' as const, required: true },
-          { name: 'tipe', label: 'Tipe', type: 'select' as const, options: ['Nasional', 'Pelajar', 'Masyarakat'], required: true }
-        ];
-      case 'wilayah':
-        return [
-          { name: 'kecamatan', label: 'Nama Kecamatan', type: 'text' as const, required: true },
-          { name: 'jumlahDesa', label: 'Jumlah Desa', type: 'number' as const, required: true },
-          { name: 'luasWilayah', label: 'Luas Wilayah', type: 'text' as const, required: true }
-        ];
-      case 'status':
-        return [
-          { name: 'nama', label: 'Nama Status', type: 'text' as const, required: true },
-          { name: 'warna', label: 'Warna', type: 'select' as const, options: ['Hijau', 'Biru', 'Kuning', 'Merah'], required: true },
-          { name: 'deskripsi', label: 'Deskripsi', type: 'textarea' as const, required: false }
-        ];
-      default:
-        return [];
+  const currentConfig = tabConfig[activeTab];
+  const getTruncatedValue = (value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      return Object.values(value).join(' - ');
     }
+    return value?.toString().substring(0, 50) || '-';
   };
 
-  const getModalTitle = () => {
-    const titles = {
-      cabang: 'Cabang Olahraga',
-      tipe: 'Tipe Sarana',
-      organisasi: 'Organisasi Pembina',
-      wilayah: 'Wilayah',
-      status: 'Status Kondisi'
-    };
-    const title = titles[activeTab];
-    return modalMode === 'create' ? `Tambah ${title}` : `Edit ${title}`;
-  };
-
-  const tabIcons = {
-    cabang: Trophy,
-    tipe: Building,
-    organisasi: Users,
-    wilayah: MapPin,
-    status: Settings
+  // Get fields with dynamic options
+  const getFieldsForCurrentTab = () => {
+    const fields = [...currentConfig.fields];
+    
+    // Update kecamatanId options if in desa-kelurahan tab
+    if (activeTab === 'desa-kelurahan') {
+      const kecamatanField = fields.find(f => f.name === 'kecamatanId');
+      if (kecamatanField) {
+        kecamatanField.options = kecamatanOptions.map(k => ({
+          label: k.nama,
+          value: k.id
+        }));
+      }
+    }
+    
+    return fields;
   };
 
   return (
     <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Master Data</h1>
-          <p className="text-gray-600">Kelola data master sistem</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Master Data</h1>
+        <p className="text-gray-600">Kelola data master sistem</p>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2 bg-gray-100 p-2 rounded-lg">
-            {Object.entries(tabIcons).map(([key, Icon]) => (
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2 bg-gray-100 p-2 rounded-lg">
+          {Object.entries(tabConfig).map(([key, config]) => {
+            const Icon = config.icon;
+            return (
               <button
                 key={key}
                 onClick={() => setActiveTab(key as any)}
@@ -152,131 +294,84 @@ const MasterData: FC = () => {
                 }`}
               >
                 <Icon className="w-4 h-4 mr-2" />
-                {key === 'cabang' ? 'Cabang Olahraga' :
-                 key === 'tipe' ? 'Tipe Sarana' :
-                 key === 'organisasi' ? 'Organisasi' :
-                 key === 'wilayah' ? 'Wilayah' :
-                 'Status Kondisi'}
+                {config.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Tambah Data
-          </button>
+      {/* Search and Action Bar */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder={`Cari ${currentConfig.label.toLowerCase()}...`}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+          />
         </div>
+        <button
+          onClick={handleCreate}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Tambah {currentConfig.label}
+        </button>
+      </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+      {/* Data Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader className="w-6 h-6 text-blue-600 animate-spin" />
+            </div>
+          ) : data.length === 0 ? (
+            <div className="py-12 text-center text-gray-500">
+              Tidak ada data untuk ditampilkan
+            </div>
+          ) : (
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                  {activeTab === 'cabang' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Cabang</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                    </>
-                  )}
-                  {activeTab === 'tipe' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Tipe</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                    </>
-                  )}
-                  {activeTab === 'organisasi' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Singkat</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lengkap</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
-                    </>
-                  )}
-                  {activeTab === 'wilayah' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kecamatan</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Desa</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Luas Wilayah</th>
-                    </>
-                  )}
-                  {activeTab === 'status' && (
-                    <>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warna</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                    </>
-                  )}
+                  {currentConfig.tableColumns.map((col) => (
+                    <th
+                      key={col}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {col.split('.')[0].charAt(0).toUpperCase() + col.split('.')[0].slice(1)}
+                    </th>
+                  ))}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {getCurrentData().map((item, index) => (
+                {data.map((item, index) => (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
-                    {activeTab === 'cabang' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.kode}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.deskripsi}</td>
-                      </>
-                    )}
-                    {activeTab === 'tipe' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.kategori}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.deskripsi}</td>
-                      </>
-                    )}
-                    {activeTab === 'organisasi' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.namaLengkap}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.tipe}</td>
-                      </>
-                    )}
-                    {activeTab === 'wilayah' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.kecamatan}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.jumlahDesa}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.luasWilayah}</td>
-                      </>
-                    )}
-                    {activeTab === 'status' && (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.nama}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            item.warna === 'Hijau' ? 'bg-green-100 text-green-800' :
-                            item.warna === 'Biru' ? 'bg-blue-100 text-blue-800' :
-                            item.warna === 'Kuning' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {item.warna}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.deskripsi}</td>
-                      </>
-                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(pagination.page - 1) * pagination.limit + index + 1}
+                    </td>
+                    {currentConfig.tableColumns.map((col) => (
+                      <td key={col} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {getTruncatedValue(col.includes('.') ? item[col.split('.')[0]]?.[col.split('.')[1]] : item[col])}
+                      </td>
+                    ))}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(item)}
                           className="text-green-600 hover:text-green-800"
+                          title="Edit"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
                           className="text-red-600 hover:text-red-800"
+                          title="Hapus"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -286,24 +381,47 @@ const MasterData: FC = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
 
-        {/* Modal */}
-        {isModalOpen && (
-          <DataModal
-            title={getModalTitle()}
-            fields={getCurrentFields()}
-            data={selectedData}
-            mode={modalMode}
-            onClose={() => setIsModalOpen(false)}
-            onSave={(data) => {
-              console.log('Save data:', data);
-              setIsModalOpen(false);
-            }}
-          />
+        {/* Pagination */}
+        {data.length > 0 && (
+          <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Halaman {pagination.page} dari {pagination.totalPages} | Total: {pagination.total} data
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handlePrevPage}
+                disabled={pagination.page === 1}
+                className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNextPage}
+                disabled={!pagination.hasMore}
+                className="flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
+
+      {/* Data Modal */}
+      {isModalOpen && (
+        <DataModal
+          title={`${modalMode === 'create' ? 'Tambah' : 'Edit'} ${currentConfig.label}`}
+          fields={getFieldsForCurrentTab()}
+          data={selectedData}
+          mode={modalMode}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveData}
+        />
+      )}
+    </div>
   );
 };
 

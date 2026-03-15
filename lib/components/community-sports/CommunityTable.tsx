@@ -1,6 +1,6 @@
 'use client';
 
-import { CommunitySportsPerson } from '@/lib/community-sports/types';
+import { CommunitySportsPerson } from '@/types/community-sports';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CommunityTableProps {

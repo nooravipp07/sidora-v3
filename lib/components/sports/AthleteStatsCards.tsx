@@ -1,5 +1,5 @@
 import { Users, UserCheck, Award, Medal } from 'lucide-react';
-import { AthleteStats } from '@/lib/sports/types';
+import { AthleteStats } from '@/types/sports';
 
 interface AthleteStatsCardsProps {
   stats: AthleteStats;

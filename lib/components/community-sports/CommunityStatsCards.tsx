@@ -1,5 +1,5 @@
 import { Users, UserCheck } from 'lucide-react';
-import { CommunityStats } from '@/lib/community-sports/types';
+import { CommunityStats } from '@/types/community-sports';
 
 interface CommunityStatsCardsProps {
   stats: CommunityStats;

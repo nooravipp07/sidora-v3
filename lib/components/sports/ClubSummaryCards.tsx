@@ -1,5 +1,5 @@
 import { Building2, CheckCircle, Users, Trophy } from 'lucide-react';
-import { ClubStats } from '@/lib/sports/types';
+import { ClubStats } from '@/types/sports';
 
 interface ClubSummaryCardsProps {
   stats: ClubStats;

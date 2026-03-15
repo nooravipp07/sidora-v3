@@ -3,10 +3,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download } from 'lucide-react';
-import PerformanceStatsCards from '@/lib/components/sports-performance/PerformanceStatsCards';
-import PerformanceFilters from '@/lib/components/sports-performance/PerformanceFilters';
-import PerformanceTable from '@/lib/components/sports-performance/PerformanceTable';
-import { FilterOptions } from '@/lib/sports-performance/types';
+import { PerformanceStatsCards, PerformanceFilters, PerformanceTable } from '@/components/ui/sports-performance';
+import { FilterOptions } from '@/types/sports-performance';
 import {
   getOrganizationStats,
   filterPerformanceData,

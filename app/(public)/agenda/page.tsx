@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import AgendaFilters from '../components/agenda/AgendaFilters';
-import AgendaTable from '../components/agenda/AgendaTable';
+import { AgendaFilters, AgendaTable } from '@/components/public/agenda';
 import { filterAgendaEvents } from '@/lib/agenda/data';
 
 const ITEMS_PER_PAGE = 10;

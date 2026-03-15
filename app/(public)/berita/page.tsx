@@ -2,9 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import HeadlineNews from '../components/news/HeadlineNews';
-import NewsCard from '../components/news/NewsCard';
-import Pagination from '../components/news/Pagination';
+import { HeadlineNews, NewsCard, Pagination } from '@/components/public/news';
 import { getNewsPage, getFeaturedNews } from '@/lib/news/data';
 
 const ITEMS_PER_PAGE = 12;

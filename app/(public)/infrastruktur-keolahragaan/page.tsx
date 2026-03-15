@@ -3,14 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronRight, Download } from 'lucide-react';
 import Link from 'next/link';
-import SummaryCards from '../components/infrastructure/SummaryCards';
-import InfrastructureTable from '../components/infrastructure/InfrastructureTable';
-import InfrastructureFilters from '../components/infrastructure/InfrastructureFilters';
-import InfrastructureCharts from '../components/infrastructure/InfrastructureCharts';
-import AthleteStatsCards from '@/lib/components/sports/AthleteStatsCards';
-import AchievementStatistics from '@/lib/components/sports/AchievementStatistics';
-import ClubSummaryCards from '@/lib/components/sports/ClubSummaryCards';
-import ClubTable from '@/lib/components/sports/ClubTable';
+import { SummaryCards, InfrastructureTable, InfrastructureFilters, InfrastructureCharts } from '@/components/public/infrastructure';
+import { AthleteStatsCards, AchievementStatistics, ClubSummaryCards, ClubTable } from '@/components/ui/sports';
 import {
   getInfrastructureStats,
   getDistrictInfrastructure,

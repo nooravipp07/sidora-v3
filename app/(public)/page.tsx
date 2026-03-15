@@ -1,11 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import HeroSlider from './components/sections/HeroSlider';
-import StatisticsSection from './components/sections/StatisticsSection';
-import AgendaSection from './components/sections/AgendaSection';
-import NewsSection from './components/sections/NewsSection';
-import GallerySection from './components/sections/GallerySection';
+import { HeroSlider, StatisticsSection, AgendaSection, NewsSection, GallerySection } from '@/components/public/sections';
 
 export default function Home() {
   const [activeNews, setActiveNews] = useState(null);

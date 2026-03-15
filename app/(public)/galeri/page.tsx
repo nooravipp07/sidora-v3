@@ -2,8 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import GalleryCard from '../components/gallery/GalleryCard';
-import GalleryPagination from '../components/gallery/GalleryPagination';
+import { GalleryCard, GalleryPagination } from '@/components/public/gallery';
 import { getGalleryPage } from '@/lib/gallery/data';
 
 const ITEMS_PER_PAGE = 12;

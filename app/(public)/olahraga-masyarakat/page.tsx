@@ -3,10 +3,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download } from 'lucide-react';
-import CommunityStatsCards from '@/lib/components/community-sports/CommunityStatsCards';
-import CommunityFilters from '@/lib/components/community-sports/CommunityFilters';
-import CommunityTable from '@/lib/components/community-sports/CommunityTable';
-import { FilterOptions } from '@/lib/community-sports/types';
+import { CommunityStatsCards, CommunityFilters, CommunityTable } from '@/components/ui/community-sports';
+import { FilterOptions } from '@/types/community-sports';
 import {
   getCommunityStats,
   filterCommunitySportsData

@@ -95,7 +95,7 @@ const UserManagement: React.FC = () => {
   return (
     <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Manajemen User & Role</h1>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600">Kelola user dan hak akses sistem</p>
         </div>
 

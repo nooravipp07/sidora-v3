@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import KecamatanMap from '@/app/(admin)/components/dashboard-lembaga/KecamatanMap';
-import LembagaSummaryCards from '@/app/(admin)/components/dashboard-lembaga/LembagaSummaryCards';
-import LembagaCategoryStats from '@/app/(admin)/components/dashboard-lembaga/LembagaCategoryStats';
-import MedalBarChart from '@/app/(admin)/components/dashboard-lembaga/MedalBarChart';
-import AthletesTable from '@/app/(admin)/components/dashboard-lembaga/AthletesTable';
+import KecamatanMap from '@/components/admin/dashboard-lembaga/KecamatanMap';
+import LembagaSummaryCards from '@/components/admin/dashboard-lembaga/LembagaSummaryCards';
+import LembagaCategoryStats from '@/components/admin/dashboard-lembaga/LembagaCategoryStats';
+import MedalBarChart from '@/components/admin/dashboard-lembaga/MedalBarChart';
+import AthletesTable from '@/components/admin/dashboard-lembaga/AthletesTable';
 import { getInstitutionSummary } from '@/lib/institution/data';
 
 export default function DashboardLembagaPage() {

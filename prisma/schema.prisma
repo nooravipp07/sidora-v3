@@ -107,32 +107,70 @@ model LoginHistory {
   @@map("m_login_history")
 }
 
-model kecamatan {
-  
-  @@map(m_kecamatan)
+// Kecamatan (District) Model
+model Kecamatan {
+  id              Int     @id @default(autoincrement())
+  nama            String
+  latitude        String?
+  longitude       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  // Relations
+  desaKelurahanList DesaKelurahan[]
+
+  @@map("m_kecamatan")
 }
 
-model desaKelurahan {
+// Desa/Kelurahan Model
+model DesaKelurahan {
+  id              Int     @id @default(autoincrement())
+  kecamatanId     Int
+  nama            String  @db.VarChar(150)
+  tipe            String  @db.VarChar(20) // 'desa' or 'kelurahan'
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
 
-  @@map(m_desa_kelurahan)
+  // Relations
+  kecamatan       Kecamatan @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
+
+  @@index([kecamatanId])
+  @@map("m_desa_kelurahan")
 }
 
-model indukOlahraga {
+// Cabang Olahraga (Sport Branch) Model
+model CabangOlahraga {
+  id              Int     @id @default(autoincrement())
+  nama            String  @db.VarChar(100)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
 
-@@map(m_induk_olahraga)
+  @@map("m_cabang_olahraga")
 }
 
-model sarana {
+// Sarana (Facility) Model
+model Sarana {
+  id              Int     @id @default(autoincrement())
+  nama            String  @db.VarChar(150)
+  jenis           String? @db.VarChar(100)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
 
-@@map(m_sarna)
+  @@map("m_sarana")
 }
 
-model prasarana {
+// Prasarana (Infrastructure) Model
+model Prasarana {
+  id              Int     @id @default(autoincrement())
+  nama            String  @db.VarChar(150)
+  jenis           String? @db.VarChar(100)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
 
-@@map(m_prasarana)
-}
-
-model cabangOlahraga {
-
-@@map(m_cabang_olahraga)
+  @@map("m_prasarana")
 }

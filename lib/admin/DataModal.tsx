@@ -8,7 +8,7 @@ interface FormField {
   label: string;
   type: 'text' | 'number' | 'textarea' | 'select';
   required?: boolean;
-  options?: string[];
+  options?: string[] | Array<{ label: string; value: string | number }>;
 }
 
 interface DataModalProps {
@@ -98,11 +98,17 @@ const DataModal: FC<DataModalProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Pilih {field.label}</option>
-                  {field.options?.map(option => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
+                  {field.options?.map(option => {
+                    const isObject = typeof option === 'object';
+                    return (
+                      <option 
+                        key={isObject ? option.value : option} 
+                        value={isObject ? option.value : option}
+                      >
+                        {isObject ? option.label : option}
+                      </option>
+                    );
+                  })}
                 </select>
               ) : (
                 <input

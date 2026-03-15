@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Club } from '@/lib/sports/types';
+import { Club } from '@/types/sports';
 import { filterClubs, getSportCategories, getDistricts } from '@/lib/sports/data';
 import { Filter, X, CheckCircle, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 

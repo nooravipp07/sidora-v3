@@ -1,5 +1,5 @@
 import { Users, UserCheck, BadgeCheck } from 'lucide-react';
-import { OrganizationStats } from '@/lib/sports-performance/types';
+import { OrganizationStats } from '@/types/sports-performance';
 
 interface PerformanceStatsCardsProps {
   koniStats: OrganizationStats;

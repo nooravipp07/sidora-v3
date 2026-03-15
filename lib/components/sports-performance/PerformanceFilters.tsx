@@ -1,6 +1,6 @@
 'use client';
 
-import { FilterOptions } from '@/lib/sports-performance/types';
+import { FilterOptions } from '@/types/sports-performance';
 import { getDistricts, getSports } from '@/lib/sports-performance/data';
 import { Filter, X } from 'lucide-react';
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth/jwt';
+import type { AuthToken } from '@/types/auth';
 
 // Define protected paths
 const PROTECTED_PATHS = ['/admin', '/dashboard'];

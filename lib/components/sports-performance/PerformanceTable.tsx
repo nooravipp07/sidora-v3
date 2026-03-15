@@ -1,6 +1,6 @@
 'use client';
 
-import { PerformancePerson } from '@/lib/sports-performance/types';
+import { PerformancePerson } from '@/types/sports-performance';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PerformanceTableProps {

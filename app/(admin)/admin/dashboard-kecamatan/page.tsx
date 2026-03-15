@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import SummaryCard from '../../components/dashboard/SummaryCard';
-import DashboardMap from '../../components/dashboard/DashboardMap';
-import DistrictTable from '../../components/dashboard/DistrictTable';
+import SummaryCard from '@/components/admin/dashboard/SummaryCard';
+import DashboardMap from '@/components/admin/dashboard/DashboardMap';
+import DistrictTable from '@/components/admin/dashboard/DistrictTable';
 import { getAvailableKecamatan, getAvailableYears, getDistrictSummary, getDistrictByKecamatan } from '@/lib/district/data';
 
 export default function DashboardKecamatanPage() {

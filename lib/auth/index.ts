@@ -1,5 +1,6 @@
-export * from './types';
+// Re-export from new locations for backward compatibility
+export * from '@/types/auth';
 export * from './jwt';
 export * from './bcrypt';
-export * from './prisma';
+export { prisma, default as defaultPrisma } from '../prisma';
 export * from './useAuth';
