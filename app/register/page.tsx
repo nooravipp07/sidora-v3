@@ -123,7 +123,7 @@ const Page: FC = () => {
             <div className="flex items-center space-x-3">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Pendaftaran Kecamatan
+                  Pendaftaran
                 </h1>
                 <p className="text-gray-600">
                   Daftar untuk mengakses sistem SIDORA

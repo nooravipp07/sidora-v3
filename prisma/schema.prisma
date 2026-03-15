@@ -106,3 +106,33 @@ model LoginHistory {
 
   @@map("m_login_history")
 }
+
+model kecamatan {
+  
+  @@map(m_kecamatan)
+}
+
+model desaKelurahan {
+
+  @@map(m_desa_kelurahan)
+}
+
+model indukOlahraga {
+
+@@map(m_induk_olahraga)
+}
+
+model sarana {
+
+@@map(m_sarna)
+}
+
+model prasarana {
+
+@@map(m_prasarana)
+}
+
+model cabangOlahraga {
+
+@@map(m_cabang_olahraga)
+}

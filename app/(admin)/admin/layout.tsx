@@ -54,7 +54,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     { id: 'olahraga-prestasi', label: 'Olahraga Prestasi', icon: Users, href: '/admin/olahraga-prestasi' },
     { id: 'olahraga-masyarakat', label: 'Olahraga Masyarakat', icon: Users, href: '/admin/olahraga-masyarakat' },
     { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
-    { id: 'verifikasi', label: 'Verifikasi Data & Akun', icon: CheckCircle, href: '/admin/verifikasi' },
+    { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
     { id: 'user-management', label: 'User Management', icon: Users, href: '/admin/user-management' },
     { id: 'master-data', label: 'Master Data', icon: Database, href: '/admin/master-data' }
   ];
