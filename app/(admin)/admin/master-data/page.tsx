@@ -56,8 +56,10 @@ const MasterData: FC = () => {
         { name: 'kecamatanId', label: 'Kecamatan', type: 'select' as const, required: true, options: [] },
         { name: 'nama', label: 'Nama Desa/Kelurahan', type: 'text' as const, required: true },
         { name: 'tipe', label: 'Tipe', type: 'select' as const, required: true, options: ['desa', 'kelurahan'] },
+        { name: 'latitude', label: 'Latitude', type: 'text' as const, required: false },
+        { name: 'longitude', label: 'Longitude', type: 'text' as const, required: false },
       ],
-      tableColumns: ['kecamatan.nama', 'nama', 'tipe'],
+      tableColumns: ['kecamatan.nama', 'nama', 'tipe', 'latitude', 'longitude'],
     },
     'sarana': {
       label: 'Sarana',
@@ -259,7 +261,7 @@ const MasterData: FC = () => {
     
     // Update kecamatanId options if in desa-kelurahan tab
     if (activeTab === 'desa-kelurahan') {
-      const kecamatanField = fields.find(f => f.name === 'kecamatanId');
+      const kecamatanField = fields.find(f => f.name === 'kecamatanId') as any;
       if (kecamatanField) {
         kecamatanField.options = kecamatanOptions.map(k => ({
           label: k.nama,
@@ -272,7 +274,7 @@ const MasterData: FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Master Data</h1>
         <p className="text-gray-600">Kelola data master sistem</p>
@@ -303,7 +305,7 @@ const MasterData: FC = () => {
 
       {/* Search and Action Bar */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
+        {/* <div className="flex-1 relative">
           <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -311,13 +313,13 @@ const MasterData: FC = () => {
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
-        </div>
+        </div> */}
         <button
           onClick={handleCreate}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center whitespace-nowrap"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Tambah {currentConfig.label}
+          Tambah
         </button>
       </div>
 

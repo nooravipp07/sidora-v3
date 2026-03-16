@@ -18,6 +18,7 @@ interface DataModalProps {
   mode: 'create' | 'edit' | 'view';
   onClose: () => void;
   onSave?: (data: any) => void;
+  onFieldChange?: (fieldName: string, value: any) => void;
 }
 
 const DataModal: FC<DataModalProps> = ({
@@ -26,7 +27,8 @@ const DataModal: FC<DataModalProps> = ({
   data,
   mode,
   onClose,
-  onSave
+  onSave,
+  onFieldChange
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
@@ -47,6 +49,9 @@ const DataModal: FC<DataModalProps> = ({
       ...prev,
       [name]: value
     }));
+    if (onFieldChange) {
+      onFieldChange(name, value);
+    }
   };
 
   const handleSubmit = (): void => {

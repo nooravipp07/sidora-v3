@@ -93,13 +93,13 @@ model RefreshToken {
 
 // Login History Model for audit trail
 model LoginHistory {
-  id           Int     @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   userId       Int
   ipAddress    String?
   userAgent    String?
-  loginAt      DateTime @default(now())
+  loginAt      DateTime     @default(now())
   logoutAt     DateTime?
-  status       String  @default("success") // success, failed, etc
+  status       String       @default("success") // success, failed, etc
 
   // Relations
   user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -125,12 +125,14 @@ model Kecamatan {
 
 // Desa/Kelurahan Model
 model DesaKelurahan {
-  id              Int     @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   kecamatanId     Int
-  nama            String  @db.VarChar(150)
-  tipe            String  @db.VarChar(20) // 'desa' or 'kelurahan'
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  nama            String      @db.VarChar(150)
+  tipe            String      @db.VarChar(20) // 'desa' or 'kelurahan'
+  latitude        String?     @db.VarChar(50)
+  longitude       String?     @db.VarChar(50)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?
 
   // Relations
@@ -142,10 +144,10 @@ model DesaKelurahan {
 
 // Cabang Olahraga (Sport Branch) Model
 model CabangOlahraga {
-  id              Int     @id @default(autoincrement())
-  nama            String  @db.VarChar(100)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id              Int         @id @default(autoincrement())
+  nama            String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?
 
   @@map("m_cabang_olahraga")

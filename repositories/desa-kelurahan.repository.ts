@@ -46,6 +46,20 @@ class DesaKelurahanRepository extends AbstractRepository<DesaKelurahan> {
             include: { kecamatan: true }
         });
     }
+
+    async update(id: number, data: any): Promise<any> {
+        return prisma.desaKelurahan.update({
+            where: { id },
+            data: {
+                nama: data.nama,
+                tipe: data.tipe,
+                kecamatanId: data.kecamatanId,
+                latitude: data.latitude,
+                longitude: data.longitude
+            },
+            include: { kecamatan: true }
+        });
+    }
 }
 
 export const DesaKelurahanRepo = new DesaKelurahanRepository();
