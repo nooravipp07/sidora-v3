@@ -25,13 +25,16 @@ export const AgendaService = {
     },
 
     async create(data: any) {
-        const { title, description, location, startDate, endDate, isAllDay } = data;
+        const { title, description, location, category, level, status, startDate, endDate, isAllDay } = data;
         
         const agenda = await prisma.agenda.create({
             data: {
                 title: title.trim(),
                 description: description?.trim() || null,
                 location: location?.trim() || null,
+                category: category?.trim() || null,
+                level: level?.trim() || null,
+                status: status || 'Active',
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : null,
                 isAllDay: isAllDay || false
@@ -42,7 +45,7 @@ export const AgendaService = {
     },
 
     async update(id: number, data: any) {
-        const { title, description, location, startDate, endDate, isAllDay } = data;
+        const { title, description, location, category, level, status, startDate, endDate, isAllDay } = data;
         
         const agenda = await prisma.agenda.update({
             where: { id },
@@ -50,6 +53,9 @@ export const AgendaService = {
                 title: title?.trim(),
                 description: description?.trim() || null,
                 location: location?.trim() || null,
+                category: category?.trim() || null,
+                level: level?.trim() || null,
+                status: status || undefined,
                 startDate: startDate ? new Date(startDate) : undefined,
                 endDate: endDate ? new Date(endDate) : null,
                 isAllDay: isAllDay !== undefined ? isAllDay : undefined

@@ -48,12 +48,16 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Previous Button */}
         <Link
           href={currentPage > 1 ? `${baseUrl}?page=${currentPage - 1}` : '#'}
+          prefetch={false}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
             currentPage > 1
               ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
           }`}
           aria-disabled={currentPage === 1}
+          onClick={(e) => {
+            if (currentPage === 1) e.preventDefault();
+          }}
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Sebelumnya</span>
@@ -67,12 +71,16 @@ const Pagination: React.FC<PaginationProps> = ({
               <Link
                 key={idx}
                 href={page !== currentPage ? `${baseUrl}?page=${page}` : '#'}
+                prefetch={false}
                 className={`inline-flex items-center justify-center w-10 h-10 rounded-lg font-semibold transition-all ${
                   page === currentPage
-                    ? 'bg-green-600 text-white shadow-md'
+                    ? 'bg-green-600 text-white shadow-md cursor-default'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 aria-current={page === currentPage ? 'page' : undefined}
+                onClick={(e) => {
+                  if (page === currentPage) e.preventDefault();
+                }}
               >
                 {page}
               </Link>
@@ -87,12 +95,16 @@ const Pagination: React.FC<PaginationProps> = ({
         {/* Next Button */}
         <Link
           href={currentPage < totalPages ? `${baseUrl}?page=${currentPage + 1}` : '#'}
+          prefetch={false}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
             currentPage < totalPages
               ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
           }`}
           aria-disabled={currentPage === totalPages}
+          onClick={(e) => {
+            if (currentPage === totalPages) e.preventDefault();
+          }}
         >
           <span className="hidden sm:inline">Berikutnya</span>
           <span className="sm:hidden">Next</span>

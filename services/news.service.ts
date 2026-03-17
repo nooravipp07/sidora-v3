@@ -121,5 +121,23 @@ export const NewsService = {
                 publishedAt: null
             }
         });
+    },
+
+    async getBySlug(slug: string) {
+        return prisma.news.findUnique({
+            where: { slug },
+            include: { category: true, tags: { include: { tag: true } } }
+        });
+    },
+
+    async incrementViews(id: number) {
+        return prisma.news.update({
+            where: { id },
+            data: {
+                views: {
+                    increment: 1
+                }
+            }
+        });
     }
 };

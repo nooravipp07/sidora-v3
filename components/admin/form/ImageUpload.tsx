@@ -124,11 +124,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
           Atau paste URL gambar
         </label>
         <input
-          type="url"
+          type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          placeholder="https://example.com/image.jpg"
+          placeholder="https://example.com/image.jpg atau /uploads/berita/image.jpg"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm disabled:bg-gray-100"
         />
       </div>

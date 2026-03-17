@@ -3,6 +3,9 @@ export interface Agenda {
   title: string;
   description?: string;
   location?: string;
+  category?: string;
+  level?: string;
+  status: string;
   startDate: Date | string;
   endDate?: Date | string;
   isAllDay: boolean;

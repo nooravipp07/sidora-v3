@@ -4,24 +4,47 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Calendar } from 'lucide-react';
-import { News } from '@/types/news';
+
+interface NewsItem {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  views?: number;
+  date?: string;
+  publishedAt: string;
+}
 
 interface NewsCardProps {
-  news: News;
+  news: NewsItem;
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
+  const hasImage = news.thumbnail && news.thumbnail.trim();
+  
   return (
-    <Link href={`/berita/${news.slug}`}>
+    <Link href={`/berita/${news.slug}`} prefetch={false}>
       <div className="h-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col">
         {/* Image Container */}
         <div className="relative h-48 bg-gray-200 overflow-hidden">
-          <Image
-            src={news.image}
-            alt={news.title}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
-          />
+          {hasImage ? (
+            <Image
+              src={news.thumbnail}
+              alt={news.title}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-gray-500 text-sm font-medium">No Image</p>
+              </div>
+            </div>
+          )}
           {/* Category Badge */}
           <div className="absolute top-3 left-3 z-10">
             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${

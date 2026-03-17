@@ -110,14 +110,13 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
             type="text"
             value={formData.title}
             onChange={(e) => {
-              setFormData({ ...formData, title: e.target.value });
-              // Auto-generate slug
-              if (!formData.slug) {
-                setFormData(prev => ({
-                  ...prev,
-                  slug: e.target.value.toLowerCase().replace(/\s+/g, '-'),
-                }));
-              }
+              const newTitle = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                title: newTitle,
+                // Auto-generate slug only if it's empty
+                slug: prev.slug || newTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+              }));
             }}
             disabled={loading}
             placeholder="Judul berita yang menarik"

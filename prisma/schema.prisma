@@ -187,6 +187,7 @@ model News {
   isPublished  Boolean   @default(false)
   publishedAt  DateTime?
   categoryId   Int?
+  views        Int       @default(0)
   category     Category? @relation(fields: [categoryId], references: [id])
   tags         NewsTag[]
   createdAt    DateTime  @default(now())
@@ -258,6 +259,9 @@ model Agenda {
   title       String
   description String?
   location    String?
+  category    String?   // e.g., "Kompetisi", "Pelatihan", "Event Komunitas", "Acara"
+  level       String?   // e.g., "Lokal", "Daerah", "Regional", "Nasional"
+  status      String    @default("Active") // "Active" or "Inactive"
 
   startDate   DateTime 
   endDate     DateTime?

@@ -4,27 +4,53 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { News } from '@/types/news';
+
+interface NewsItem {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  views?: number;
+  date?: string;
+  publishedAt: string;
+  readTime?: number;
+}
 
 interface HeadlineNewsProps {
-  news: News;
+  news: NewsItem;
 }
 
 const HeadlineNews: React.FC<HeadlineNewsProps> = ({ news }) => {
+  const hasImage = news.thumbnail && news.thumbnail.trim();
+  
   return (
-    <Link href={`/berita/${news.slug}`}>
+    <Link href={`/berita/${news.slug}`} prefetch={false}>
       <div className="mb-12 cursor-pointer group overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
         {/* Featured Image */}
         <div className="relative h-[400px] sm:h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
-          <Image
-            src={news.image}
-            alt={news.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            priority
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          {hasImage ? (
+            <>
+              <Image
+                src={news.thumbnail}
+                alt={news.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, 100vw"
+                priority
+              />
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-gray-300 text-lg font-medium">No Image Available</p>
+              </div>
+            </div>
+          )}
 
           {/* Content Overlay */}
           <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 md:p-12">

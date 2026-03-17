@@ -18,6 +18,9 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
     title: initialData?.title || '',
     description: initialData?.description || '',
     location: initialData?.location || '',
+    level: initialData?.level || '',
+    category: initialData?.category || '',
+    status: initialData?.status || '',
     startDate: initialData?.startDate ? formatDateInput(initialData.startDate) : '',
     endDate: initialData?.endDate ? formatDateInput(initialData.endDate) : '',
     isAllDay: initialData?.isAllDay || false,
@@ -173,6 +176,48 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
           <label htmlFor="isAllDay" className="text-sm font-medium text-gray-700 cursor-pointer">
             Sepanjang hari (All Day)
           </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Level
+          </label>
+          <input
+            type="text"
+            value={formData.level}
+            onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+            disabled={loading}
+            placeholder="Tingkat agenda"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Kategori
+          </label>
+          <input
+            type="text"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            disabled={loading}
+            placeholder="Kategori agenda"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Status
+          </label>
+          <input
+            type="text"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            disabled={loading}
+            placeholder="Status agenda"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
         </div>
 
         {/* Start Date */}

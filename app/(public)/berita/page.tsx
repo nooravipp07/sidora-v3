@@ -1,29 +1,102 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { HeadlineNews, NewsCard, Pagination } from '@/components/public/news';
-import { getNewsPage, getFeaturedNews } from '@/lib/news/data';
 
 const ITEMS_PER_PAGE = 12;
+
+interface NewsItem {
+  id: number;
+  title: string;
+  slug: string;
+  thumbnail: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  views: number;
+  date: string;
+  publishedAt: string;
+}
+
+interface FeaturedNews {
+  popular: NewsItem[];
+  trending: NewsItem[];
+  latest: NewsItem[];
+}
 
 function BeritaPageContent() {
   useTrackPageView('/berita');
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1', 10);
 
-  // Validate page number
-  const newsPageData = getNewsPage(page, ITEMS_PER_PAGE);
-  const validPage = Math.max(1, Math.min(page, newsPageData.totalPages));
-  
-  // Get featured news (first item)
-  const featuredNews = getFeaturedNews();
-  
-  // Get paginated news (excluding featured from the grid if it's on page 1)
-  const gridNews = validPage === 1 && newsPageData.items.length > 0
-    ? newsPageData.items.slice(1) // Skip featured news on first page
-    : newsPageData.items;
+  const [newsData, setNewsData] = useState<{
+    items: NewsItem[];
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+  } | null>(null);
+
+  const [featuredNews, setFeaturedNews] = useState<NewsItem | null>(null);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
+  const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch news list
+  useEffect(() => {
+    const fetchNewsList = async () => {
+      try {
+        setIsLoadingNews(true);
+        const response = await fetch(`/api/berita?page=${page}&limit=${ITEMS_PER_PAGE}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch news');
+        }
+
+        const data = await response.json();
+        setNewsData(data);
+      } catch (err) {
+        console.error('Error fetching news:', err);
+        setError('Gagal memuat berita. Silahkan coba lagi nanti.');
+      } finally {
+        setIsLoadingNews(false);
+      }
+    };
+
+    fetchNewsList();
+  }, [page]);
+
+  // Fetch featured (trending) news
+  useEffect(() => {
+    const fetchFeaturedNews = async () => {
+      try {
+        setIsLoadingFeatured(true);
+        const response = await fetch('/api/news/featured');
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Get first trending news as banner
+          if (data.trending && data.trending.length > 0) {
+            setFeaturedNews(data.trending[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching featured news:', err);
+      } finally {
+        setIsLoadingFeatured(false);
+      }
+    };
+
+    if (page === 1) {
+      fetchFeaturedNews();
+    }
+  }, [page]);
+
+  // Filter grid news to exclude featured on page 1
+  const gridNews = page === 1 && newsData?.items
+    ? newsData.items.filter(item => item.id !== featuredNews?.id)
+    : newsData?.items || [];
 
   return (
     <main className="min-h-screen bg-white">
@@ -39,12 +112,28 @@ function BeritaPageContent() {
         </div>
 
         {/* Featured Headline - Only on page 1 */}
-        {validPage === 1 && (
-          <HeadlineNews news={featuredNews} />
+        {page === 1 && (
+          <>
+            {isLoadingFeatured ? (
+              <div className="mb-12 h-96 bg-gray-200 rounded-xl animate-pulse"></div>
+            ) : featuredNews ? (
+              <HeadlineNews news={featuredNews} />
+            ) : null}
+          </>
         )}
 
         {/* News Grid */}
-        {gridNews.length > 0 ? (
+        {isLoadingNews ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="bg-gray-200 rounded-xl h-64 animate-pulse"></div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">{error}</p>
+          </div>
+        ) : gridNews.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {gridNews.map((news) => (
@@ -53,11 +142,13 @@ function BeritaPageContent() {
             </div>
 
             {/* Pagination */}
-            <Pagination 
-              currentPage={validPage} 
-              totalPages={newsPageData.totalPages}
-              baseUrl="/berita"
-            />
+            {newsData && (
+              <Pagination 
+                currentPage={newsData.currentPage} 
+                totalPages={newsData.totalPages}
+                baseUrl="/berita"
+              />
+            )}
           </>
         ) : (
           <div className="text-center py-12">

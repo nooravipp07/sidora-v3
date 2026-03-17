@@ -3,3 +3,5 @@
 export { default as HeadlineNews } from './HeadlineNews';
 export { default as NewsCard } from './NewsCard';
 export { default as Pagination } from './Pagination';
+export { ArticleTracker } from './ArticleTracker';
+export { DetailArticleTracker } from './DetailArticleTracker';
