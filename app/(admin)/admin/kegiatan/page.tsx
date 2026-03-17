@@ -2,10 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Eye, FileText, Image, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, FileText, Image, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { News } from '@/types/news';
 import { Gallery } from '@/types/gallery';
 import { Agenda } from '@/types/agenda';
+
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
+}
 
 const Kegiatan: React.FC = () => {
   const router = useRouter();
@@ -18,6 +26,30 @@ const Kegiatan: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [beritaPagination, setBeritaPagination] = useState<PaginationMeta>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasMore: false,
+  });
+
+  const [galleryPagination, setGalleryPagination] = useState<PaginationMeta>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasMore: false,
+  });
+
+  const [agendaPagination, setAgendaPagination] = useState<PaginationMeta>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasMore: false,
+  });
+
   // Fetch data on component mount and tab change
   useEffect(() => {
     if (activeTab === 'berita') {
@@ -29,14 +61,15 @@ const Kegiatan: React.FC = () => {
     }
   }, [activeTab]);
 
-  const fetchBerita = async () => {
+  const fetchBerita = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/berita?page=1&limit=100');
+      const response = await fetch(`/api/berita?page=${page}&limit=10`);
       if (!response.ok) throw new Error('Failed to fetch berita');
       const data = await response.json();
       setBeritaData(data.data || []);
+      setBeritaPagination(data.meta);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch berita');
       console.error('Error fetching berita:', err);
@@ -45,14 +78,15 @@ const Kegiatan: React.FC = () => {
     }
   };
 
-  const fetchGallery = async () => {
+  const fetchGallery = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/gallery?page=1&limit=100');
+      const response = await fetch(`/api/gallery?page=${page}&limit=10`);
       if (!response.ok) throw new Error('Failed to fetch gallery');
       const data = await response.json();
       setGalleryData(data.data || []);
+      setGalleryPagination(data.meta);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch gallery');
       console.error('Error fetching gallery:', err);
@@ -61,14 +95,15 @@ const Kegiatan: React.FC = () => {
     }
   };
 
-  const fetchAgenda = async () => {
+  const fetchAgenda = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/agenda?page=1&limit=100');
+      const response = await fetch(`/api/agenda?page=${page}&limit=10`);
       if (!response.ok) throw new Error('Failed to fetch agenda');
       const data = await response.json();
       setAgendaData(data.data || []);
+      setAgendaPagination(data.meta);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch agenda');
       console.error('Error fetching agenda:', err);
@@ -125,6 +160,54 @@ const Kegiatan: React.FC = () => {
       } finally {
         setDeleting(false);
       }
+    }
+  };
+
+  const handleBeritaNextPage = () => {
+    if (beritaPagination.hasMore) {
+      const nextPage = beritaPagination.page + 1;
+      setBeritaPagination(prev => ({ ...prev, page: nextPage }));
+      fetchBerita(nextPage);
+    }
+  };
+
+  const handleBeritaPrevPage = () => {
+    if (beritaPagination.page > 1) {
+      const prevPage = beritaPagination.page - 1;
+      setBeritaPagination(prev => ({ ...prev, page: prevPage }));
+      fetchBerita(prevPage);
+    }
+  };
+
+  const handleGalleryNextPage = () => {
+    if (galleryPagination.hasMore) {
+      const nextPage = galleryPagination.page + 1;
+      setGalleryPagination(prev => ({ ...prev, page: nextPage }));
+      fetchGallery(nextPage);
+    }
+  };
+
+  const handleGalleryPrevPage = () => {
+    if (galleryPagination.page > 1) {
+      const prevPage = galleryPagination.page - 1;
+      setGalleryPagination(prev => ({ ...prev, page: prevPage }));
+      fetchGallery(prevPage);
+    }
+  };
+
+  const handleAgendaNextPage = () => {
+    if (agendaPagination.hasMore) {
+      const nextPage = agendaPagination.page + 1;
+      setAgendaPagination(prev => ({ ...prev, page: nextPage }));
+      fetchAgenda(nextPage);
+    }
+  };
+
+  const handleAgendaPrevPage = () => {
+    if (agendaPagination.page > 1) {
+      const prevPage = agendaPagination.page - 1;
+      setAgendaPagination(prev => ({ ...prev, page: prevPage }));
+      fetchAgenda(prevPage);
     }
   };
 
@@ -282,6 +365,34 @@ const Kegiatan: React.FC = () => {
                 </table>
               )}
             </div>
+
+            {/* Berita Pagination */}
+            {beritaData.length > 0 && (
+              <div className="flex flex-col items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 gap-4 sm:flex-row">
+                <div className="text-sm text-gray-600">
+                  Menampilkan {(beritaPagination.page - 1) * beritaPagination.limit + 1} - {Math.min(beritaPagination.page * beritaPagination.limit, beritaPagination.total)} dari {beritaPagination.total} data
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleBeritaPrevPage}
+                    disabled={beritaPagination.page === 1 || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Halaman {beritaPagination.page} dari {beritaPagination.totalPages}
+                  </span>
+                  <button
+                    onClick={handleBeritaNextPage}
+                    disabled={!beritaPagination.hasMore || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -345,6 +456,34 @@ const Kegiatan: React.FC = () => {
                 </table>
               )}
             </div>
+
+            {/* Gallery Pagination */}
+            {galleryData.length > 0 && (
+              <div className="flex flex-col items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 gap-4 sm:flex-row">
+                <div className="text-sm text-gray-600">
+                  Menampilkan {(galleryPagination.page - 1) * galleryPagination.limit + 1} - {Math.min(galleryPagination.page * galleryPagination.limit, galleryPagination.total)} dari {galleryPagination.total} data
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleGalleryPrevPage}
+                    disabled={galleryPagination.page === 1 || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Halaman {galleryPagination.page} dari {galleryPagination.totalPages}
+                  </span>
+                  <button
+                    onClick={handleGalleryNextPage}
+                    disabled={!galleryPagination.hasMore || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -419,6 +558,34 @@ const Kegiatan: React.FC = () => {
                 </table>
               )}
             </div>
+
+            {/* Agenda Pagination */}
+            {agendaData.length > 0 && (
+              <div className="flex flex-col items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 gap-4 sm:flex-row">
+                <div className="text-sm text-gray-600">
+                  Menampilkan {(agendaPagination.page - 1) * agendaPagination.limit + 1} - {Math.min(agendaPagination.page * agendaPagination.limit, agendaPagination.total)} dari {agendaPagination.total} data
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAgendaPrevPage}
+                    disabled={agendaPagination.page === 1 || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    Halaman {agendaPagination.page} dari {agendaPagination.totalPages}
+                  </span>
+                  <button
+                    onClick={handleAgendaNextPage}
+                    disabled={!agendaPagination.hasMore || loading}
+                    className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
