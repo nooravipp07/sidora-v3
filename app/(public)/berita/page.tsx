@@ -2,12 +2,14 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { HeadlineNews, NewsCard, Pagination } from '@/components/public/news';
 import { getNewsPage, getFeaturedNews } from '@/lib/news/data';
 
 const ITEMS_PER_PAGE = 12;
 
 function BeritaPageContent() {
+  useTrackPageView('/berita');
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1', 10);
 

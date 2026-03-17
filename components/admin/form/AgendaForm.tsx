@@ -88,14 +88,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Kembali"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               {isEdit ? 'Edit Agenda' : 'Buat Agenda Baru'}
@@ -122,7 +114,7 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+      <div className="bg-white min-h-screen space-y-6">
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">

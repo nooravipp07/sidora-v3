@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react';
 import { HeroSlider, StatisticsSection, AgendaSection, NewsSection, GallerySection } from '@/components/public/sections';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 
 export default function Home() {
+  // Track homepage visit
+  useTrackPageView('/');
+  
   const [activeNews, setActiveNews] = useState(null);
 
   return (

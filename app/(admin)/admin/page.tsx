@@ -56,34 +56,55 @@ interface VerificationItem {
   tanggalPendaftaran: string;
 }
 
-const Dashboard: FC = () => {
-  const [visitorData, setVisitorData] = useState({
-    totalVisitors: 18750,
-    previousPeriodVisitors: 16200,
-    todayVisitors: 847,
-    lastUpdated: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-  });
+interface VisitorStats {
+  totalVisitors: number;
+  previousPeriodVisitors: number;
+  todayVisitors: number;
+  averageDailyVisitors: number;
+  lastUpdated: string;
+  trend: {
+    difference: number;
+    percentage: number;
+    isPositive: boolean;
+  };
+  period: {
+    current: string;
+    previous: string;
+  };
+}
 
-  const calculateTrend = () => {
-    const difference = visitorData.totalVisitors - visitorData.previousPeriodVisitors;
-    const percentageChange = ((difference / visitorData.previousPeriodVisitors) * 100).toFixed(1);
-    return {
-      difference,
-      percentage: percentageChange,
-      isPositive: difference > 0
-    };
+const Dashboard: FC = () => {
+  const [visitorData, setVisitorData] = useState<VisitorStats | null>(null);
+  const [isLoadingVisitors, setIsLoadingVisitors] = useState(true);
+  const [visitorError, setVisitorError] = useState<string | null>(null);
+
+  // Fetch visitor statistics from API
+  const fetchVisitorStats = async () => {
+    try {
+      setIsLoadingVisitors(true);
+      setVisitorError(null);
+      const response = await fetch('/api/analytics/visitors');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch visitor statistics');
+      }
+      
+      const data = await response.json();
+      setVisitorData(data);
+    } catch (error) {
+      console.error('Error fetching visitor statistics:', error);
+      setVisitorError(error instanceof Error ? error.message : 'Failed to load visitor data');
+    } finally {
+      setIsLoadingVisitors(false);
+    }
   };
 
-  const trend = calculateTrend();
-
   useEffect(() => {
-    // Simulate real-time updates from backend
-    const interval = setInterval(() => {
-      setVisitorData(prev => ({
-        ...prev,
-        lastUpdated: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-      }));
-    }, 60000); // Update every minute
+    // Fetch visitor stats immediately on mount
+    fetchVisitorStats();
+
+    // Set up interval to refetch every minute
+    const interval = setInterval(fetchVisitorStats, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -363,75 +384,114 @@ const Dashboard: FC = () => {
       {/* Visitor Counter Section */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-6">Statistik Pengunjung</h2>
+        
+        {visitorError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">⚠️ {visitorError}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Total Visitors Card */}
           <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <div className="bg-indigo-100 p-4 rounded-lg">
-                <Eye className="w-8 h-8 text-indigo-600" />
+            {isLoadingVisitors ? (
+              <div className="animate-pulse">
+                <div className="h-12 bg-gray-200 rounded mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
               </div>
-              <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${trend.isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
-                {trend.isPositive ? (
-                  <TrendingUp className={`w-4 h-4 text-green-600`} />
-                ) : (
-                  <TrendingDown className={`w-4 h-4 text-red-600`} />
-                )}
-                <span className={`text-sm font-semibold ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {trend.isPositive ? '+' : ''}{trend.percentage}%
-                </span>
-              </div>
-            </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-2">Total Pengunjung</h3>
-            <p className="text-4xl font-bold text-gray-900 mb-4">
-              {visitorData.totalVisitors.toLocaleString('id-ID')}
-            </p>
-            <div className="space-y-2 text-xs text-gray-500">
-              <p>Periode sebelumnya: {visitorData.previousPeriodVisitors.toLocaleString('id-ID')}</p>
-              <p className={`flex items-center gap-1 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                <BarChart3 className="w-3 h-3" />
-                {trend.isPositive ? 'Meningkat' : 'Menurun'} {Math.abs(trend.difference).toLocaleString('id-ID')}
-              </p>
-            </div>
+            ) : visitorData ? (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-indigo-100 p-4 rounded-lg">
+                    <Eye className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${visitorData.trend.isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
+                    {visitorData.trend.isPositive ? (
+                      <TrendingUp className={`w-4 h-4 text-green-600`} />
+                    ) : (
+                      <TrendingDown className={`w-4 h-4 text-red-600`} />
+                    )}
+                    <span className={`text-sm font-semibold ${visitorData.trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {visitorData.trend.isPositive ? '+' : ''}{visitorData.trend.percentage}%
+                    </span>
+                  </div>
+                </div>
+                <h3 className="text-gray-600 text-sm font-medium mb-2">Total Pengunjung</h3>
+                <p className="text-4xl font-bold text-gray-900 mb-4">
+                  {visitorData.totalVisitors.toLocaleString('id-ID')}
+                </p>
+                <div className="space-y-2 text-xs text-gray-500">
+                  <p>Periode sebelumnya: {visitorData.previousPeriodVisitors.toLocaleString('id-ID')}</p>
+                  <p className={`flex items-center gap-1 ${visitorData.trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <BarChart3 className="w-3 h-3" />
+                    {visitorData.trend.isPositive ? 'Meningkat' : 'Menurun'} {Math.abs(visitorData.trend.difference).toLocaleString('id-ID')}
+                  </p>
+                </div>
+              </>
+            ) : null}
           </div>
 
           {/* Today Visitors Card */}
           <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <div className="bg-cyan-100 p-4 rounded-lg">
-                <BarChart3 className="w-8 h-8 text-cyan-600" />
+            {isLoadingVisitors ? (
+              <div className="animate-pulse">
+                <div className="h-12 bg-gray-200 rounded mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
               </div>
-              <span className="text-cyan-600 text-xs font-semibold bg-cyan-100 px-3 py-1 rounded-full">Hari Ini</span>
-            </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-2">Pengunjung Hari Ini</h3>
-            <p className="text-4xl font-bold text-gray-900 mb-4">
-              {visitorData.todayVisitors.toLocaleString('id-ID')}
-            </p>
-            <div className="text-xs text-gray-500 flex items-center gap-2">
-              <Clock className="w-3 h-3" />
-              <span>Update: {visitorData.lastUpdated}</span>
-            </div>
+            ) : visitorData ? (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-cyan-100 p-4 rounded-lg">
+                    <BarChart3 className="w-8 h-8 text-cyan-600" />
+                  </div>
+                  <span className="text-cyan-600 text-xs font-semibold bg-cyan-100 px-3 py-1 rounded-full">Hari Ini</span>
+                </div>
+                <h3 className="text-gray-600 text-sm font-medium mb-2">Pengunjung Hari Ini</h3>
+                <p className="text-4xl font-bold text-gray-900 mb-4">
+                  {visitorData.todayVisitors.toLocaleString('id-ID')}
+                </p>
+                <div className="text-xs text-gray-500 flex items-center gap-2">
+                  <Clock className="w-3 h-3" />
+                  <span>Update: {visitorData.lastUpdated}</span>
+                </div>
+              </>
+            ) : null}
           </div>
 
           {/* Visitor Insights Card */}
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow-md p-8 border border-indigo-100 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <div className="bg-indigo-600 p-4 rounded-lg">
-                <Users className="w-8 h-8 text-white" />
+            {isLoadingVisitors ? (
+              <div className="animate-pulse">
+                <div className="h-12 bg-gray-300 rounded mb-4"></div>
+                <div className="h-6 bg-gray-300 rounded w-3/4"></div>
               </div>
-            </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-4">Wawasan Pengunjung</h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Rata-rata Harian</span>
-                <span className="font-semibold text-gray-900">625</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-indigo-600 h-2 rounded-full" style={{ width: '78%' }}></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-3">
-                Data diperbarui secara otomatis dari backend analytics
-              </p>
-            </div>
+            ) : visitorData ? (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="bg-indigo-600 p-4 rounded-lg">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-gray-600 text-sm font-medium mb-4">Wawasan Pengunjung</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Rata-rata Harian</span>
+                    <span className="font-semibold text-gray-900">{visitorData.averageDailyVisitors.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-indigo-600 h-2 rounded-full" 
+                      style={{ 
+                        width: `${Math.min((visitorData.averageDailyVisitors / 1000) * 100, 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">
+                    Data diperbarui setiap menit dari backend analytics
+                  </p>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

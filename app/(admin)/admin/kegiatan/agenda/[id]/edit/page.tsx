@@ -46,5 +46,9 @@ export default function EditAgendaPage() {
     );
   }
 
-  return <AgendaForm initialData={agenda} isEdit />;
+  return (
+    <div className="p-6 bg-white min-h-screen">
+      <AgendaForm initialData={agenda} isEdit />
+    </div>
+  );
 }

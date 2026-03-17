@@ -269,3 +269,24 @@ model Agenda {
 
   @@map("agendas")
 }
+
+// Visitor Model for tracking page views and visitor statistics
+model Visitor {
+  id              Int      @id @default(autoincrement())
+  sessionId       String   @db.VarChar(100) // Unique session identifier
+  ipAddress       String?  @db.VarChar(50)
+  userAgent       String?  @db.Text
+  page            String   @db.VarChar(255) // Page path (e.g., /berita, /galeri, /)
+  referrer        String?  @db.VarChar(255) // Referrer URL
+  visitedAt       DateTime @default(now())
+  
+  // For better analytics
+  country         String?  @db.VarChar(100)
+  city            String?  @db.VarChar(100)
+  deviceType      String?  @db.VarChar(50)  // desktop, mobile, tablet
+
+  @@index([sessionId])
+  @@index([visitedAt])
+  @@index([page])
+  @@map("visitors")
+}

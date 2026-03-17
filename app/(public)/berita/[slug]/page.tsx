@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronLeft, Calendar, User, Clock } from 'lucide-react';
 import { getNewsBySlug, newsData } from '@/lib/news/data';
 import { notFound } from 'next/navigation';
+import { ArticleTracker } from '@/components/public/news/ArticleTracker';
 
 interface PageProps {
   params: Promise<{
@@ -59,6 +60,8 @@ export default async function BeritaDetailPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-white">
+      <ArticleTracker slug={slug} />
+      
       {/* Back Button */}
       <div className="bg-gray-50 border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

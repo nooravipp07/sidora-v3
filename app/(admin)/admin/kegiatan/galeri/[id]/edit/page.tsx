@@ -40,11 +40,15 @@ export default function EditGalleryPage() {
 
   if (error || !gallery) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-white min-h-screen">
         <div className="text-red-600">{error || 'Gallery not found'}</div>
       </div>
     );
   }
 
-  return <GalleryForm initialData={gallery} isEdit />;
+  return (
+    <div className="p-6 bg-white min-h-screen">
+      <GalleryForm initialData={gallery} isEdit />
+    </div>
+  );
 }

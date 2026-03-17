@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download } from 'lucide-react';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { CommunityStatsCards, CommunityFilters, CommunityTable } from '@/components/ui/community-sports';
 import { FilterOptions } from '@/types/community-sports';
 import {
@@ -13,6 +14,7 @@ import {
 const ITEMS_PER_PAGE = 10;
 
 export default function OlahragaMasyarakat() {
+  useTrackPageView('/olahraga-masyarakat');
   const [filters, setFilters] = useState<FilterOptions>({});
   const [currentPage, setCurrentPage] = useState(1);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 interface FooterLink {
@@ -12,6 +12,12 @@ interface FooterSection {
   title?: string;
   links?: FooterLink[];
   content?: React.ReactNode;
+}
+
+interface VisitorStats {
+  totalVisitors: number;
+  todayVisitors: number;
+  lastUpdated: string;
 }
 
 interface FooterConfig {
@@ -72,20 +78,47 @@ const defaultConfig: FooterConfig = {
       ),
     },
   ],
-  analytics: {
-    totalVisitors: 24587,
-    visitorsToday: 156,
-  },
   copyright: '© 2024 SIDORA - Sistem Informasi Data Keolahragaan. All rights reserved.',
 };
 
 const Footer: React.FC<{ config?: FooterConfig }> = ({ config = defaultConfig }) => {
+  const [visitorStats, setVisitorStats] = useState<VisitorStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch visitor statistics from API
+  useEffect(() => {
+    const fetchVisitorStats = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/analytics/visitors');
+        
+        if (response.ok) {
+          const data = await response.json();
+          setVisitorStats({
+            totalVisitors: data.totalVisitors,
+            todayVisitors: data.todayVisitors,
+            lastUpdated: data.lastUpdated
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching visitor stats for footer:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVisitorStats();
+
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchVisitorStats, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const {
     logo,
     title,
     description,
     sections,
-    analytics,
     copyright,
   } = { ...defaultConfig, ...config };
 
@@ -138,30 +171,39 @@ const Footer: React.FC<{ config?: FooterConfig }> = ({ config = defaultConfig })
             </div>
           ))}
 
-          {/* Analytics Section */}
-          {analytics && (
-            <div>
-              <h4 className="text-lg font-semibold mb-4">👥 Pengunjung</h4>
-              <div className="space-y-4">
-                {analytics.totalVisitors !== undefined && (
+          {/* Analytics Section - Real Time Visitor Stats */}
+          <div>
+            <h4 className="text-lg font-semibold mb-4">👥 Pengunjung</h4>
+            <div className="space-y-4">
+              {isLoading ? (
+                <div className="space-y-3">
+                  <div className="animate-pulse">
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Total Pengunjung</p>
+                    <div className="h-8 bg-gray-700 rounded w-3/4"></div>
+                  </div>
+                  <div className="animate-pulse">
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Hari Ini</p>
+                    <div className="h-8 bg-gray-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ) : visitorStats ? (
+                <>
                   <div>
                     <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Total Pengunjung</p>
                     <p className="text-2xl font-bold text-green-400">
-                      {analytics.totalVisitors.toLocaleString('id-ID')}
+                      {visitorStats.totalVisitors.toLocaleString('id-ID')}
                     </p>
                   </div>
-                )}
-                {analytics.visitorsToday !== undefined && (
                   <div>
                     <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Hari Ini</p>
                     <p className="text-2xl font-bold text-blue-400">
-                      {analytics.visitorsToday}
+                      {visitorStats.todayVisitors.toLocaleString('id-ID')}
                     </p>
                   </div>
-                )}
-              </div>
+                </>
+              ) : null}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Copyright */}

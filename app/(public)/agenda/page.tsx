@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { AgendaFilters, AgendaTable } from '@/components/public/agenda';
 import { filterAgendaEvents } from '@/lib/agenda/data';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AgendaPage() {
+  useTrackPageView('/agenda');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);

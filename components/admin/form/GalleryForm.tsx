@@ -123,14 +123,6 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Kembali"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {isEdit ? 'Edit Galeri' : 'Buat Galeri Baru'}
@@ -162,7 +154,7 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+        <div className="bg-white rounded-lg space-y-6">
           {/* Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -217,8 +209,8 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
 
       {/* Gallery Items Section - only show if editing */}
       {isEdit && initialData && (
-        <div className="max-w-4xl mx-auto mt-8">
-          <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="mt-8">
+          <div className="bg-white">
             <h2 className="text-xl font-bold text-gray-900 mb-6">Kelola Gambar</h2>
 
             {/* Add New Item */}

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronRight, Download } from 'lucide-react';
 import Link from 'next/link';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { SummaryCards, InfrastructureTable, InfrastructureFilters, InfrastructureCharts } from '@/components/public/infrastructure';
 import { AthleteStatsCards, AchievementStatistics, ClubSummaryCards, ClubTable } from '@/components/ui/sports';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@/lib/sports/data';
 
 export default function InfrastructureKeolahraganPage() {
+  useTrackPageView('/infrastruktur-keolahragaan');
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');

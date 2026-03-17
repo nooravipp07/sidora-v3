@@ -41,7 +41,7 @@ export default function EditBeritaPage() {
 
   if (error || !berita) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-white min-h-screen">
         <div className="text-center text-red-600">
           {error || 'Berita tidak ditemukan'}
         </div>
@@ -50,7 +50,7 @@ export default function EditBeritaPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white min-h-screen">
       <BeritaForm initialData={berita} isEdit={true} />
     </div>
   );

@@ -218,7 +218,7 @@ const Kegiatan: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-white min-h-screen">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Kelola Kegiatan</h1>
           <p className="text-gray-600">Manajemen berita, galeri, dan agenda kegiatan</p>

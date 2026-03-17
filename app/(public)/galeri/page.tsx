@@ -2,12 +2,14 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { GalleryCard, GalleryPagination } from '@/components/public/gallery';
 import { getGalleryPage } from '@/lib/gallery/data';
 
 const ITEMS_PER_PAGE = 12;
 
 function GaleriPageContent() {
+  useTrackPageView('/galeri');
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1', 10);
 

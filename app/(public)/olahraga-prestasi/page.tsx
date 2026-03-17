@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download } from 'lucide-react';
+import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
 import { PerformanceStatsCards, PerformanceFilters, PerformanceTable } from '@/components/ui/sports-performance';
 import { FilterOptions } from '@/types/sports-performance';
 import {
@@ -14,6 +15,7 @@ import {
 const ITEMS_PER_PAGE = 10;
 
 export default function OlahragaPrestasi() {
+  useTrackPageView('/olahraga-prestasi');
   const [filters, setFilters] = useState<FilterOptions>({});
   const [currentPage, setCurrentPage] = useState(1);
 
