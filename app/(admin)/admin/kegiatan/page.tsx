@@ -1,154 +1,137 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Eye, Download, Filter, FileText, Image, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, Edit, Trash2, Eye, FileText, Image, Calendar } from 'lucide-react';
+import { News } from '@/types/news';
+import { Gallery } from '@/types/gallery';
+import { Agenda } from '@/types/agenda';
 
 const Kegiatan: React.FC = () => {
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<'berita' | 'galeri' | 'agenda'>('berita');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<any>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [beritaData, setBeritaData] = useState<News[]>([]);
+  const [galleryData, setGalleryData] = useState<Gallery[]>([]);
+  const [agendaData, setAgendaData] = useState<Agenda[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const beritaData = [
-    {
-      id: 1,
-      judul: 'Kejuaraan Daerah Bulu Tangkis 2024',
-      title: 'Turnamen Prestasi Tingkat Daerah',
-      kategori: 'Trending',
-      deskripsi: 'Kejuaraan bulu tangkis tingkat daerah dengan partisipasi 150 atlet dari berbagai kecamatan.',
-      tanggal: '2024-01-15',
-      gambar: 'badminton-tournament.jpg'
-    },
-    {
-      id: 2,
-      judul: 'Pembangunan Lapangan Sepak Bola',
-      title: 'Fasilitas Olahraga Baru',
-      kategori: 'Latest',
-      deskripsi: 'Pembangunan lapangan sepak bola baru dengan anggaran 2.5 miliar rupiah.',
-      tanggal: '2024-01-12',
-      gambar: 'football-field.jpg'
+  // Fetch data on component mount and tab change
+  useEffect(() => {
+    if (activeTab === 'berita') {
+      fetchBerita();
+    } else if (activeTab === 'galeri') {
+      fetchGallery();
+    } else if (activeTab === 'agenda') {
+      fetchAgenda();
     }
-  ];
+  }, [activeTab]);
 
-  const galeriData = [
-    {
-      id: 1,
-      judul: 'Kejuaraan Renang Daerah',
-      title: 'Dokumentasi Event Renang',
-      gambar: 'swimming-championship.jpg',
-      tanggal: '2023-12-20',
-      terkaitBerita: 'Kejuaraan Renang Daerah 2023'
-    },
-    {
-      id: 2,
-      judul: 'Turnamen Basket Antar Sekolah',
-      title: 'Kompetisi Basket Pelajar',
-      gambar: 'basketball-tournament.jpg',
-      tanggal: '2023-12-18',
-      terkaitBerita: 'Turnamen Basket SMA'
+  const fetchBerita = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/berita?page=1&limit=100');
+      if (!response.ok) throw new Error('Failed to fetch berita');
+      const data = await response.json();
+      setBeritaData(data.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch berita');
+      console.error('Error fetching berita:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const agendaData = [
-    {
-      id: 1,
-      judul: 'Kejuaraan Tenis Meja Regional',
-      title: 'Turnamen Tenis Meja Tingkat Regional',
-      kategori: 'Trending',
-      deskripsi: 'Turnamen tenis meja dengan hadiah total 50 juta rupiah.',
-      tanggal: '2024-02-25',
-      gambar: 'table-tennis.jpg',
-      linkEvent: '/event/tenis-meja-regional'
-    },
-    {
-      id: 2,
-      judul: 'Pelatihan Wasit Sepak Bola',
-      title: 'Workshop Wasit Berlisensi',
-      kategori: 'Latest',
-      deskripsi: 'Workshop pelatihan wasit sepak bola dengan instruktur berpengalaman.',
-      tanggal: '2024-02-20',
-      gambar: 'referee-training.jpg',
-      linkEvent: '/event/wasit-sepakbola'
-    }
-  ];
-
-  const handleCreate = () => {
-    setSelectedData(null);
-    setModalMode('create');
-    setIsModalOpen(true);
   };
 
-  const handleEdit = (data: any) => {
-    setSelectedData(data);
-    setModalMode('edit');
-    setIsModalOpen(true);
+  const fetchGallery = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/gallery?page=1&limit=100');
+      if (!response.ok) throw new Error('Failed to fetch gallery');
+      const data = await response.json();
+      setGalleryData(data.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch gallery');
+      console.error('Error fetching gallery:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleView = (data: any) => {
-    setSelectedData(data);
-    setModalMode('view');
-    setIsModalOpen(true);
+  const fetchAgenda = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/agenda?page=1&limit=100');
+      if (!response.ok) throw new Error('Failed to fetch agenda');
+      const data = await response.json();
+      setAgendaData(data.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch agenda');
+      console.error('Error fetching agenda:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDeleteBerita = async (id: number) => {
     if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-      console.log('Delete data with id:', id);
+      try {
+        setDeleting(true);
+        const response = await fetch(`/api/berita/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete berita');
+        setBeritaData(beritaData.filter(item => item.id !== id));
+        alert('Berita berhasil dihapus');
+      } catch (err) {
+        console.error('Error deleting berita:', err);
+        alert('Gagal menghapus berita');
+      } finally {
+        setDeleting(false);
+      }
     }
   };
 
-  const beritaFields = [
-    { name: 'judul', label: 'Judul', type: 'text', required: true },
-    { name: 'title', label: 'Title', type: 'text', required: true },
-    { name: 'kategori', label: 'Kategori', type: 'select', options: ['Trending', 'Latest', 'Popular'], required: true },
-    { name: 'deskripsi', label: 'Deskripsi', type: 'textarea', required: true },
-    { name: 'tanggal', label: 'Tanggal', type: 'date', required: true },
-    { name: 'gambar', label: 'Gambar', type: 'file', required: false },
-    { name: 'video', label: 'Video', type: 'file', required: false }
-  ];
-
-  const galeriFields = [
-    { name: 'judul', label: 'Judul', type: 'text', required: true },
-    { name: 'title', label: 'Title', type: 'text', required: true },
-    { name: 'gambar', label: 'Gambar', type: 'file', required: true },
-    { name: 'tanggal', label: 'Tanggal', type: 'date', required: true },
-    { name: 'terkaitBerita', label: 'Terkait dengan Berita', type: 'text', required: false }
-  ];
-
-  const agendaFields = [
-    { name: 'judul', label: 'Judul', type: 'text', required: true },
-    { name: 'title', label: 'Title', type: 'text', required: true },
-    { name: 'kategori', label: 'Kategori', type: 'select', options: ['Trending', 'Latest', 'Popular'], required: true },
-    { name: 'deskripsi', label: 'Deskripsi', type: 'textarea', required: true },
-    { name: 'tanggal', label: 'Tanggal', type: 'date', required: true },
-    { name: 'gambar', label: 'Gambar', type: 'file', required: false },
-    { name: 'video', label: 'Video', type: 'file', required: false },
-    { name: 'linkEvent', label: 'Link Event', type: 'text', required: false }
-  ];
-
-  const getCurrentData = () => {
-    switch (activeTab) {
-      case 'berita': return beritaData;
-      case 'galeri': return galeriData;
-      case 'agenda': return agendaData;
-      default: return [];
+  const handleDeleteGallery = async (id: number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus galeri ini beserta semua gambarnya?')) {
+      try {
+        setDeleting(true);
+        const response = await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete gallery');
+        setGalleryData(galleryData.filter(item => item.id !== id));
+        alert('Galeri berhasil dihapus');
+      } catch (err) {
+        console.error('Error deleting gallery:', err);
+        alert('Gagal menghapus galeri');
+      } finally {
+        setDeleting(false);
+      }
     }
   };
 
-  const getCurrentFields = () => {
-    switch (activeTab) {
-      case 'berita': return beritaFields;
-      case 'galeri': return galeriFields;
-      case 'agenda': return agendaFields;
-      default: return [];
+  const handleDeleteAgenda = async (id: number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus agenda ini?')) {
+      try {
+        setDeleting(true);
+        const response = await fetch(`/api/agenda/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete agenda');
+        setAgendaData(agendaData.filter(item => item.id !== id));
+        alert('Agenda berhasil dihapus');
+      } catch (err) {
+        console.error('Error deleting agenda:', err);
+        alert('Gagal menghapus agenda');
+      } finally {
+        setDeleting(false);
+      }
     }
   };
 
-  const getModalTitle = () => {
-    const type = activeTab === 'berita' ? 'Berita' : activeTab === 'galeri' ? 'Galeri' : 'Agenda';
-    return modalMode === 'create' ? `Tambah ${type}` :
-           modalMode === 'edit' ? `Edit ${type}` :
-           `Detail ${type}`;
+  const formatDate = (date: any) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('id-ID');
   };
 
   return (
@@ -197,99 +180,250 @@ const Kegiatan: React.FC = () => {
           </div>
         </div>
 
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6">
           <button
-            onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            onClick={() => router.push('/admin/kegiatan/berita/create')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
+            disabled={loading || activeTab !== 'berita'}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Tambah Data
+            Buat Berita Baru
           </button>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-            <Download className="w-4 h-4 mr-2" />
-            Export Excel
+          <button
+            onClick={() => router.push('/admin/kegiatan/galeri/create')}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
+            disabled={loading || activeTab !== 'galeri'}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Buat Galeri Baru
           </button>
-          <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
-            <Download className="w-4 h-4 mr-2" />
-            Export PDF
-          </button>
-          <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
+          <button
+            onClick={() => router.push('/admin/kegiatan/agenda/create')}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center disabled:opacity-50"
+            disabled={loading || activeTab !== 'agenda'}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Buat Agenda Baru
           </button>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  {activeTab !== 'galeri' && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                  )}
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                  {activeTab === 'galeri' && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terkait Berita</th>
-                  )}
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {getCurrentData().map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.judul}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.title}</td>
-                    {activeTab !== 'galeri' && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          (item as any).kategori === 'Trending' ? 'bg-red-100 text-red-800' :
-                          (item as any).kategori === 'Latest' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {(item as any).kategori}
-                        </span>
-                      </td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.tanggal}</td>
-                    {activeTab === 'galeri' && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(item as any).terkaitBerita}</td>
-                    )}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleView(item)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="text-green-600 hover:text-green-800"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
           </div>
-        </div>
+        )}
+
+        {/* Loading State */}
+        {loading && activeTab === 'berita' && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {/* Table */}
+        {!loading && activeTab === 'berita' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              {beritaData.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  Tidak ada data berita. Klik "Buat Berita Baru" untuk membuat berita.
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {beritaData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          <div className="max-w-xs truncate">{item.title}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            item.isPublished ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {item.isPublished ? 'Dipublikasikan' : 'Draft'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(item.createdAt)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => router.push(`/admin/kegiatan/berita/${item.id}/edit`)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBerita(item.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Hapus"
+                              disabled={deleting}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Loading State - Galeri */}
+        {loading && activeTab === 'galeri' && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {/* Gallery Table */}
+        {!loading && activeTab === 'galeri' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              {galleryData.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  Tidak ada data galeri. Klik "Buat Galeri Baru" untuk membuat galeri.
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gambar</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {galleryData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          <div className="max-w-xs truncate">{item.title}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.items?.length || 0} gambar</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(item.createdAt)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => router.push(`/admin/kegiatan/galeri/${item.id}/edit`)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteGallery(item.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Hapus"
+                              disabled={deleting}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Loading State - Agenda */}
+        {loading && activeTab === 'agenda' && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {/* Agenda Table */}
+        {!loading && activeTab === 'agenda' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              {agendaData.length === 0 ? (
+                <div className="p-6 text-center text-gray-500">
+                  Tidak ada data agenda. Klik "Buat Agenda Baru" untuk membuat agenda.
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Mulai</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {agendaData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          <div className="max-w-xs truncate">{item.title}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="max-w-xs truncate">{item.location || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(item.startDate).toLocaleDateString('id-ID', { 
+                            weekday: 'short',
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => router.push(`/admin/kegiatan/agenda/${item.id}/edit`)}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAgenda(item.id)}
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Hapus"
+                              disabled={deleting}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
   );
 };
 
 export default Kegiatan;
+

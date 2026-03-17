@@ -176,3 +176,96 @@ model Prasarana {
 
   @@map("m_prasarana")
 }
+
+model News {
+  id           Int       @id @default(autoincrement())
+  title        String
+  slug         String    @unique
+  content      String
+  thumbnail    String?
+  author       String?
+  isPublished  Boolean   @default(false)
+  publishedAt  DateTime?
+  categoryId   Int?
+  category     Category? @relation(fields: [categoryId], references: [id])
+  tags         NewsTag[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  
+  @@map("news")
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String
+  slug  String @unique
+
+  news  News[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String
+
+  news  NewsTag[]
+
+  @@map("tags")
+}
+
+model NewsTag {
+  newsId Int
+  tagId  Int
+
+  news   News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([newsId, tagId])
+  @@map("news_tags")
+}
+
+model Gallery {
+  id          Int            @id @default(autoincrement())
+  title       String
+  description String?
+
+  items       GalleryItem[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  @@map("galleries")
+}
+
+model GalleryItem {
+  id         Int     @id @default(autoincrement())
+  galleryId  Int
+  imageUrl   String
+  caption    String?
+
+  gallery    Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@map("gallery_items")
+}
+
+model Agenda {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  location    String?
+
+  startDate   DateTime 
+  endDate     DateTime?
+  isAllDay    Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("agendas")
+}

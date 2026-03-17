@@ -1,10 +1,12 @@
-export interface AgendaEvent {
+export interface Agenda {
   id: number;
-  date: Date;
-  name: string;
-  category: string;
-  location: string;
-  level: string;
-  status: string;
-  time: string;
+  title: string;
+  description?: string;
+  location?: string;
+  startDate: Date | string;
+  endDate?: Date | string;
+  isAllDay: boolean;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  deletedAt?: Date | string | null;
 }
