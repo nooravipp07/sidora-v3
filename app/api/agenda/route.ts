@@ -39,10 +39,14 @@ export async function GET(request: NextRequest) {
         const paginatedData = filteredData.slice(start, start + limit);
 
         return NextResponse.json({
-            items: paginatedData,
-            currentPage: page,
-            totalPages: totalPages,
-            totalCount: totalCount
+            data: paginatedData,
+            meta: {
+                total: totalCount,
+                page: page,
+                limit: limit,
+                totalPages: totalPages,
+                hasMore: page < totalPages
+            }
         }, { status: 200 });
     } catch (error) {
         console.error('Error fetching agenda:', error);

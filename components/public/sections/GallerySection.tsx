@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 interface GalleryItem {
   id: number;
@@ -15,60 +16,136 @@ interface GallerySectionProps {
   galleryData?: GalleryItem[];
 }
 
-const defaultGalleryData: GalleryItem[] = [
-  {
-    id: 1,
-    title: "Kejuaraan Renang Daerah",
-    image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "20 Desember 2023",
-    description: "Dokumentasi kegiatan kejuaraan renang tingkat daerah dengan partisipasi 200 atlet dari berbagai kecamatan. Event ini menampilkan berbagai nomor renang mulai dari gaya bebas, gaya punggung, hingga gaya kupu-kupu."
-  },
-  {
-    id: 2,
-    title: "Turnamen Basket Antar Sekolah",
-    image: "https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "18 Desember 2023",
-    description: "Turnamen basket antar sekolah menengah atas se-kabupaten dengan 32 tim peserta. Kompetisi berlangsung sengit dengan menampilkan bakat-bakat muda basket daerah."
-  },
-  {
-    id: 3,
-    title: "Pelatihan Atletik Usia Dini",
-    image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "15 Desember 2023",
-    description: "Program pelatihan atletik untuk anak-anak usia dini sebagai bibit atlet masa depan. Program ini fokus pada pengembangan kemampuan dasar atletik dan pembentukan karakter."
-  },
-  {
-    id: 4,
-    title: "Kejuaraan Renang Daerah",
-    image: "https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "20 Desember 2023",
-    description: "Dokumentasi kegiatan kejuaraan renang tingkat daerah dengan partisipasi 200 atlet dari berbagai kecamatan."
-  },
-  {
-    id: 5,
-    title: "Turnamen Basket Antar Sekolah",
-    image: "https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "18 Desember 2023",
-    description: "Turnamen basket antar sekolah menengah atas se-kabupaten dengan 32 tim peserta."
-  },
-  {
-    id: 6,
-    title: "Pelatihan Atletik Usia Dini",
-    image: "https://images.pexels.com/photos/2834917/pexels-photo-2834917.jpeg?auto=compress&cs=tinysrgb&w=400",
-    date: "15 Desember 2023",
-    description: "Program pelatihan atletik untuk anak-anak usia dini sebagai bibit atlet masa depan."
-  }
-];
+interface GalleryAPIItem {
+  id: number;
+  title: string;
+  description: string | null;
+  items: Array<{
+    id: number;
+    imageUrl: string;
+    caption: string | null;
+  }>;
+  createdAt: string;
+}
 
-const GallerySection: React.FC<GallerySectionProps> = ({ galleryData = defaultGalleryData }) => {
+interface GalleryAPIResponse {
+  data: GalleryAPIItem[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+const GallerySection: React.FC<GallerySectionProps> = ({ galleryData: externalGalleryData }) => {
+  const [galleryData, setGalleryData] = useState<GalleryItem[]>(externalGalleryData);
   const [currentGallerySlide, setCurrentGallerySlide] = useState(0);
+  const [isLoading, setIsLoading] = useState(!externalGalleryData);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch gallery data from API if not provided
   useEffect(() => {
+    if (externalGalleryData) {
+      setGalleryData(externalGalleryData);
+      return;
+    }
+
+    const fetchGalleries = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch first page with 6 items to show in carousel
+        const response = await fetch('/api/gallery?page=1&limit=6');
+        if (!response.ok) {
+          throw new Error('Failed to fetch galleries');
+        }
+
+        const data: GalleryAPIResponse = await response.json();
+
+        // Transform API data to component format
+        const transformedGalleries = data.data.map((gallery: GalleryAPIItem) => {
+          const thumbnail = gallery.items?.[0]?.imageUrl || 'https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400';
+          
+          return {
+            id: gallery.id,
+            title: gallery.title,
+            image: thumbnail,
+            date: new Date(gallery.createdAt).toLocaleDateString('id-ID', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+            description: gallery.description || 'Dokumentasi kegiatan olahraga daerah',
+          };
+        });
+
+        setGalleryData(transformedGalleries);
+      } catch (err) {
+        console.error('Error fetching galleries:', err);
+        setError('Gagal memuat galeri');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGalleries();
+  }, [externalGalleryData]);
+
+  // Auto carousel effect
+  useEffect(() => {
+    if (galleryData?.length === 0) return;
+    
     const interval = setInterval(() => {
-      setCurrentGallerySlide((prev) => (prev + 1) % galleryData.length);
+      setCurrentGallerySlide((prev) => (prev + 1) % galleryData?.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [galleryData.length]);
+  }, [galleryData?.length]);
+
+  // Handle empty/loading state
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Galeri Kegiatan
+              </h2>
+              <p className="text-xl text-gray-600">
+                Dokumentasi kegiatan olahraga dan prestasi atlet
+              </p>
+            </div>
+          </div>
+          <div className="relative w-full h-96 bg-gray-200 rounded-2xl animate-pulse"></div>
+        </div>
+      </section>
+    );
+  }
+
+  if (galleryData.length === 0) {
+    return (
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Galeri Kegiatan
+              </h2>
+              <p className="text-xl text-gray-600">
+                Dokumentasi kegiatan olahraga dan prestasi atlet
+              </p>
+            </div>
+          </div>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">Tidak ada galeri tersedia saat ini</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-20 bg-white">
@@ -76,16 +153,16 @@ const GallerySection: React.FC<GallerySectionProps> = ({ galleryData = defaultGa
         <div className="flex justify-between items-center mb-12">
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Galeri Kegiatan
+              Berita Terkini
             </h2>
             <p className="text-xl text-gray-600">
-              Dokumentasi kegiatan olahraga dan prestasi atlet
+              Update terbaru dari dunia olahraga daerah
             </p>
           </div>
-          <button className="hidden md:flex items-center text-green-600 hover:text-green-800 font-semibold">
+          <Link href="/galeri" className="hidden md:flex items-center text-green-600 hover:text-green-800 font-semibold">
             Lihat Semua
             <ChevronRight className="ml-1 w-5 h-5" />
-          </button>
+          </Link>
         </div>
 
         {/* Gallery Grid Carousel */}

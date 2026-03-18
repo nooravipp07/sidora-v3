@@ -33,10 +33,14 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({
-      items: transformedItems,
-      currentPage: result.meta.page,
-      totalPages: result.meta.totalPages,
-      totalCount: result.meta.total
+      data: transformedItems,
+      meta: {
+        total: result.meta.total,
+        page: result.meta.page,
+        limit: result.meta.limit,
+        totalPages: result.meta.totalPages,
+        hasMore: result.meta.hasMore
+      }
     });
   } catch (error) {
     console.error('Error fetching news:', error);

@@ -165,7 +165,6 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               disabled={loading}
-              placeholder="Judul galeri"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
           </div>
@@ -179,7 +178,6 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               disabled={loading}
-              placeholder="Deskripsi galeri"
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />

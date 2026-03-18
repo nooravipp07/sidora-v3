@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, MapPin as Location, X } from 'lucide-react';
 
 interface AgendaEvent {
@@ -18,114 +18,98 @@ interface AgendaSectionProps {
   eventCalendarData?: AgendaEvent[];
 }
 
-const defaultEventCalendarData: AgendaEvent[] = [
-  {
-    id: 1,
-    date: new Date(2026, 0, 5),
-    name: "Kejuaraan Tenis Meja Regional",
-    category: "Kompetisi",
-    location: "GOR Tenis Meja Utama",
-    level: "Regional",
-    status: "Active",
-    time: "08:00 - 17:00"
-  },
-  {
-    id: 2,
-    date: new Date(2026, 0, 5),
-    name: "Pelatihan Wasit Badminton",
-    category: "Pelatihan",
-    location: "Stadion Utama",
-    level: "Daerah",
-    status: "Active",
-    time: "09:00 - 16:00"
-  },
-  {
-    id: 3,
-    date: new Date(2026, 0, 12),
-    name: "Pelatihan Wasit Sepak Bola",
-    category: "Pelatihan",
-    location: "Stadion Utama",
-    level: "Nasional",
-    status: "Active",
-    time: "09:00 - 16:00"
-  },
-  {
-    id: 4,
-    date: new Date(2026, 0, 15),
-    name: "Lomba Lari Marathon",
-    category: "Event Komunitas",
-    location: "Alun-alun Kota",
-    level: "Lokal",
-    status: "Active",
-    time: "06:00 - 12:00"
-  },
-  {
-    id: 5,
-    date: new Date(2026, 0, 20),
-    name: "Turnamen Basket Antar Klub",
-    category: "Kompetisi",
-    location: "GOR Basket",
-    level: "Regional",
-    status: "Active",
-    time: "15:00 - 21:00"
-  },
-  {
-    id: 6,
-    date: new Date(2026, 0, 25),
-    name: "Kejuaraan Renang Daerah",
-    category: "Kompetisi",
-    location: "Kolam Renang Olimpik",
-    level: "Daerah",
-    status: "Inactive",
-    time: "08:00 - 15:00"
-  },
-  {
-    id: 7,
-    date: new Date(2026, 1, 8),
-    name: "Pembukaan Musim Olahraga 2026",
-    category: "Acara",
-    location: "Stadion Utama",
-    level: "Nasional",
-    status: "Active",
-    time: "10:00 - 12:00"
-  },
-  {
-    id: 8,
-    date: new Date(2026, 1, 14),
-    name: "Workshop Pelatih Muda",
-    category: "Pelatihan",
-    location: "Gedung Olahraga",
-    level: "Regional",
-    status: "Active",
-    time: "09:00 - 17:00"
-  },
-  {
-    id: 9,
-    date: new Date(2026, 2, 8),
-    name: "Piala Walikota Sepak Bola",
-    category: "Kompetisi",
-    location: "Stadion Kota",
-    level: "Lokal",
-    status: "Active",
-    time: "14:00 - 21:00"
-  },
-  {
-    id: 10,
-    date: new Date(2026, 2, 15),
-    name: "Kejuaraan Voli Putri",
-    category: "Kompetisi",
-    location: "GOR Voli",
-    level: "Daerah",
-    status: "Active",
-    time: "08:00 - 18:00"
-  }
-];
+interface AgendaAPIEvent {
+  id: number;
+  title: string;
+  description: string | null;
+  location: string | null;
+  category: string | null;
+  level: string | null;
+  status: string;
+  startDate: string;
+  endDate: string | null;
+  isAllDay: boolean;
+}
 
-const AgendaSection: React.FC<AgendaSectionProps> = ({ eventCalendarData = defaultEventCalendarData }) => {
+interface AgendaAPIResponse {
+  data: AgendaAPIEvent[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+const AgendaSection: React.FC<AgendaSectionProps> = ({ eventCalendarData: externalEventData }) => {
+  const [eventCalendarData, setEventCalendarData] = useState<AgendaEvent[]>(externalEventData);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   const [selectedDateEvents, setSelectedDateEvents] = useState<AgendaEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(!externalEventData);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch agenda data from API if not provided
+  useEffect(() => {
+    if (externalEventData) {
+      setEventCalendarData(externalEventData);
+      return;
+    }
+
+    const fetchAgendas = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Fetch with limit to get many agenda items
+        const response = await fetch('/api/agenda?page=1&limit=100');
+        if (!response.ok) {
+          throw new Error('Failed to fetch agendas');
+        }
+
+        const data: AgendaAPIResponse = await response.json();
+
+        // Transform API data to component format
+        const transformedAgendas = data.data.map((agenda: AgendaAPIEvent) => {
+          const startDate = new Date(agenda.startDate);
+          const endDate = agenda.endDate ? new Date(agenda.endDate) : startDate;
+          
+          // Format time
+          const startHour = String(startDate.getHours()).padStart(2, '0');
+          const startMin = String(startDate.getMinutes()).padStart(2, '0');
+          const endHour = String(endDate.getHours()).padStart(2, '0');
+          const endMin = String(endDate.getMinutes()).padStart(2, '0');
+          
+          const time = agenda.isAllDay 
+            ? 'Seharian'
+            : `${startHour}:${startMin} - ${endHour}:${endMin}`;
+
+          return {
+            id: agenda.id,
+            date: startDate,
+            name: agenda.title,
+            category: agenda.category || 'Acara',
+            location: agenda.location || 'TBD',
+            level: agenda.level || 'Lokal',
+            status: agenda.status,
+            time: time,
+          };
+        });
+
+        setEventCalendarData(transformedAgendas);
+      } catch (err) {
+        console.error('Error fetching agendas:', err);
+        setError('Gagal memuat agenda');
+        // Fallback to default data on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAgendas();
+  }, [externalEventData]);
 
   const getEventsForDate = (date: Date) => {
     return eventCalendarData.filter(event => {
@@ -164,6 +148,48 @@ const AgendaSection: React.FC<AgendaSectionProps> = ({ eventCalendarData = defau
   }
   for (let i = 1; i <= daysInMonth; i++) {
     calendarDays.push(i);
+  }
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <section id="agenda" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Agenda Kegiatan
+            </h2>
+            <p className="text-xl text-gray-600">
+              Lihat jadwal lengkap event dan kompetisi olahraga daerah
+            </p>
+          </div>
+          <div className="flex items-center justify-center min-h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Handle error state
+  if (error && eventCalendarData.length === 0) {
+    return (
+      <section id="agenda" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Agenda Kegiatan
+            </h2>
+            <p className="text-xl text-gray-600">
+              Lihat jadwal lengkap event dan kompetisi olahraga daerah
+            </p>
+          </div>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+            <p className="text-red-600 text-lg">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

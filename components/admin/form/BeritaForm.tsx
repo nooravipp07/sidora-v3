@@ -119,7 +119,6 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
               }));
             }}
             disabled={loading}
-            placeholder="Judul berita yang menarik"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -134,7 +133,6 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.slug}
             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
             disabled={loading}
-            placeholder="slug-berita"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
           <p className="text-xs text-gray-500 mt-1">URL-friendly identifier untuk berita ini</p>
@@ -162,7 +160,6 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.author}
             onChange={(e) => setFormData({ ...formData, author: e.target.value })}
             disabled={loading}
-            placeholder="Nama penulis"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>

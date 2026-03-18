@@ -8,10 +8,14 @@ import { AgendaEvent } from '@/lib/agenda/types';
 const ITEMS_PER_PAGE = 10;
 
 interface AgendaResponse {
-  items: any[];
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
+  data: any[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
 }
 
 export default function AgendaPage() {
@@ -45,7 +49,7 @@ export default function AgendaPage() {
         const data: AgendaResponse = await response.json();
 
         // Transform API data to AgendaEvent format
-        const transformedAgendas = data.items.map((agenda: any) => {
+        const transformedAgendas = data.data.map((agenda: any) => {
           const startDate = new Date(agenda.startDate);
           const time = formatTime(startDate);
 

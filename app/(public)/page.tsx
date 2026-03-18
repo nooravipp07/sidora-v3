@@ -28,14 +28,6 @@ export default function Home() {
 
       {/* Gallery Section */}
       <GallerySection />
-
-      {/* Modals (if needed) */}
-      {/* {activeNews && (
-        <NewsModal 
-          news={activeNews} 
-          onClose={() => setActiveNews(null)} 
-        />
-      )} */}
     </div>
   );
 }

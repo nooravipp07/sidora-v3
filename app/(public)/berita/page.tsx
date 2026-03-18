@@ -32,10 +32,14 @@ function BeritaPageContent() {
   const page = parseInt(searchParams.get('page') || '1', 10);
 
   const [newsData, setNewsData] = useState<{
-    items: NewsItem[];
-    currentPage: number;
-    totalPages: number;
-    totalCount: number;
+    data: NewsItem[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasMore: boolean;
+    };
   } | null>(null);
 
   const [featuredNews, setFeaturedNews] = useState<NewsItem | null>(null);
@@ -94,9 +98,9 @@ function BeritaPageContent() {
   }, [page]);
 
   // Filter grid news to exclude featured on page 1
-  const gridNews = page === 1 && newsData?.items
-    ? newsData.items.filter(item => item.id !== featuredNews?.id)
-    : newsData?.items || [];
+  const gridNews = page === 1 && newsData?.data
+    ? newsData.data.filter(item => item.id !== featuredNews?.id)
+    : newsData?.data || [];
 
   return (
     <main className="min-h-screen bg-white">
@@ -144,8 +148,8 @@ function BeritaPageContent() {
             {/* Pagination */}
             {newsData && (
               <Pagination 
-                currentPage={newsData.currentPage} 
-                totalPages={newsData.totalPages}
+                currentPage={newsData.meta.page} 
+                totalPages={newsData.meta.totalPages}
                 baseUrl="/berita"
               />
             )}
