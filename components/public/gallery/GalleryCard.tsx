@@ -2,15 +2,29 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Gallery } from '@/types/gallery';
 import { X, Calendar } from 'lucide-react';
 
+interface GalleryItem {
+  id: number;
+  imageUrl: string;
+  caption?: string;
+}
+
 interface GalleryCardProps {
-  item: Gallery;
+  item: {
+    id: number;
+    title: string;
+    description?: string | null;
+    items: GalleryItem[];
+    createdAt: string;
+  };
 }
 
 export default function GalleryCard({ item }: GalleryCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Get the first image from the items array
+  const firstImage = item.items?.[0]?.imageUrl || '/images/placeholder.jpg';
 
   return (
     <>
@@ -21,17 +35,11 @@ export default function GalleryCard({ item }: GalleryCardProps) {
           onClick={() => setIsModalOpen(true)}
         >
           <Image
-            src={item.image}
+            src={firstImage}
             alt={item.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
-          {/* Category Badge */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white bg-green-600">
-              {item.category}
-            </span>
-          </div>
           {/* Overlay on hover */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <div className="text-white text-center">
@@ -49,14 +57,14 @@ export default function GalleryCard({ item }: GalleryCardProps) {
 
           {/* Description */}
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-            {item.description}
+            {item.description || 'Koleksi foto tanpa deskripsi'}
           </p>
 
           {/* Date */}
           <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-gray-200 pt-3">
             <Calendar className="w-3 h-3" />
-            <time dateTime={item.postedAt}>
-              {new Date(item.postedAt).toLocaleDateString('id-ID', {
+            <time dateTime={item.createdAt}>
+              {new Date(item.createdAt).toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'short',
                 year: '2-digit'
@@ -87,7 +95,7 @@ export default function GalleryCard({ item }: GalleryCardProps) {
             {/* Image */}
             <div className="relative w-full h-full bg-black rounded-lg overflow-hidden flex items-center justify-center">
               <Image
-                src={item.image}
+                src={firstImage}
                 alt={item.title}
                 width={1200}
                 height={800}
@@ -99,13 +107,10 @@ export default function GalleryCard({ item }: GalleryCardProps) {
             {/* Info below image */}
             <div className="bg-gray-900 text-white p-4 rounded-b-lg space-y-2">
               <h3 className="text-xl font-bold">{item.title}</h3>
-              <p className="text-gray-300">{item.description}</p>
-              <div className="flex items-center justify-between pt-2 border-t border-gray-700">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-600">
-                  {item.category}
-                </span>
-                <time dateTime={item.postedAt} className="text-sm text-gray-400">
-                  {new Date(item.postedAt).toLocaleDateString('id-ID', {
+              <p className="text-gray-300">{item.description || 'Koleksi foto tanpa deskripsi'}</p>
+              <div className="flex items-center justify-end pt-2 border-t border-gray-700">
+                <time dateTime={item.createdAt} className="text-sm text-gray-400">
+                  {new Date(item.createdAt).toLocaleDateString('id-ID', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',

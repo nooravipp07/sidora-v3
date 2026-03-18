@@ -138,3 +138,53 @@ export interface PrasaranaFilter {
   nama?: string;
   jenis?: string;
 }
+
+// FacilityRecord Types
+export interface FacilityRecord {
+  id: number;
+  desaKelurahanId: number;
+  prasaranaId: number;
+  year: number;
+  condition?: string | null;
+  ownershipStatus?: string | null; // OWNED, RENTED, SHARED
+  address?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  // Relations
+  prasarana?: Prasarana;
+  desaKelurahan?: DesaKelurahan;
+}
+
+export interface FacilityRecordCreateInput {
+  desaKelurahanId: number;
+  prasaranaId: number;
+  year: number;
+  condition?: string;
+  ownershipStatus?: string;
+  address?: string;
+  notes?: string;
+  isActive?: boolean;
+}
+
+export interface FacilityRecordUpdateInput {
+  desaKelurahanId?: number;
+  prasaranaId?: number;
+  year?: number;
+  condition?: string;
+  ownershipStatus?: string;
+  address?: string;
+  notes?: string;
+  isActive?: boolean;
+}
+
+export interface FacilityRecordFilter {
+  kecamatanId?: number;
+  desaKelurahanId?: number;
+  prasaranaId?: number;
+  year?: number;
+  isActive?: boolean;
+}

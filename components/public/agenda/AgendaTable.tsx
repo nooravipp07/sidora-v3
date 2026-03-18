@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { AgendaEvent } from '@/types/agenda';
+import { AgendaEvent } from '@/lib/agenda/types';
 import { Calendar, MapPin, Clock, Badge, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AgendaTableProps {

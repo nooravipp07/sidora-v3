@@ -137,6 +137,7 @@ model DesaKelurahan {
 
   // Relations
   kecamatan       Kecamatan @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
+  facilityRecords   FacilityRecord[]
 
   @@index([kecamatanId])
   @@map("m_desa_kelurahan")
@@ -173,6 +174,8 @@ model Prasarana {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
+
+  facilityRecords   FacilityRecord[]
 
   @@map("m_prasarana")
 }
@@ -293,4 +296,60 @@ model Visitor {
   @@index([visitedAt])
   @@index([page])
   @@map("visitors")
+}
+
+model FacilityRecord {
+  id                    Int             @id @default(autoincrement())
+  desaKelurahanId       Int         
+  prasaranaId           Int
+  year                  Int
+
+  condition             String?
+  ownershipStatus       String?            // OWNED, RENTED, SHARED
+  address               String?
+
+  notes                 String?
+  isActive              Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  createdBy             String?
+  updatedBy             String?
+
+  prasarana             Prasarana               @relation(fields: [prasaranaId], references: [id])
+  desaKelurahan         DesaKelurahan           @relation(fields: [desaKelurahanId], references: [id])
+  photos                FacilityRecordPhoto[]
+
+  @@unique([prasaranaId, year])
+  @@index([year])
+  @@index([prasaranaId])
+
+  @@map("facility_record")
+}
+
+model FacilityRecordPhoto {
+  id                Int             @id @default(autoincrement())
+  facilityRecordId  Int
+
+  fileUrl           String
+  fileName          String?
+  fileSize          Int?
+  mimeType          String?
+
+  photoType         String?
+  description       String?
+
+  takenAt           DateTime?
+  uploadedAt        DateTime    @default(now())
+  uploadedBy        String?
+
+  isPrimary         Boolean     @default(false)
+
+  latitude          Float?
+  longitude         Float?
+
+  facilityRecord    FacilityRecord @relation(fields: [facilityRecordId], references: [id])
+
+  @@index([facilityRecordId])
+
+  @@map("facility_record_photo")
 }

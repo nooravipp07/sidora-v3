@@ -128,7 +128,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             disabled={loading}
-            placeholder="Judul agenda"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -142,7 +141,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             disabled={loading}
-            placeholder="Deskripsi agenda"
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
@@ -158,7 +156,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             disabled={loading}
-            placeholder="Lokasi/Tempat agenda"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -187,7 +184,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.level}
             onChange={(e) => setFormData({ ...formData, level: e.target.value })}
             disabled={loading}
-            placeholder="Tingkat agenda"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -201,7 +197,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             disabled={loading}
-            placeholder="Kategori agenda"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -215,7 +210,6 @@ const AgendaForm: React.FC<AgendaFormProps> = ({ initialData, isEdit = false }) 
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             disabled={loading}
-            placeholder="Status agenda"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />
         </div>
