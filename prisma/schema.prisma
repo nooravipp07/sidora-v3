@@ -138,6 +138,9 @@ model DesaKelurahan {
   // Relations
   kecamatan       Kecamatan @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
   facilityRecords   FacilityRecord[]
+  equipment         Equipment[]
+  sportsGroups      SportsGroup[]
+  athletes          Athlete[]
 
   @@index([kecamatanId])
   @@map("m_desa_kelurahan")
@@ -151,6 +154,9 @@ model CabangOlahraga {
   updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?
 
+  // Relations
+  athletes        Athlete[]
+
   @@map("m_cabang_olahraga")
 }
 
@@ -162,6 +168,9 @@ model Sarana {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
+
+  // Relations
+  equipment       Equipment[]
 
   @@map("m_sarana")
 }
@@ -352,4 +361,118 @@ model FacilityRecordPhoto {
   @@index([facilityRecordId])
 
   @@map("facility_record_photo")
+}
+
+model Equipment {
+  id                  Int      @id @default(autoincrement())
+
+  desaKelurahanId     Int
+  saranaId            Int
+
+  quantity            Int      @default(0)
+  unit                String?  @db.VarChar(50)
+
+  isUsable            Boolean  @default(true)
+  isGovernmentGrant   Boolean  @default(false)
+
+  year                Int?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+
+  // Relations
+  desaKelurahan       DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sarana              Sarana        @relation(fields: [saranaId], references: [id], onDelete: Cascade)
+
+  @@index([desaKelurahanId])
+  @@index([saranaId])
+  @@index([year])
+
+  @@map("equipments")
+}
+
+model SportsGroup {
+  id                  Int      @id @default(autoincrement())
+
+  desaKelurahanId     Int
+
+  groupName           String   @db.VarChar(150)
+  leaderName          String?  @db.VarChar(150)
+
+  memberCount         Int      @default(0)
+
+  isVerified          Boolean  @default(false)
+
+  decreeNumber        String?  @db.VarChar(100) // nomor SK
+  secretariatAddress  String?  @db.VarChar(255)
+
+  year                Int?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  deletedAt           DateTime?
+
+  // Relations
+  desaKelurahan       DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+
+  @@index([desaKelurahanId])
+  @@index([year])
+
+  @@map("sports_groups")
+}
+
+model Athlete {
+  id                Int      @id @default(autoincrement())
+
+  nationalId        String   @unique @db.VarChar(20) // NIK
+  fullName          String   @db.VarChar(150)
+  birthPlace        String?  @db.VarChar(100)
+  birthDate         DateTime?
+  gender            String?  @db.VarChar(10)
+
+  desaKelurahanId   Int
+
+  fullAddress       String?
+  organization      String?  @db.VarChar(150)
+  category          String?  @db.VarChar(100)
+
+  sportId           Int?
+  photoUrl          String?  @db.VarChar(255)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  desaKelurahan     DesaKelurahan      @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sport             CabangOlahraga?    @relation(fields: [sportId], references: [id])
+  achievements      AthleteAchievement[]
+
+  @@index([desaKelurahanId])
+  @@index([sportId])
+
+  @@map("athletes")
+}
+
+model AthleteAchievement {
+  id                Int      @id @default(autoincrement())
+
+  athleteId         Int
+
+  achievementName   String   @db.VarChar(150)
+  category          String?  @db.VarChar(100)
+
+  medal             String?  @db.VarChar(20)
+  year              Int?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+
+  @@map("athlete_achievements")
 }

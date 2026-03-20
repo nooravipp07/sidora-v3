@@ -2,7 +2,7 @@
 
 import React, { FC, useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, UserCheck, UserX, RefreshCw, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
-import DataModal from '../../../../lib/admin/DataModal';
+import { useRouter } from 'next/navigation';
 
 interface PaginationMeta {
     total: number;
@@ -18,6 +18,7 @@ interface ApiResponse<T> {
 }
 
 const UserManagement: FC = () => {
+    const router = useRouter();
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState<PaginationMeta>({
@@ -28,30 +29,13 @@ const UserManagement: FC = () => {
         hasMore: false,
     });
     const [filters, setFilters] = useState<Record<string, any>>({});
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedData, setSelectedData] = useState<any>(null);
-    const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
-    const [roles, setRoles] = useState<any[]>([]);
     const [stats, setStats] = useState<any>({
         total: 0,
         active: 0,
         inactive: 0
     });
-    const [kecamatanOptions, setKecamatanOptions] = useState<any[]>([]);
-    const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
-
-    const fields = [
-        { name: 'name', label: 'Username', type: 'text' as const, required: true },
-        { name: 'namaLengkap', label: 'Nama Lengkap', type: 'text' as const, required: true },
-        { name: 'email', label: 'Email', type: 'text' as const, required: true },
-        { name: 'noTelepon', label: 'No. Telepon', type: 'text' as const, required: false },
-        { name: 'roleId', label: 'Role', type: 'select' as const, required: true, options: [] as any[] },
-        { name: 'status', label: 'Status', type: 'select' as const, required: true, options: [
-            { label: 'Aktif', value: 1 },
-            { label: 'Tidak Aktif', value: 0 }
-        ] },
-        { name: 'password', label: 'Password', type: 'text' as const, required: modalMode === 'create' }
-    ];
 
     // Fetch data
     const fetchData = async (page: number = 1, filterParams: Record<string, any> = {}) => {
@@ -91,15 +75,7 @@ const UserManagement: FC = () => {
         try {
         const response = await fetch('/api/users');
         if (response.ok) {
-            // In a real scenario, create a separate endpoint for roles
-            // For now, use hardcoded roles
-            setRoles([
-            { label: 'Superadmin', value: 1 },
-            { label: 'Admin Lembaga', value: 2 },
-            { label: 'Admin Kecamatan', value: 3 },
-            { label: 'Verifikator', value: 4 },
-            { label: 'Operator', value: 5 }
-            ]);
+            // Roles are now only used if needed
         }
         } catch (error) {
         console.error('Error fetching roles:', error);
@@ -153,26 +129,16 @@ const UserManagement: FC = () => {
 
     // Handle CRUD
     const handleCreate = () => {
-        setSelectedData(null);
-        setModalMode('create');
-        setSelectedRoleId(null);
-        setIsModalOpen(true);
-        fetchKecamatanOptions();
+        router.push('/admin/user-management/create');
     };
 
     const handleEdit = (item: any) => {
-        setSelectedData(item);
-        setModalMode('edit');
-        setSelectedRoleId(item.roleId);
-        setIsModalOpen(true);
-        fetchKecamatanOptions();
+        router.push(`/admin/user-management/${item.id}/edit`);
     };
 
     const handleView = (item: any) => {
         setSelectedData(item);
-        setModalMode('view');
-        setSelectedRoleId(item.roleId);
-        setIsModalOpen(true);
+        setIsViewModalOpen(true);
     };
 
     const handleDelete = async (id: number) => {
@@ -257,107 +223,6 @@ const UserManagement: FC = () => {
             console.error('Error resetting password:', error);
             alert('Terjadi kesalahan');
         }
-    };
-
-    const handleSaveData = async (formData: any) => {
-        try {
-        const url = modalMode === 'create' 
-            ? '/api/users'
-            : `/api/users/${selectedData.id}`;
-        
-        const method = modalMode === 'create' ? 'POST' : 'PUT';
-
-        const response = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-            fetchData(pagination.page, filters);
-            fetchStats();
-            setIsModalOpen(false);
-        } else {
-            const errorData = await response.json();
-            alert(errorData.error || 'Gagal menyimpan data');
-        }
-        } catch (error) {
-            console.error('Error saving data:', error);
-            alert('Terjadi kesalahan saat menyimpan data');
-        }
-    };
-
-    // Fetch kecamatan for LOV
-    const fetchKecamatanOptions = async () => {
-        try {
-        const response = await fetch('/api/masterdata/kecamatan?limit=999');
-        if (response.ok) {
-            const result = await response.json();
-            setKecamatanOptions(result.data);
-        }
-        } catch (error) {
-            console.error('Error fetching kecamatan options:', error);
-        }
-    };
-
-    // Get fields with role options and conditional fields
-    const getFieldsForModal = () => {
-        const baseFields = fields.map(field => {
-        if (field.name === 'roleId') {
-            return {
-            ...field,
-            options: [
-                { label: 'Superadmin', value: 1 },
-                { label: 'Admin Lembaga (KONI, NPCI, KORMI)', value: 2 },
-                { label: 'Admin Kecamatan', value: 3 },
-                { label: 'Verifikator', value: 4 },
-                { label: 'Operator', value: 5 }
-            ]
-            };
-        }
-        return field;
-        });
-
-        // Determine which role is currently selected
-        const roleId = selectedRoleId !== null ? selectedRoleId : selectedData?.roleId;
-
-        // Add conditional fields based on role
-        if (roleId === 2) {
-        // Admin Lembaga - show Lembaga field
-        const lembagaField = {
-            name: 'jenisAkun',
-            label: 'Lembaga',
-            type: 'select' as const,
-            required: true,
-            options: [
-                { label: 'KONI', value: 1 },
-                { label: 'KORMI', value: 2 },
-                { label: 'NPCI', value: 3 }
-            ]
-        };
-        
-        // Find the position to insert (after roleId)
-        const roleIdIndex = baseFields.findIndex(f => f.name === 'roleId');
-        baseFields.splice(roleIdIndex + 1, 0, lembagaField);
-        } else if (roleId === 3) {
-        // Admin Kecamatan - show Kecamatan field
-        const kecamatanField = {
-            name: 'kecamatanId',
-            label: 'Kecamatan',
-            type: 'select' as const,
-            required: true,
-            options: kecamatanOptions.map((k: any) => ({
-            label: k.nama,
-            value: k.id
-            }))
-        };
-        
-        // Find the position to insert (after roleId)
-        const roleIdIndex = baseFields.findIndex(f => f.name === 'roleId');
-        baseFields.splice(roleIdIndex + 1, 0, kecamatanField);
-        }
-
-        return baseFields;
     };
 
     return (
@@ -557,30 +422,53 @@ const UserManagement: FC = () => {
             )}
         </div>
 
-        {/* Modal */}
-        {isModalOpen && (
-            <DataModal
-            title={
-                modalMode === 'create' 
-                ? 'Tambah User Baru'
-                : modalMode === 'edit'
-                ? 'Edit User'
-                : 'Detail User'
-            }
-            fields={getFieldsForModal()}
-            data={selectedData}
-            mode={modalMode}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveData}
-            onFieldChange={(fieldName, value) => {
-                if (fieldName === 'roleId') {
-                    setSelectedRoleId(parseInt(value, 10));
-                }
-            }}
-            />
+        {/* View Modal */}
+        {isViewModalOpen && selectedData && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Detail User</h2>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-sm text-gray-600">Username</p>
+                            <p className="text-gray-900 font-medium">{selectedData.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Nama Lengkap</p>
+                            <p className="text-gray-900 font-medium">{selectedData.namaLengkap}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Email</p>
+                            <p className="text-gray-900 font-medium">{selectedData.email}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">No. Telepon</p>
+                            <p className="text-gray-900 font-medium">{selectedData.noTelepon || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Status</p>
+                            <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                                selectedData.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                                {selectedData.status === 1 ? 'Aktif' : 'Tidak Aktif'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 flex justify-end">
+                        <button
+                            onClick={() => setIsViewModalOpen(false)}
+                            className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
         )}
         </div>
     );
 };
+
 
 export default UserManagement;
