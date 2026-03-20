@@ -12,27 +12,27 @@ datasource db {
 
 // User Model
 model User {
-  id              Int         @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   name            String
-  email           String      @unique
+  email           String    @unique
   namaLengkap     String?
   noTelepon       String?
   emailVerifiedAt DateTime?
   password        String
-  rememberToken   String?     @db.VarChar(100)
+  rememberToken   String?   @db.VarChar(100)
   roleId          Int?
   jenisAkun       Int?
   kecamatanId     Int?
   desaKelurahanId Int?
-  status          Int?        @default(0)
+  status          Int?      @default(0)
   lastLogin       DateTime?
-  createdAt       DateTime?   @default(now())
-  updatedAt       DateTime?   @updatedAt
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
 
   // Relations
-  role            Role?       @relation(fields: [roleId], references: [id])
-  refreshTokens   RefreshToken[]
-  loginHistory    LoginHistory[]
+  role          Role?          @relation(fields: [roleId], references: [id])
+  refreshTokens RefreshToken[]
+  loginHistory  LoginHistory[]
 
   @@map("m_users")
 }
@@ -57,20 +57,20 @@ model Permission {
   description String?
 
   // Relations
-  roles       RolePermission[]
+  roles RolePermission[]
 
   @@map("m_permissions")
 }
 
 // Role Permission Pivot Model
 model RolePermission {
-  id           Int    @id @default(autoincrement())
+  id           Int @id @default(autoincrement())
   roleId       Int
   permissionId Int
 
   // Relations
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
   @@map("m_role_permissions")
@@ -78,44 +78,44 @@ model RolePermission {
 
 // Refresh Token Model for token rotation
 model RefreshToken {
-  id        Int     @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
-  token     String  @unique
+  token     String    @unique
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   revokedAt DateTime?
 
   // Relations
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("m_refresh_tokens")
 }
 
 // Login History Model for audit trail
 model LoginHistory {
-  id           Int          @id @default(autoincrement())
-  userId       Int
-  ipAddress    String?
-  userAgent    String?
-  loginAt      DateTime     @default(now())
-  logoutAt     DateTime?
-  status       String       @default("success") // success, failed, etc
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  ipAddress String?
+  userAgent String?
+  loginAt   DateTime  @default(now())
+  logoutAt  DateTime?
+  status    String    @default("success") // success, failed, etc
 
   // Relations
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("m_login_history")
 }
 
 // Kecamatan (District) Model
 model Kecamatan {
-  id              Int     @id @default(autoincrement())
-  nama            String
-  latitude        String?
-  longitude       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  id        Int       @id @default(autoincrement())
+  nama      String
+  latitude  String?
+  longitude String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
   desaKelurahanList DesaKelurahan[]
@@ -125,22 +125,22 @@ model Kecamatan {
 
 // Desa/Kelurahan Model
 model DesaKelurahan {
-  id              Int         @id @default(autoincrement())
-  kecamatanId     Int
-  nama            String      @db.VarChar(150)
-  tipe            String      @db.VarChar(20) // 'desa' or 'kelurahan'
-  latitude        String?     @db.VarChar(50)
-  longitude       String?     @db.VarChar(50)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  deletedAt       DateTime?
+  id          Int       @id @default(autoincrement())
+  kecamatanId Int
+  nama        String    @db.VarChar(150)
+  tipe        String    @db.VarChar(20) // 'desa' or 'kelurahan'
+  latitude    String?   @db.VarChar(50)
+  longitude   String?   @db.VarChar(50)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   // Relations
-  kecamatan       Kecamatan @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
-  facilityRecords   FacilityRecord[]
-  equipment         Equipment[]
-  sportsGroups      SportsGroup[]
-  athletes          Athlete[]
+  kecamatan       Kecamatan        @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
+  facilityRecords FacilityRecord[]
+  equipment       Equipment[]
+  sportsGroups    SportsGroup[]
+  athletes        Athlete[]
 
   @@index([kecamatanId])
   @@map("m_desa_kelurahan")
@@ -148,82 +148,82 @@ model DesaKelurahan {
 
 // Cabang Olahraga (Sport Branch) Model
 model CabangOlahraga {
-  id              Int         @id @default(autoincrement())
-  nama            String      @db.VarChar(100)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  deletedAt       DateTime?
+  id        Int       @id @default(autoincrement())
+  nama      String    @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  athletes        Athlete[]
+  athletes Athlete[]
 
   @@map("m_cabang_olahraga")
 }
 
 // Sarana (Facility) Model
 model Sarana {
-  id              Int     @id @default(autoincrement())
-  nama            String  @db.VarChar(150)
-  jenis           String? @db.VarChar(100)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  id        Int       @id @default(autoincrement())
+  nama      String    @db.VarChar(150)
+  jenis     String?   @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  equipment       Equipment[]
+  equipment Equipment[]
 
   @@map("m_sarana")
 }
 
 // Prasarana (Infrastructure) Model
 model Prasarana {
-  id              Int     @id @default(autoincrement())
-  nama            String  @db.VarChar(150)
-  jenis           String? @db.VarChar(100)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deletedAt       DateTime?
+  id        Int       @id @default(autoincrement())
+  nama      String    @db.VarChar(150)
+  jenis     String?   @db.VarChar(100)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  facilityRecords   FacilityRecord[]
+  facilityRecords FacilityRecord[]
 
   @@map("m_prasarana")
 }
 
 model News {
-  id           Int       @id @default(autoincrement())
-  title        String
-  slug         String    @unique
-  content      String
-  thumbnail    String?
-  author       String?
-  isPublished  Boolean   @default(false)
-  publishedAt  DateTime?
-  categoryId   Int?
-  views        Int       @default(0)
-  category     Category? @relation(fields: [categoryId], references: [id])
-  tags         NewsTag[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
-  
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String
+  thumbnail   String?
+  author      String?
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  categoryId  Int?
+  views       Int       @default(0)
+  category    Category? @relation(fields: [categoryId], references: [id])
+  tags        NewsTag[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
   @@map("news")
 }
 
 model Category {
-  id    Int    @id @default(autoincrement())
-  name  String
-  slug  String @unique
+  id   Int    @id @default(autoincrement())
+  name String
+  slug String @unique
 
-  news  News[]
+  news News[]
 
   @@map("categories")
 }
 
 model Tag {
-  id    Int       @id @default(autoincrement())
-  name  String
+  id   Int    @id @default(autoincrement())
+  name String
 
-  news  NewsTag[]
+  news NewsTag[]
 
   @@map("tags")
 }
@@ -232,74 +232,74 @@ model NewsTag {
   newsId Int
   tagId  Int
 
-  news   News @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([newsId, tagId])
   @@map("news_tags")
 }
 
 model Gallery {
-  id          Int            @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   description String?
 
-  items       GalleryItem[]
+  items GalleryItem[]
 
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@map("galleries")
 }
 
 model GalleryItem {
-  id         Int     @id @default(autoincrement())
-  galleryId  Int
-  imageUrl   String
-  caption    String?
+  id        Int     @id @default(autoincrement())
+  galleryId Int
+  imageUrl  String
+  caption   String?
 
-  gallery    Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("gallery_items")
 }
 
 model Agenda {
-  id          Int       @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   title       String
   description String?
   location    String?
-  category    String?   // e.g., "Kompetisi", "Pelatihan", "Event Komunitas", "Acara"
-  level       String?   // e.g., "Lokal", "Daerah", "Regional", "Nasional"
-  status      String    @default("Active") // "Active" or "Inactive"
+  category    String? // e.g., "Kompetisi", "Pelatihan", "Event Komunitas", "Acara"
+  level       String? // e.g., "Lokal", "Daerah", "Regional", "Nasional"
+  status      String  @default("Active") // "Active" or "Inactive"
 
-  startDate   DateTime 
-  endDate     DateTime?
-  isAllDay    Boolean   @default(false)
+  startDate DateTime
+  endDate   DateTime?
+  isAllDay  Boolean   @default(false)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@map("agendas")
 }
 
 // Visitor Model for tracking page views and visitor statistics
 model Visitor {
-  id              Int      @id @default(autoincrement())
-  sessionId       String   @db.VarChar(100) // Unique session identifier
-  ipAddress       String?  @db.VarChar(50)
-  userAgent       String?  @db.Text
-  page            String   @db.VarChar(255) // Page path (e.g., /berita, /galeri, /)
-  referrer        String?  @db.VarChar(255) // Referrer URL
-  visitedAt       DateTime @default(now())
-  
+  id        Int      @id @default(autoincrement())
+  sessionId String   @db.VarChar(100) // Unique session identifier
+  ipAddress String?  @db.VarChar(50)
+  userAgent String?  @db.Text
+  page      String   @db.VarChar(255) // Page path (e.g., /berita, /galeri, /)
+  referrer  String?  @db.VarChar(255) // Referrer URL
+  visitedAt DateTime @default(now())
+
   // For better analytics
-  country         String?  @db.VarChar(100)
-  city            String?  @db.VarChar(100)
-  deviceType      String?  @db.VarChar(50)  // desktop, mobile, tablet
+  country    String? @db.VarChar(100)
+  city       String? @db.VarChar(100)
+  deviceType String? @db.VarChar(50) // desktop, mobile, tablet
 
   @@index([sessionId])
   @@index([visitedAt])
@@ -308,171 +308,165 @@ model Visitor {
 }
 
 model FacilityRecord {
-  id                    Int             @id @default(autoincrement())
-  desaKelurahanId       Int         
-  prasaranaId           Int
-  year                  Int
+  id              Int @id @default(autoincrement())
+  desaKelurahanId Int
+  prasaranaId     Int
+  year            Int
 
-  condition             String?
-  ownershipStatus       String?            // OWNED, RENTED, SHARED
-  address               String?
+  condition       String?
+  ownershipStatus String? // OWNED, RENTED, SHARED
+  address         String?
 
-  notes                 String?
-  isActive              Boolean            @default(true)
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  createdBy             String?
-  updatedBy             String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+  updatedBy String?
 
-  prasarana             Prasarana               @relation(fields: [prasaranaId], references: [id])
-  desaKelurahan         DesaKelurahan           @relation(fields: [desaKelurahanId], references: [id])
-  photos                FacilityRecordPhoto[]
+  prasarana     Prasarana             @relation(fields: [prasaranaId], references: [id])
+  desaKelurahan DesaKelurahan         @relation(fields: [desaKelurahanId], references: [id])
+  photos        FacilityRecordPhoto[]
 
   @@unique([prasaranaId, year])
   @@index([year])
   @@index([prasaranaId])
-
   @@map("facility_record")
 }
 
 model FacilityRecordPhoto {
-  id                Int             @id @default(autoincrement())
-  facilityRecordId  Int
+  id               Int @id @default(autoincrement())
+  facilityRecordId Int
 
-  fileUrl           String
-  fileName          String?
-  fileSize          Int?
-  mimeType          String?
+  fileUrl  String
+  fileName String?
+  fileSize Int?
+  mimeType String?
 
-  photoType         String?
-  description       String?
+  photoType   String?
+  description String?
 
-  takenAt           DateTime?
-  uploadedAt        DateTime    @default(now())
-  uploadedBy        String?
+  takenAt    DateTime?
+  uploadedAt DateTime  @default(now())
+  uploadedBy String?
 
-  isPrimary         Boolean     @default(false)
+  isPrimary Boolean @default(false)
 
-  latitude          Float?
-  longitude         Float?
+  latitude  Float?
+  longitude Float?
 
-  facilityRecord    FacilityRecord @relation(fields: [facilityRecordId], references: [id])
+  facilityRecord FacilityRecord @relation(fields: [facilityRecordId], references: [id])
 
   @@index([facilityRecordId])
-
   @@map("facility_record_photo")
 }
 
 model Equipment {
-  id                  Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  desaKelurahanId     Int
-  saranaId            Int
+  desaKelurahanId Int
+  saranaId        Int
 
-  quantity            Int      @default(0)
-  unit                String?  @db.VarChar(50)
+  quantity Int     @default(0)
+  unit     String? @db.VarChar(50)
 
-  isUsable            Boolean  @default(true)
-  isGovernmentGrant   Boolean  @default(false)
+  isUsable          Boolean @default(true)
+  isGovernmentGrant Boolean @default(false)
 
-  year                Int?
+  year Int?
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  deletedAt           DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  desaKelurahan       DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
-  sarana              Sarana        @relation(fields: [saranaId], references: [id], onDelete: Cascade)
+  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sarana        Sarana        @relation(fields: [saranaId], references: [id], onDelete: Cascade)
 
   @@index([desaKelurahanId])
   @@index([saranaId])
   @@index([year])
-
   @@map("equipments")
 }
 
 model SportsGroup {
-  id                  Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  desaKelurahanId     Int
+  desaKelurahanId Int
 
-  groupName           String   @db.VarChar(150)
-  leaderName          String?  @db.VarChar(150)
+  groupName  String  @db.VarChar(150)
+  leaderName String? @db.VarChar(150)
 
-  memberCount         Int      @default(0)
+  memberCount Int @default(0)
 
-  isVerified          Boolean  @default(false)
+  isVerified Boolean @default(false)
 
-  decreeNumber        String?  @db.VarChar(100) // nomor SK
-  secretariatAddress  String?  @db.VarChar(255)
+  decreeNumber       String? @db.VarChar(100) // nomor SK
+  secretariatAddress String? @db.VarChar(255)
 
-  year                Int?
+  year Int?
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  deletedAt           DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  desaKelurahan       DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
 
   @@index([desaKelurahanId])
   @@index([year])
-
   @@map("sports_groups")
 }
 
 model Athlete {
-  id                Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  nationalId        String   @unique @db.VarChar(20) // NIK
-  fullName          String   @db.VarChar(150)
-  birthPlace        String?  @db.VarChar(100)
-  birthDate         DateTime?
-  gender            String?  @db.VarChar(10)
+  nationalId String    @unique @db.VarChar(20) // NIK
+  fullName   String    @db.VarChar(150)
+  birthPlace String?   @db.VarChar(100)
+  birthDate  DateTime?
+  gender     String?   @db.VarChar(10)
 
-  desaKelurahanId   Int
+  desaKelurahanId Int
 
-  fullAddress       String?
-  organization      String?  @db.VarChar(150)
-  category          String?  @db.VarChar(100)
+  fullAddress  String?
+  organization String? @db.VarChar(150)
+  category     String? @db.VarChar(100)
 
-  sportId           Int?
-  photoUrl          String?  @db.VarChar(255)
+  sportId  Int?
+  photoUrl String? @db.VarChar(255)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  deletedAt         DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  desaKelurahan     DesaKelurahan      @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
-  sport             CabangOlahraga?    @relation(fields: [sportId], references: [id])
-  achievements      AthleteAchievement[]
+  desaKelurahan DesaKelurahan        @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sport         CabangOlahraga?      @relation(fields: [sportId], references: [id])
+  achievements  AthleteAchievement[]
 
   @@index([desaKelurahanId])
   @@index([sportId])
-
   @@map("athletes")
 }
 
 model AthleteAchievement {
-  id                Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  athleteId         Int
+  athleteId Int
 
-  achievementName   String   @db.VarChar(150)
-  category          String?  @db.VarChar(100)
+  achievementName String  @db.VarChar(150)
+  category        String? @db.VarChar(100)
 
-  medal             String?  @db.VarChar(20)
-  year              Int?
+  medal String? @db.VarChar(20)
+  year  Int?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  athlete           Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@index([athleteId])
-
   @@map("athlete_achievements")
 }
