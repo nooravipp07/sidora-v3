@@ -23,7 +23,7 @@ export class AbstractRepository<T> {
 
     async findById(id: number): Promise<T | null> {
         return this.model.findUnique({
-        where: { id }
+            where: { id }
         })
     }
 

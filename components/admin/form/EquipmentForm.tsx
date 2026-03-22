@@ -297,7 +297,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ initialData, isEdit = fal
             className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
           />
           <label htmlFor="isGovernmentGrant" className="text-sm font-medium text-gray-700 cursor-pointer">
-            Bantuan Pemerintah
+            Hibah Pemerintah
           </label>
         </div>
       </div>

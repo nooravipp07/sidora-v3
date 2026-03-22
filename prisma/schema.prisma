@@ -119,6 +119,7 @@ model Kecamatan {
 
   // Relations
   desaKelurahanList DesaKelurahan[]
+  Registration      Registration[]
 
   @@map("m_kecamatan")
 }
@@ -469,4 +470,44 @@ model AthleteAchievement {
 
   @@index([athleteId])
   @@map("athlete_achievements")
+}
+
+model Registration {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  password        String
+
+  // informasi tambahan
+  nip             String
+  namaLengkap     String
+  noTelepon       String
+
+  // jenis pendaftar
+  jenisAkun       Int       // 1 = Kecamatan, 2 = Lembaga
+
+  // jika kecamatan
+  kecamatanId     Int
+
+  // jika lembaga
+  lembagaId       Int?
+
+  // status workflow
+  status          Int       // 1 = PENDING, 2 = APPROVE, 3 = REJECT
+
+  // verifikasi
+  verifiedBy      Int
+  verifiedAt      DateTime?
+
+  // alasan reject
+  rejectReason    String?
+
+  docUrl          String
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  kecamatan       Kecamatan        @relation(fields: [kecamatanId], references: [id])
+
+  @@map("registrations")
 }
