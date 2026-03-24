@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, Download, Upload, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { FacilityRecord } from '@/types/masterdata';
+import { useAuth } from '@/lib/auth/useAuth';
 
 interface PaginationMeta {
   total: number;
@@ -27,6 +28,8 @@ const Prasarana: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importingFile, setImportingFile] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  const { user, loading: authLoading, error: authError, isAuthenticated } = useAuth();
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -51,8 +54,10 @@ const Prasarana: React.FC = () => {
 
   // Fetch facility records
   useEffect(() => {
-    fetchFacilityRecords(1);
-  }, [filters]);
+    if (!authLoading && user) {
+      fetchFacilityRecords(1);
+    }
+  }, [filters, user, authLoading]);
 
   // Fetch filter options
   useEffect(() => {
@@ -107,6 +112,15 @@ const Prasarana: React.FC = () => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '10');
+
+      // 🔥 AUTO FILTER BERDASARKAN ROLE
+      if (user?.roleId === 3 && user.kecamatanId) {
+        params.append('kecamatanId', String(user.kecamatanId));
+      } else {
+        // hanya gunakan filter user kalau bukan role 3
+        if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
+      }
+
       if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
@@ -341,8 +355,15 @@ const Prasarana: React.FC = () => {
     }
   };
 
-  const filteredDesaKelurahan = filters.kecamatanId
-    ? desaKelurahanList.filter(d => d.kecamatan?.id === parseInt(filters.kecamatanId))
+  const effectiveKecamatanId =
+    user?.roleId === 3
+      ? user.kecamatanId
+      : filters.kecamatanId;
+
+  const filteredDesaKelurahan = effectiveKecamatanId
+    ? desaKelurahanList.filter(
+        d => d.kecamatan?.id === Number(effectiveKecamatanId)
+      )
     : desaKelurahanList;
 
   return (
@@ -414,12 +435,18 @@ const Prasarana: React.FC = () => {
                 Kecamatan
               </label>
               <select
-                value={filters.kecamatanId}
+                value={
+                  user?.roleId === 3
+                    ? String(user.kecamatanId)
+                    : filters.kecamatanId
+                }
                 onChange={(e) => {
-                  handleFilterChange('kecamatanId', e.target.value);
-                  // Reset desa/kelurahan when kecamatan changes
-                  setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  if (user?.roleId !== 3) {
+                    handleFilterChange('kecamatanId', e.target.value);
+                    setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  }
                 }}
+                disabled={user?.roleId === 3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua Kecamatan --</option>
@@ -439,7 +466,7 @@ const Prasarana: React.FC = () => {
               <select
                 value={filters.desaKelurahanId}
                 onChange={(e) => handleFilterChange('desaKelurahanId', e.target.value)}
-                disabled={!filters.kecamatanId}
+                disabled={!effectiveKecamatanId}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">-- Semua Desa/Kelurahan --</option>

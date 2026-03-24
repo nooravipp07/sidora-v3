@@ -258,18 +258,10 @@ export default function InfrastructureKeolahraganPage() {
 
         {/* Sports Ecosystem Dashboard Sections */}
         <div className="mt-16 space-y-12">
-          {/* Divider */}
-          <div className="border-t-2 border-gray-300 pt-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Ekosistem Atlet</h2>
-            <p className="text-gray-600">Statistik dan data atlet olahraga di berbagai cabang</p>
-          </div>
-
-          {/* Athlete Statistics */}
-          <AthleteStatsCards stats={getAthleteStats()} />
 
           {/* Divider */}
           <div className="border-t-2 border-gray-300 pt-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Pencapaian & Medali</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Prestasi Atlet</h2>
             <p className="text-gray-600">Prestasi atlet dan perolehan medali dalam berbagai kejuaraan</p>
           </div>
 
@@ -278,7 +270,7 @@ export default function InfrastructureKeolahraganPage() {
 
           {/* Divider */}
           <div className="border-t-2 border-gray-300 pt-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Manajemen Klub</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Kelompok Olahraga</h2>
             <p className="text-gray-600">Informasi klub olahraga, atlet, dan prestasi mereka</p>
           </div>
 

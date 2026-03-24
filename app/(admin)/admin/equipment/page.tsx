@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/lib/auth/useAuth';
 
 interface PaginationMeta {
   total: number;
@@ -21,6 +22,8 @@ const Equipment: React.FC = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+   const { user, loading: authLoading, error: authError, isAuthenticated } = useAuth();
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -48,8 +51,11 @@ const Equipment: React.FC = () => {
 
   // Fetch equipment data
   useEffect(() => {
-    fetchEquipments(1);
-  }, [filters]);
+    if (!authLoading && user) {
+      fetchEquipments(1);
+      console.log('Current User:', user);
+    }
+  }, [filters, user, authLoading]);
 
   // Fetch filter options
   useEffect(() => {
@@ -99,6 +105,15 @@ const Equipment: React.FC = () => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '10');
+
+      // FILTER BERDASARKAN ROLE
+      if (user?.roleId === 3 && user.kecamatanId) {
+        params.append('kecamatanId', String(user.kecamatanId));
+      } else {
+        // hanya gunakan filter user kalau bukan role 3
+        if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
+      }
+
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.saranaId) params.append('saranaId', filters.saranaId);
       if (filters.year) params.append('year', filters.year);
@@ -106,6 +121,7 @@ const Equipment: React.FC = () => {
 
       const response = await fetch(`/api/masterdata/equipment?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch equipment');
+
       const data = await response.json();
       setEquipments(data.data || []);
       setPagination(data.meta);

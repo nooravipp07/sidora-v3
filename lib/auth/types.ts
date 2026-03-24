@@ -1,11 +1,21 @@
 import { JwtPayload } from 'jsonwebtoken';
 
 export interface AuthUser {
-  id: string;
+  id: number;
   name: string;
   email: string;
+  namaLengkap: string;
+  noTelepon?: string;
   roleId: number | null;
+  kecamatanId: number | null;
   status: number | null;
+  lastLogin?: string;
+  createdAt?: string;
+  role?: {
+    id: number;
+    name: string;
+    description: string;
+  };
 }
 
 export interface AuthToken extends JwtPayload {

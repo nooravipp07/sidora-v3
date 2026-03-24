@@ -1,7 +1,31 @@
 'use client';
 
 import { useEffect, useState, useCallback, useContext, createContext, ReactNode } from 'react';
-import { AuthUser, AuthContext } from '@/lib/auth/types';
+
+interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  namaLengkap: string;
+  noTelepon?: string;
+  roleId: number | null;
+  kecamatanId: number | null;
+  status: number | null;
+  lastLogin?: string;
+  createdAt?: string;
+  role?: {
+    id: number;
+    name: string;
+    description: string;
+  };
+}
+
+interface AuthContext {
+  user: AuthUser | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
+}
 
 // Create context
 const AuthContextObj = createContext<AuthContext | undefined>(undefined);
@@ -28,8 +52,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               id: data.user.id,
               name: data.user.name,
               email: data.user.email,
+              namaLengkap: data.user.namaLengkap || '',
+              noTelepon: data.user.noTelepon,
               roleId: data.user.roleId,
+              kecamatanId: data.user.kecamatanId,
               status: data.user.status,
+              lastLogin: data.user.lastLogin,
+              createdAt: data.user.createdAt,
+              role: data.user.role,
             });
           }
         } else {

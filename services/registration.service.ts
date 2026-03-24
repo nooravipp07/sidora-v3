@@ -97,6 +97,7 @@ export const RegistrationService = {
                 password: registration.password,
                 namaLengkap: registration.namaLengkap,
                 noTelepon: registration.noTelepon,
+                roleId: 3,
                 kecamatanId: registration.kecamatanId,
                 status: 1, // Active
                 jenisAkun: registration.jenisAkun,

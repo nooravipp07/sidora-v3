@@ -27,10 +27,10 @@ const Page: FC = () => {
 	const [formData, setFormData] = useState<RegisterFormData>({
 		kecamatanId: '',
 		nip: '',
+		namaLengkap: '',
 		email: '',
 		telepon: '',
 		name: '',
-		namaLengkap: '',
 		password: '',
 		confirmPassword: '',
 		dokumenSK: null
@@ -262,6 +262,20 @@ const Page: FC = () => {
 							</div>
 						)}
 					</div>
+				</div>
+				<div>
+					<label className="block text-sm font-medium text-gray-700 mb-2">
+					Nama Lengkap *
+					</label>
+					<input
+						type="text"
+						value={formData.namaLengkap}
+						onChange={(e: ChangeEvent<HTMLInputElement>) =>
+							handleInputChange('namaLengkap', e.target.value)
+						}
+						className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+						required
+					/>
 				</div>
 				<div>
 					<label className="block text-sm font-medium text-gray-700 mb-2">

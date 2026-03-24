@@ -28,28 +28,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get full user data from database
-    // Convert userId string to number for database query
     const userId = Number(decoded.userId);
+    console.log('🔍 [auth/me] Fetching user id:', userId);
+    
+    // Fetch user with relations
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        namaLengkap: true,
-        noTelepon: true,
-        roleId: true,
-        kecamatanId: true,
-        status: true,
-        lastLogin: true,
-        createdAt: true,
-        role: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
-        },
+      include: {
+        role: true,
       },
     });
 
@@ -60,10 +46,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    // Manually construct response object to ensure all fields included
+    const responseData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      namaLengkap: user.namaLengkap,
+      noTelepon: user.noTelepon,
+      roleId: user.roleId,
+      kecamatanId: user.kecamatanId,
+      desaKelurahanId: user.desaKelurahanId,
+      status: user.status,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      role: user.role ? {
+        id: user.role.id,
+        name: user.role.name,
+        description: user.role.description,
+      } : null,
+    };
+
+    console.log('📊 [auth/me] Response kecamatanId:', responseData.kecamatanId);
+
+    const jsonResponse = {
       success: true,
-      user,
-    });
+      user: responseData,
+    };
+    
+    console.log('✅ [auth/me] Final JSON response:', JSON.stringify(jsonResponse, null, 2));
+
+    return NextResponse.json(jsonResponse);
   } catch (error) {
     console.error('Get current user error:', error);
     return NextResponse.json(
