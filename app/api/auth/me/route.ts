@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
         namaLengkap: true,
         noTelepon: true,
         roleId: true,
+        kecamatanId: true,
         status: true,
         lastLogin: true,
         createdAt: true,

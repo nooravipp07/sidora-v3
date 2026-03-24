@@ -94,8 +94,10 @@ export async function POST(request: NextRequest) {
     // Determine redirect URL based on role
     const roleRedirects: Record<number, string> = {
       1: '/admin',
-      2: '/admin/dashboard-kecamatan',
-      3: '/admin/dashboard-lembaga',
+      3: '/admin/dashboard-kecamatan',
+      4: '/admin/dashboard-lembaga',
+      5: '/admin/dashboard-lembaga',
+      6: '/admin/dashboard-lembaga',
     };
 
     const redirectUrl = user.roleId ? roleRedirects[user.roleId] : '/login';

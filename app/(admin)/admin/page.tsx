@@ -51,7 +51,6 @@ interface VerificationItem {
   noTelepon: string;
   jenisAkun: string;
   kecamatan: string;
-  desaKelurahan: string;
   status: 'Waiting For Approve' | 'Approved' | 'Rejected';
   tanggalPendaftaran: string;
 }
@@ -77,6 +76,41 @@ const Dashboard: FC = () => {
   const [visitorData, setVisitorData] = useState<VisitorStats | null>(null);
   const [isLoadingVisitors, setIsLoadingVisitors] = useState(true);
   const [visitorError, setVisitorError] = useState<string | null>(null);
+  const [verificationData, setVerificationData] = useState<VerificationItem[]>([]);
+  const [isLoadingVerification, setIsLoadingVerification] = useState(true);
+
+  // Fetch verification data from API
+  const fetchVerificationData = async () => {
+    try {
+      setIsLoadingVerification(true);
+      const response = await fetch('/api/registration?page=1&limit=10&status=1');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch verification data');
+      }
+      
+      const data = await response.json();
+      const registrations = data.data || [];
+      
+      // Map API response to VerificationItem format
+      const mappedData = registrations.map((reg: any) => ({
+        id: reg.id,
+        namaLengkap: reg.namaLengkap,
+        email: reg.email,
+        noTelepon: reg.noTelepon,
+        jenisAkun: reg.jenisAkun === 1 ? 'KONI' : reg.jenisAkun === 2 ? 'KECAMATAN' : 'USER',
+        kecamatan: reg.kecamatan?.nama || '',
+        status: 'Waiting For Approve' as const,
+        tanggalPendaftaran: new Date(reg.createdAt).toLocaleString('id-ID')
+      }));
+      
+      setVerificationData(mappedData);
+    } catch (error) {
+      console.error('Error fetching verification data:', error);
+    } finally {
+      setIsLoadingVerification(false);
+    }
+  };
 
   // Fetch visitor statistics from API
   const fetchVisitorStats = async () => {
@@ -102,6 +136,8 @@ const Dashboard: FC = () => {
   useEffect(() => {
     // Fetch visitor stats immediately on mount
     fetchVisitorStats();
+    // Fetch verification data immediately on mount
+    fetchVerificationData();
 
     // Set up interval to refetch every minute
     const interval = setInterval(fetchVisitorStats, 60000);
@@ -183,74 +219,7 @@ const Dashboard: FC = () => {
     }
   ];
 
-  const verificationData: VerificationItem[] = [
-    {
-      id: 1,
-      namaLengkap: 'aip hidayattuloh',
-      email: 'aiphidayattuloh4@gmail.com',
-      noTelepon: '081313384306',
-      jenisAkun: 'KONI',
-      kecamatan: '',
-      desaKelurahan: '',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-05-20 02:50:46'
-    },
-    {
-      id: 2,
-      namaLengkap: 'aip hidayattuloh',
-      email: 'aiphidayattuloh4@gmail.com',
-      noTelepon: '081313384306',
-      jenisAkun: 'KONI',
-      kecamatan: '',
-      desaKelurahan: '',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-06-18 07:35:12'
-    },
-    {
-      id: 3,
-      namaLengkap: 'dedi kusniadi',
-      email: 'theloner666@gmail.com',
-      noTelepon: '082117559399',
-      jenisAkun: 'KECAMATAN',
-      kecamatan: 'SOLOKANJERUK',
-      desaKelurahan: '',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-09-25 00:49:32'
-    },
-    {
-      id: 4,
-      namaLengkap: 'dedi kusniadi',
-      email: 'theloner666@gmail.com',
-      noTelepon: '082117559399',
-      jenisAkun: 'KECAMATAN',
-      kecamatan: 'SOLOKANJERUK',
-      desaKelurahan: 'PANYADAP',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-09-25 01:42:18'
-    },
-    {
-      id: 5,
-      namaLengkap: 'Kecamatan Cimenyan',
-      email: 'achiejulians79@gmail.com',
-      noTelepon: '081287972015',
-      jenisAkun: 'KECAMATAN',
-      kecamatan: 'CIMENYAN',
-      desaKelurahan: '',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-09-25 03:28:30'
-    },
-    {
-      id: 6,
-      namaLengkap: 'Nia Kurniawati',
-      email: 'Kurniawatiniania142@gmail.com',
-      noTelepon: '085624453335',
-      jenisAkun: 'KECAMATAN',
-      kecamatan: '',
-      desaKelurahan: '',
-      status: 'Waiting For Approve',
-      tanggalPendaftaran: '2025-09-25 03:56:44'
-    }
-  ];
+  // Verification data is now fetched from API in fetchVerificationData()
 
   return (
     <div className="space-y-6">
@@ -334,6 +303,15 @@ const Dashboard: FC = () => {
 
           {/* Verification Table */}
           <div className="overflow-x-auto">
+            {isLoadingVerification ? (
+              <div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : verificationData.length === 0 ? (
+              <div className="p-8 text-center text-gray-600">
+                Tidak ada pendaftaran yang menunggu persetujuan
+              </div>
+            ) : (
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b-2 border-gray-200">
@@ -342,7 +320,6 @@ const Dashboard: FC = () => {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">No. Telepon</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Jenis Akun</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Kecamatan</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tanggal Pendaftaran</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
@@ -360,7 +337,6 @@ const Dashboard: FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.kecamatan || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.desaKelurahan || '-'}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
                         {item.status === 'Waiting For Approve' ? 'Menunggu' : item.status}
@@ -377,6 +353,7 @@ const Dashboard: FC = () => {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
       </div>

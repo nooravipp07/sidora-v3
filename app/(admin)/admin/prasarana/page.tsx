@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Eye, Download, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Download, Upload, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import Swal from 'sweetalert2';
 import { FacilityRecord } from '@/types/masterdata';
 
 interface PaginationMeta {
@@ -15,6 +16,7 @@ interface PaginationMeta {
 
 const Prasarana: React.FC = () => {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [facilityRecords, setFacilityRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -22,6 +24,9 @@ const Prasarana: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importingFile, setImportingFile] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -193,6 +198,149 @@ const Prasarana: React.FC = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
+  const handleExport = async () => {
+    // Validate filters
+    if (!filters.year || !filters.kecamatanId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Filter Tidak Lengkap',
+        text: 'Silakan pilih Kecamatan dan Tahun untuk mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('year', filters.year);
+      params.append('kecamatanId', filters.kecamatanId);
+
+      const response = await fetch(`/api/facility-records/export?${params.toString()}`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Gagal mengekspor data');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prasarana_${filters.year}_${new Date().getTime()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data berhasil diekspor ke Excel',
+        confirmButtonColor: '#3B82F6'
+      });
+    } catch (err) {
+      console.error('Export error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Mengekspor',
+        text: err instanceof Error ? err.message : 'Terjadi kesalahan saat mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    // Validate filters
+    if (!filters.year || !filters.kecamatanId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Filter Tidak Lengkap',
+        text: 'Silakan pilih Kecamatan dan Tahun sebelum mengimpor data',
+        confirmButtonColor: '#3B82F6'
+      });
+      return;
+    }
+    setIsImportModalOpen(true);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Format File Salah',
+        text: 'File harus berformat .xlsx atau .xls',
+        confirmButtonColor: '#3B82F6'
+      });
+      return;
+    }
+
+    setImportingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('createdBy', 'Admin'); // You might want to get actual user
+
+      const response = await fetch('/api/facility-records/import', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal mengimpor data');
+      }
+
+      // Show result
+      if (result.failed > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Import Selesai dengan Peringatan',
+          html: `<div class="text-left">
+            <p><strong>Berhasil:</strong> ${result.success} data</p>
+            <p><strong>Gagal:</strong> ${result.failed} data</p>
+            ${result.errors.length > 0 ? `<details class="mt-2">
+              <summary class="cursor-pointer font-medium">Lihat Error</summary>
+              <pre class="text-xs mt-2 bg-gray-100 p-2 rounded whitespace-pre-wrap">${result.errors.map((e: any) => `Baris ${e.row}: ${e.error}`).join('\n')}</pre>
+            </details>` : ''}
+          </div>`,
+          confirmButtonColor: '#3B82F6'
+        });
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'Import Berhasil',
+          text: `${result.success} data berhasil diimpor`,
+          confirmButtonColor: '#3B82F6'
+        });
+      }
+
+      setIsImportModalOpen(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      
+      // Refresh data
+      fetchFacilityRecords(1);
+    } catch (err) {
+      console.error('Import error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Mengimpor',
+        text: err instanceof Error ? err.message : 'Terjadi kesalahan saat mengimpor data',
+        confirmButtonColor: '#3B82F6'
+      });
+    } finally {
+      setImportingFile(false);
+    }
+  };
+
   const filteredDesaKelurahan = filters.kecamatanId
     ? desaKelurahanList.filter(d => d.kecamatan?.id === parseInt(filters.kecamatanId))
     : desaKelurahanList;
@@ -231,10 +379,28 @@ const Prasarana: React.FC = () => {
           <Filter className="w-4 h-4 mr-2" />
           {showFilters ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
         </button>
-        <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+        <button 
+          onClick={handleExport}
+          disabled={exporting || !filters.year || !filters.kecamatanId}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Download className="w-4 h-4 mr-2" />
-          Export Excel
+          {exporting ? 'Mengekspor...' : 'Export Excel'}
         </button>
+        <button
+          onClick={handleImportClick}
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Import Excel
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
       </div>
 
       {/* Filter Section */}
@@ -330,16 +496,16 @@ const Prasarana: React.FC = () => {
             </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prasarana</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desa/Kelurahan</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kecamatan</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Prasarana</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kondisi</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -499,6 +665,67 @@ const Prasarana: React.FC = () => {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div className="px-6 py-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-bold text-gray-900">Import Data Prasarana</h2>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="px-6 py-6 space-y-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Format File</p>
+                <p className="text-sm text-gray-600 mb-4">File harus berformat .xlsx atau .xls dengan kolom: Tahun, Prasarana, Desa/Kelurahan</p>
+              </div>
+              <div>
+                <label className="block">
+                  <div className="flex items-center justify-center w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <div className="text-center">
+                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-700">Klik untuk memilih file</p>
+                      <p className="text-xs text-gray-500">atau drag & drop</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleFileSelect}
+                      disabled={importingFile}
+                      className="hidden"
+                    />
+                  </div>
+                </label>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                <p className="text-xs text-blue-700"><strong>Catatan:</strong> Pastikan kolom Tahun, Prasarana, dan Desa/Kelurahan sudah diisi</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-6 py-4 border-t flex justify-end gap-2">
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                disabled={importingFile}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importingFile}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {importingFile ? 'Mengimpor...' : 'Pilih File'}
               </button>
             </div>
           </div>

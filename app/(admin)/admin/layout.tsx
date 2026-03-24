@@ -51,9 +51,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     { id: 'sarana', label: 'Sarana', icon: Building2, href: '/admin/equipment' },
     { id: 'prasarana', label: 'Prasarana', icon: Hammer, href: '/admin/prasarana' },
     { id: 'kelompok-olahraga', label: 'Kelompok Olahraga', icon: Users, href: '/admin/sports-group' },
-    { id: 'athlete', label: 'Data Atlet', icon: UserCheck, href: '/admin/athlete' },
-    { id: 'olahraga-prestasi', label: 'Olahraga Prestasi', icon: Users, href: '/admin/olahraga-prestasi' },
-    { id: 'olahraga-masyarakat', label: 'Olahraga Masyarakat', icon: Users, href: '/admin/olahraga-masyarakat' },
+    { id: 'athlete', label: 'Prestasi Atlet', icon: UserCheck, href: '/admin/athlete' },
     { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
     { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
     { id: 'user-management', label: 'User Management', icon: Users, href: '/admin/user-management' },
@@ -72,23 +70,21 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     }
 
     // Role 2: Admin - Kecamatan
-    if (roleId === 2) {
+    if (roleId === 3) {
       return allMenuItems.filter(item => [
         'dashboard-kecamatan',
         'sarana',
         'prasarana',
-        'equipment',
         'kelompok-olahraga',
         'athlete',
       ].includes(item.id));
     }
 
     // Role 3: Admin - Lembaga (KONI, NPCI dna BAPOPSI)
-    if (roleId === 3) {
+    if (roleId === 4) {
       return allMenuItems.filter(item => [
         'dashboard-lembaga',
-        'olahraga-prestasi',
-        'olahraga-masyarakat'
+        'athlete'
       ].includes(item.id));
     }
 

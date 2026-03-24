@@ -1,8 +1,8 @@
 'use client';
 
-import { FC, useState, FormEvent, ChangeEvent } from 'react';
+import { FC, useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, ArrowLeft, Eye, EyeOff, Check } from 'lucide-react';
+import { Upload, ArrowLeft, Eye, EyeOff, Check, Search } from 'lucide-react';
 
 interface RegisterFormData {
 	kecamatanId: string;
@@ -14,6 +14,11 @@ interface RegisterFormData {
 	password: string;
 	confirmPassword: string;
 	dokumenSK: File | null;
+}
+
+interface Kecamatan {
+	id: string;
+	nama: string;
 }
 
 const Page: FC = () => {
@@ -37,6 +42,13 @@ const Page: FC = () => {
 	// 👁️ state password
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+	// 🔍 state kecamatan
+	const [kecamatanList, setKecamatanList] = useState<Kecamatan[]>([]);
+	const [kecamatanSearch, setKecamatanSearch] = useState('');
+	const [filteredKecamatan, setFilteredKecamatan] = useState<Kecamatan[]>([]);
+	const [showKecamatanDropdown, setShowKecamatanDropdown] = useState(false);
+	const [loadingKecamatan, setLoadingKecamatan] = useState(false);
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -97,6 +109,45 @@ const Page: FC = () => {
 
 	const handleBackClick = () => {
 		router.push('/');
+	};
+
+	// Fetch kecamatan data
+	useEffect(() => {
+		const fetchKecamatan = async () => {
+			try {
+				setLoadingKecamatan(true);
+				const res = await fetch('/api/masterdata/kecamatan?limit=100');
+				if (!res.ok) throw new Error('Failed to fetch kecamatan');
+				const response = await res.json();
+				const kecamatanData = response.data || response;
+				setKecamatanList(kecamatanData);
+				setFilteredKecamatan(kecamatanData);
+			} catch (error) {
+				console.error('Error fetching kecamatan:', error);
+			} finally {
+				setLoadingKecamatan(false);
+			}
+		};
+
+		fetchKecamatan();
+	}, []);
+
+	// Live search filtering
+	useEffect(() => {
+		if (kecamatanSearch.trim() === '') {
+			setFilteredKecamatan(kecamatanList);
+		} else {
+			const filtered = kecamatanList.filter(k =>
+				k.nama.toLowerCase().includes(kecamatanSearch.toLowerCase())
+			);
+			setFilteredKecamatan(filtered);
+		}
+	}, [kecamatanSearch, kecamatanList]);
+
+	const handleKecamatanSelect = (kecamatan: Kecamatan) => {
+		setFormData({ ...formData, kecamatanId: kecamatan.id });
+		setKecamatanSearch(kecamatan.nama);
+		setShowKecamatanDropdown(false);
 	};
 
 	if (isSubmitted) {
@@ -168,19 +219,49 @@ const Page: FC = () => {
 			<form onSubmit={handleSubmit} className="space-y-6">
 
 				<div className="grid md:grid-cols-2 gap-6">
-				<div>
+				<div className="relative">
 					<label className="block text-sm font-medium text-gray-700 mb-2">
 					Kecamatan *
 					</label>
-					<input
-						type="text"
-						value={formData.kecamatanId}
-						onChange={(e: ChangeEvent<HTMLInputElement>) =>
-							handleInputChange('kecamatanId', e.target.value)
-						}
-						className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-						required
-					/>
+					<div className="relative">
+						<div className="flex items-center gap-2 w-full px-4 py-3 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-green-500 bg-white">
+							<Search size={18} className="text-gray-400" />
+							<input
+								type="text"
+								placeholder="Cari kecamatan..."
+								value={kecamatanSearch}
+								onChange={(e) => setKecamatanSearch(e.target.value)}
+								onFocus={() => setShowKecamatanDropdown(true)}
+								className="flex-1 outline-none bg-transparent"
+								required={!formData.kecamatanId}
+							/>
+						</div>
+
+						{showKecamatanDropdown && (
+							<div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto">
+								{loadingKecamatan ? (
+									<div className="p-4 text-center text-gray-500">
+										Loading...
+									</div>
+								) : filteredKecamatan.length > 0 ? (
+									filteredKecamatan.map((kecamatan) => (
+										<button
+											key={kecamatan.id}
+											type="button"
+											onClick={() => handleKecamatanSelect(kecamatan)}
+											className="w-full text-left px-4 py-3 hover:bg-green-50 border-b border-gray-200 last:border-b-0 transition-colors"
+										>
+											<span className="text-gray-900">{kecamatan.nama}</span>
+										</button>
+									))
+								) : (
+									<div className="p-4 text-center text-gray-500">
+										Tidak ada kecamatan yang cocok
+									</div>
+								)}
+							</div>
+						)}
+					</div>
 				</div>
 				<div>
 					<label className="block text-sm font-medium text-gray-700 mb-2">

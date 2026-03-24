@@ -147,5 +147,168 @@ export const FacilityRecordService = {
         return prisma.facilityRecord.delete({
             where: { id }
         });
+    },
+
+    /**
+     * Export facility records to Excel format
+     * Filters by year and kecamatan
+     */
+    async exportToExcel(filter: { year?: number; kecamatanId?: number }) {
+        const where: any = {};
+
+        if (filter.kecamatanId !== undefined) {
+            const desaList = await prisma.desaKelurahan.findMany({
+                where: { kecamatanId: filter.kecamatanId },
+                select: { id: true }
+            });
+            const desaIds = desaList.map(d => d.id);
+            if (desaIds.length > 0) {
+                where.desaKelurahanId = { in: desaIds };
+            } else {
+                return [];
+            }
+        }
+
+        if (filter.year !== undefined) {
+            where.year = filter.year;
+        }
+
+        // Get all records without pagination
+        const records = await prisma.facilityRecord.findMany({
+            where,
+            include: {
+                prasarana: {
+                    select: { nama: true }
+                },
+                desaKelurahan: {
+                    select: { 
+                        nama: true,
+                        kecamatan: {
+                            select: { nama: true }
+                        }
+                    }
+                }
+            },
+            orderBy: [{ year: 'desc' }, { prasarana: { nama: 'asc' } }]
+        });
+
+        // Transform data for Excel export
+        const excelData = records.map(record => ({
+            'No': record.id,
+            'Tahun': record.year,
+            'Prasarana': record.prasarana.nama,
+            'Desa/Kelurahan': record.desaKelurahan.nama,
+            'Kecamatan': record.desaKelurahan.kecamatan.nama,
+            'Kondisi': record.condition || '-',
+            'Status Kepemilikan': record.ownershipStatus || '-',
+            'Alamat': record.address || '-',
+            'Catatan': record.notes || '-',
+            'Aktif': record.isActive ? 'Ya' : 'Tidak',
+            'Dibuat Oleh': record.createdBy || '-',
+            'Diperbarui Oleh': record.updatedBy || '-',
+            'Tanggal Dibuat': new Date(record.createdAt).toLocaleDateString('id-ID'),
+            'Tanggal Diperbarui': new Date(record.updatedAt).toLocaleDateString('id-ID')
+        }));
+
+        return excelData;
+    },
+
+    /**
+     * Import facility records from Excel data
+     */
+    async importFromExcel(
+        data: any[],
+        createdBy?: string
+    ): Promise<{
+        success: number;
+        failed: number;
+        errors: Array<{ row: number; error: string }>;
+        created: any[];
+    }> {
+        const errors: Array<{ row: number; error: string }> = [];
+        const created: any[] = [];
+        let successCount = 0;
+        let failedCount = 0;
+
+        for (let i = 0; i < data.length; i++) {
+            const row = i + 2; // Excel row number (1-indexed, +1 for header)
+            const item = data[i];
+
+            try {
+                // Validate required fields
+                if (!item['Tahun'] || !item['Prasarana'] || !item['Desa/Kelurahan']) {
+                    throw new Error('Tahun, Prasarana, dan Desa/Kelurahan harus diisi');
+                }
+
+                // Find prasarana by name
+                const prasarana = await prisma.prasarana.findFirst({
+                    where: { nama: item['Prasarana'].toString().trim() }
+                });
+
+                if (!prasarana) {
+                    throw new Error(`Prasarana "${item['Prasarana']}" tidak ditemukan`);
+                }
+
+                // Find desa/kelurahan by name
+                const desaKelurahan = await prisma.desaKelurahan.findFirst({
+                    where: { nama: item['Desa/Kelurahan'].toString().trim() }
+                });
+
+                if (!desaKelurahan) {
+                    throw new Error(`Desa/Kelurahan "${item['Desa/Kelurahan']}" tidak ditemukan`);
+                }
+
+                // Check if record already exists
+                const existingRecord = await prisma.facilityRecord.findFirst({
+                    where: {
+                        prasaranaId: prasarana.id,
+                        year: parseInt(item['Tahun'], 10),
+                        desaKelurahanId: desaKelurahan.id
+                    }
+                });
+
+                if (existingRecord) {
+                    // Update existing record
+                    const updated = await this.update(existingRecord.id, {
+                        condition: item['Kondisi'] || undefined,
+                        ownershipStatus: item['Status Kepemilikan'] || undefined,
+                        address: item['Alamat'] || undefined,
+                        notes: item['Catatan'] || undefined,
+                        isActive: item['Aktif'] === 'Ya' || item['Aktif'] === true,
+                        updatedBy: createdBy
+                    });
+                    created.push(updated);
+                } else {
+                    // Create new record
+                    const newRecord = await this.create({
+                        desaKelurahanId: desaKelurahan.id,
+                        prasaranaId: prasarana.id,
+                        year: parseInt(item['Tahun'], 10),
+                        condition: item['Kondisi'] || undefined,
+                        ownershipStatus: item['Status Kepemilikan'] || undefined,
+                        address: item['Alamat'] || undefined,
+                        notes: item['Catatan'] || undefined,
+                        isActive: item['Aktif'] === 'Ya' || item['Aktif'] === true,
+                        createdBy: createdBy
+                    });
+                    created.push(newRecord);
+                }
+
+                successCount++;
+            } catch (error) {
+                failedCount++;
+                errors.push({
+                    row,
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                });
+            }
+        }
+
+        return {
+            success: successCount,
+            failed: failedCount,
+            errors,
+            created
+        };
     }
 };

@@ -446,14 +446,17 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Organisasi
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.organization}
                 onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
                 disabled={loading}
-                placeholder="Masukkan organisasi"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              />
+              >
+                <option value="">-- Pilih Organisasi --</option>
+                <option value="KONI">KONI</option>
+                <option value="NPCI">NPCI</option>
+                <option value="KORMI">KORMI</option>
+              </select>
             </div>
 
             <div>
@@ -481,14 +484,17 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Kategori
             </label>
-            <input
-              type="text"
+            <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               disabled={loading}
-              placeholder="Contoh: Muda, Senior, dll"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-            />
+            >
+              <option value="">-- Pilih Kategori --</option>
+              <option value="ATLET">ATLET</option>
+              <option value="PELATIH">PELATIH</option>
+              <option value="WASIT">WASIT - JURI</option>
+            </select>
           </div>
 
           {/* Photo Upload */}

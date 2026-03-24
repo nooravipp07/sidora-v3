@@ -153,7 +153,7 @@ const GallerySection: React.FC<GallerySectionProps> = ({ galleryData: externalGa
         <div className="flex justify-between items-center mb-12">
           <div>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Berita Terkini
+              Galeri Kegiatan
             </h2>
             <p className="text-xl text-gray-600">
               Update terbaru dari dunia olahraga daerah
