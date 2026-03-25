@@ -29,7 +29,7 @@ const Prasarana: React.FC = () => {
   const [importingFile, setImportingFile] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const { user, loading: authLoading, error: authError, isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
 
   // Filter state
   const [filters, setFilters] = useState({

@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FacilityRecordService } from '@/services/facility-record.service';
 import { importFromExcel, parseExcelWithValidation } from '@/lib/excel-utils';
 
-export const config = {
-    api: {
-        bodyParser: {
-            sizeLimit: '10mb',
-        },
-    },
-};
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,10 +10,11 @@ export async function POST(request: NextRequest) {
         const file = formData.get('file') as File;
 
         if (!file) {
-            return NextResponse.json(
-                { error: 'File harus diunggah' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'File harus diunggah' }, { status: 400 });
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            return NextResponse.json({ error: 'Ukuran file maksimal 10MB' }, { status: 400 });
         }
 
         if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {

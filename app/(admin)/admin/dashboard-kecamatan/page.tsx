@@ -33,7 +33,7 @@ interface DashboardData {
 
 export default function DashboardKecamatanPage() {
   const router = useRouter();
-  const { user, loading: authLoading, error: authError, isAuthenticated } = useAuth();
+  const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
   
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);

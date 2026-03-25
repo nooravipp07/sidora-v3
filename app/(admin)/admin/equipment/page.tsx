@@ -23,7 +23,7 @@ const Equipment: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-   const { user, loading: authLoading, error: authError, isAuthenticated } = useAuth();
+   const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
 
   // Filter state
   const [filters, setFilters] = useState({

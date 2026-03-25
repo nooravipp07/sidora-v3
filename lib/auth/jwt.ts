@@ -7,7 +7,7 @@ const JWT_EXPIRY: string = process.env.JWT_EXPIRY || '7d';
 /**
  * Generate JWT token
  */
-export function generateToken(user: AuthUser): string {
+export function generateToken(user: any): string {
   const payload = {
     userId: String(user.id), // Convert BigInt to string for JWT serialization
     email: user.email,
