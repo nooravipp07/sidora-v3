@@ -51,18 +51,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
 
       const data = await response.json();
       
-      // Build full URL for production
-      let imageUrl = data.url;
-      if (typeof window !== 'undefined') {
-        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (!isDev && !imageUrl.startsWith('http')) {
-          // In production, ensure full URL is used
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-          imageUrl = `${baseUrl}${imageUrl}`;
-        }
-      }
-      
-      onChange(imageUrl);
+      // Use relative URL - getImageUrl utility handles dev/production fallback logic
+      // Never add domain URL here, let image-utils handle it
+      onChange(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload gagal');
       console.error('Upload error:', err);

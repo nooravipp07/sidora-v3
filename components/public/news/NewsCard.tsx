@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Calendar } from 'lucide-react';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface NewsItem {
   id: number;
@@ -23,7 +23,23 @@ interface NewsCardProps {
 }
 
 const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
+  const [imageError, setImageError] = useState(false);
   const hasImage = news.thumbnail && news.thumbnail.trim();
+  
+  // Normalize image URL - support both local and remote URLs (same as GalleryCard)
+  const normalizeImageUrl = (url?: string) => {
+    if (!url) return '';
+    
+    // If it's already a remote URL (starts with http/https), use as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // Use getImageUrl utility which handles production API fallback
+    return getImageUrl(url);
+  };
+
+  const imageUrl = imageError ? getImageErrorSrc() : normalizeImageUrl(news.thumbnail);
   
   return (
     <Link href={`/berita/${news.slug}`} prefetch={false}>
@@ -31,12 +47,14 @@ const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
         {/* Image Container */}
         <div className="relative h-48 bg-gray-200 overflow-hidden">
           {hasImage ? (
-            <Image
-              src={news.thumbnail}
+            <img
+              src={imageUrl}
               alt={news.title}
-              fill
-              className="object-cover group-hover:scale-110 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+              onError={(e) => {
+                setImageError(true);
+                e.currentTarget.src = getImageErrorSrc();
+              }}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
