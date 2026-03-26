@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface NewsItem {
   id: number;
@@ -38,6 +39,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
   const [activeTab, setActiveTab] = useState<'popular' | 'trending' | 'latest'>('latest');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // Fetch featured news data
   useEffect(() => {
@@ -143,13 +145,22 @@ const NewsSection: React.FC<NewsSectionProps> = ({
           </div>
         ) : currentNews.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentNews.map((news) => (
+            {currentNews.map((news) => {
+              const imageUrl = imageErrors[news.id] ? getImageErrorSrc() : getImageUrl(news.thumbnail) || 'https://via.placeholder.com/400x300?text=No+Image';
+              
+              return (
               <div key={news.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow border border-gray-100 group">
                 <div className="relative overflow-hidden">
                   <img 
-                    src={news.thumbnail || 'https://via.placeholder.com/400x300?text=No+Image'}
+                    src={imageUrl}
                     alt={news.title}
                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={() => {
+                      setImageErrors(prev => ({
+                        ...prev,
+                        [news.id]: true
+                      }));
+                    }}
                   />
                   <div className="absolute top-4 left-4">
                     <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
@@ -180,7 +191,8 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">
