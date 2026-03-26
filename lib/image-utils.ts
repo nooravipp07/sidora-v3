@@ -10,18 +10,28 @@ export function getImageUrl(imagePath: string): string {
     return imagePath;
   }
 
-  // Check if we're in browser
+  // If base64 (data URL), return as-is
+  if (imagePath.startsWith('data:')) {
+    return imagePath;
+  }
+
+  // For relative paths like /uploads/berita/file.png
+  // Try direct access first, fallback to API route if needed
+  
   if (typeof window !== 'undefined') {
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     if (!isDev) {
-      // Production: ensure full URL
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      return `${baseUrl}${imagePath}`;
+      // Production: Use API fallback route for serving files
+      // This ensures files work even if not served as static
+      if (imagePath.startsWith('/uploads/')) {
+        // Use /api/files route which handles multiple storage locations
+        return `/api/files/${imagePath.replace(/^\/uploads\//, '')}`;
+      }
     }
   }
 
-  // Development or server-side: return relative path
+  // Development or system-side: return relative path
   return imagePath;
 }
 

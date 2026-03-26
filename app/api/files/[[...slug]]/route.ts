@@ -29,43 +29,51 @@ export async function GET(
       );
     }
 
-    // Determine upload directory
-    let uploadsDir: string;
-    
-    if (process.env.NODE_ENV === 'production') {
-      uploadsDir = process.env.UPLOADS_DIR || join('/tmp', 'uploads');
-    } else {
-      uploadsDir = join(process.cwd(), 'public', 'uploads');
+    // Try multiple locations
+    const possiblePaths = [
+      process.env.UPLOADS_DIR ? join(process.env.UPLOADS_DIR, filePath) : null,
+      join('/app/public/uploads', filePath),
+      join(process.cwd(), 'public', 'uploads', filePath),
+      join('/tmp/uploads', filePath),
+    ].filter(Boolean) as string[];
+
+    let foundPath: string | null = null;
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        foundPath = path;
+        break;
+      }
     }
 
-    const fullPath = join(uploadsDir, filePath);
-
-    // Verify file exists
-    if (!existsSync(fullPath)) {
+    if (!foundPath) {
+      console.error(`File not found at any location: ${filePath}`);
       return NextResponse.json(
-        { error: 'File not found' },
+        { error: 'File not found', tried: possiblePaths },
         { status: 404 }
       );
     }
 
     // Read file
-    const fileBuffer = await readFile(fullPath);
+    const fileBuffer = await readFile(foundPath);
     const ext = filePath.split('.').pop()?.toLowerCase() || 'bin';
     const contentType = contentTypes[ext as keyof typeof contentTypes] || 'application/octet-stream';
 
-    // Return file with proper headers
+    console.log(`Serving file from: ${foundPath}`);
+
+    // Return file with proper headers for caching
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Content-Length': fileBuffer.length.toString(),
+        'Access-Control-Allow-Origin': '*', // Allow cross-origin
       },
     });
   } catch (error) {
     console.error('File serving error:', error);
     return NextResponse.json(
-      { error: 'Failed to serve file' },
+      { error: error instanceof Error ? error.message : 'Failed to serve file' },
       { status: 500 }
     );
   }

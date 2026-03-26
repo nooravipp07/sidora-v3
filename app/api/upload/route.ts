@@ -3,6 +3,84 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+// Utility function to save file locally
+async function saveFileLocally(file: File, filename: string): Promise<{ url: string; local: true } | null> {
+  try {
+    let uploadsDir: string;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, prefer /app/public (deployed to server root)
+      // Fallback to /public in same directory
+      const paths = [
+        process.env.UPLOADS_DIR,
+        '/app/public/uploads/berita',
+        join(process.cwd(), 'public', 'uploads', 'berita'),
+        '/tmp/uploads/berita', // Last resort (ephemeral)
+      ].filter(Boolean) as string[];
+
+      let foundPath = '';
+      for (const path of paths) {
+        try {
+          if (!existsSync(path)) {
+            await mkdir(path, { recursive: true });
+          }
+          foundPath = path;
+          console.log(`Using upload path: ${path}`);
+          break;
+        } catch (e) {
+          console.error(`Failed to use path ${path}:`, e);
+          continue;
+        }
+      }
+
+      if (!foundPath) {
+        console.error('No writable upload directory found');
+        return null;
+      }
+      uploadsDir = foundPath;
+    } else {
+      // Development - always use project's /public folder
+      uploadsDir = join(process.cwd(), 'public', 'uploads', 'berita');
+      if (!existsSync(uploadsDir)) {
+        await mkdir(uploadsDir, { recursive: true });
+      }
+    }
+
+    const filepath = join(uploadsDir, filename);
+    const buffer = await file.arrayBuffer();
+    await writeFile(filepath, Buffer.from(buffer));
+
+    // Build URL - always use relative path for static served files
+    const url = `/uploads/berita/${filename}`;
+
+    console.log(`File saved to ${filepath}`);
+    console.log(`File URL: ${url}`);
+
+    return { url, local: true };
+  } catch (error) {
+    console.error('Local file save error:', error);
+    return null;
+  }
+}
+
+// Utility function to save to database as base64 (fallback)
+async function saveFileToDatabase(file: File, filename: string): Promise<{ url: string; local: false } | null> {
+  try {
+    const buffer = await file.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString('base64');
+    const mimeType = file.type;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+    
+    // Note: This is limited by database column size
+    // Make sure your schema supports this (use LONGBLOB or similar)
+    console.log(`File stored as base64 (size: ${dataUrl.length} bytes)`);
+    return { url: dataUrl, local: false };
+  } catch (error) {
+    console.error('Database save error:', error);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -31,62 +109,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine upload directory based on environment
-    // For production: use /app/public or /tmp
-    // For development: use project's /public
-    let uploadsDir: string;
-    
-    if (process.env.NODE_ENV === 'production') {
-      // Try container's public path first, then /tmp
-      uploadsDir = process.env.UPLOADS_DIR || join('/', 'app', 'public', 'uploads', 'berita');
-      
-      // If /app/public doesn't exist, use /tmp
-      try {
-        if (!existsSync(join(uploadsDir, '..'))) {
-          uploadsDir = join('/tmp', 'uploads', 'berita');
-        }
-      } catch (e) {
-        uploadsDir = join('/tmp', 'uploads', 'berita');
-      }
-    } else {
-      // Development: use project's public folder
-      uploadsDir = join(process.cwd(), 'public', 'uploads', 'berita');
-    }
-
-    // Create uploads directory if it doesn't exist
-    try {
-      if (!existsSync(uploadsDir)) {
-        await mkdir(uploadsDir, { recursive: true });
-      }
-    } catch (mkdirError) {
-      console.error('Failed to create uploads directory:', mkdirError);
-      // Fallback to /tmp if primary location fails
-      if (uploadsDir !== join('/tmp', 'uploads', 'berita')) {
-        uploadsDir = join('/tmp', 'uploads', 'berita');
-        await mkdir(uploadsDir, { recursive: true });
-      }
-    }
-
     // Generate unique filename
     const timestamp = Date.now();
     const ext = file.name.split('.').pop();
     const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`;
-    const filepath = join(uploadsDir, filename);
 
-    // Convert file to buffer and write
-    const buffer = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(buffer));
+    // Try local storage first
+    const localResult = await saveFileLocally(file, filename);
+    if (localResult) {
+      return NextResponse.json(localResult, { status: 201 });
+    }
 
-    // Return public URL
-    // In production, adjust domain based on environment variable
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-    const url = baseUrl 
-      ? `${baseUrl}/uploads/berita/${filename}`
-      : `/uploads/berita/${filename}`;
+    // Fallback: save to database as base64 if local fails
+    console.warn('Local storage failed, using database fallback');
+    const dbResult = await saveFileToDatabase(file, filename);
+    if (dbResult) {
+      return NextResponse.json(dbResult, { status: 201 });
+    }
 
-    console.log(`File uploaded successfully: ${url}`);
-
-    return NextResponse.json({ url }, { status: 201 });
+    return NextResponse.json(
+      { error: 'Failed to save file (no storage available)' },
+      { status: 500 }
+    );
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
