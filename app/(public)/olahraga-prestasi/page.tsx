@@ -175,10 +175,6 @@ export default function OlahragaPrestasi() {
                 Data atlet, pelatih, dan wasit dari organisasi KONI dan NPCI
               </p>
             </div>
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
           </div>
         </div>
       </div>
@@ -186,57 +182,63 @@ export default function OlahragaPrestasi() {
       {/* Content Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Summary Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          {/* KONI Stats */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">KONI - Total</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.koni.total}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">KONI - Atlet</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">{stats.koni.athletes}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* KONI Card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">KONI</h2>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">Total</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.koni.total}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Atlet</p>
+                <p className="text-xl font-semibold text-green-600">{stats.koni.athletes}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Pelatih</p>
+                <p className="text-xl font-semibold text-blue-600">{stats.koni.coaches}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Wasit/Juri</p>
+                <p className="text-xl font-semibold text-purple-600">{stats.koni.referees}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Prestasi</p>
+                <p className="text-xl font-semibold text-yellow-600">{stats.koni.achievements}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">KONI - Pelatih</p>
-            <p className="text-3xl font-bold text-blue-600 mt-1">{stats.koni.coaches}</p>
-          </div>
+          {/* NPCI Card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">NPCI</h2>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">Total</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.npci.total}</p>
+            </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">KONI - Wasit/Juri</p>
-            <p className="text-3xl font-bold text-purple-600 mt-1">{stats.koni.referees}</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">KONI - Prestasi</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-1">{stats.koni.achievements}</p>
-          </div>
-
-          {/* NPCI Stats */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">NPCI - Total</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.npci.total}</p>
-          </div>
-          
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">NPCI - Atlet</p>
-            <p className="text-3xl font-bold text-green-600 mt-1">{stats.npci.athletes}</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">NPCI - Pelatih</p>
-            <p className="text-3xl font-bold text-blue-600 mt-1">{stats.npci.coaches}</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">NPCI - Wasit/Juri</p>
-            <p className="text-3xl font-bold text-purple-600 mt-1">{stats.npci.referees}</p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-600 font-medium">NPCI - Prestasi</p>
-            <p className="text-3xl font-bold text-yellow-600 mt-1">{stats.npci.achievements}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Atlet</p>
+                <p className="text-xl font-semibold text-green-600">{stats.npci.athletes}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Pelatih</p>
+                <p className="text-xl font-semibold text-blue-600">{stats.npci.coaches}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Wasit/Juri</p>
+                <p className="text-xl font-semibold text-purple-600">{stats.npci.referees}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Prestasi</p>
+                <p className="text-xl font-semibold text-yellow-600">{stats.npci.achievements}</p>
+              </div>
+            </div>
           </div>
         </div>
 

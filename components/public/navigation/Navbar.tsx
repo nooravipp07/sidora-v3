@@ -23,7 +23,7 @@ const defaultNavLinks: NavLink[] = [
   { href: '/', label: 'Home' },
   { href: '/infrastruktur-keolahragaan', label: 'Infrastruktur Keolahragaan' },
   { href: '/olahraga-prestasi', label: 'Olahraga Prestasi' },
-  { href: '/olahraga-masyarakat', label: 'Olahraga Masyarakat' },
+  // { href: '/olahraga-masyarakat', label: 'Olahraga Masyarakat' },
   { href: '/berita', label: 'Berita' },
   { href: '/galeri', label: 'Galeri' },
   { href: '/agenda', label: 'Agenda' },
