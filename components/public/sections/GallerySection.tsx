@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface GalleryItem {
   id: number;
@@ -44,6 +45,7 @@ const GallerySection: React.FC<GallerySectionProps> = ({ galleryData: externalGa
   const [currentGallerySlide, setCurrentGallerySlide] = useState(0);
   const [isLoading, setIsLoading] = useState(!externalGalleryData);
   const [error, setError] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
 
   // Fetch gallery data from API if not provided
   useEffect(() => {
@@ -176,16 +178,25 @@ const GallerySection: React.FC<GallerySectionProps> = ({ galleryData: externalGa
                   transform: `translateX(calc(-${currentGallerySlide} * (100% / 1 + (${currentGallerySlide === 0 ? 0 : 1} * 16px / 1))))`,
                 }}
               >
-                {galleryData.map((item) => (
+                {galleryData.map((item) => {
+                  const imageUrl = imageErrors[item.id] ? getImageErrorSrc() : getImageUrl(item.image) || 'https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400';
+                  
+                  return (
                   <div
                     key={item.id}
                     className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3"
                   >
                     <div className="relative h-72 sm:h-80 md:h-96 rounded-xl overflow-hidden shadow-lg group">
                       <img
-                        src={item.image}
+                        src={imageUrl}
                         alt={item.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => {
+                          setImageErrors(prev => ({
+                            ...prev,
+                            [item.id]: true
+                          }));
+                        }}
                       />
                       {/* Dark Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -208,7 +219,8 @@ const GallerySection: React.FC<GallerySectionProps> = ({ galleryData: externalGa
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Navigation Controls */}
