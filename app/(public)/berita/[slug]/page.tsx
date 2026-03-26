@@ -5,6 +5,7 @@ import { ChevronLeft, Calendar, User, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { DetailArticleTracker } from '@/components/public/news/DetailArticleTracker';
 import { ArticleContentRenderer } from '@/components/public/news/ArticleContentRenderer';
+import { FeaturedImage } from '@/components/public/news/FeaturedImage';
 import { getImageUrl } from '@/lib/image-utils';
 import { prisma } from '@/lib/prisma';
 
@@ -146,15 +147,7 @@ export default async function BeritaDetailPage({ params }: PageProps) {
         </h1>
 
         {/* Featured Image */}
-        {news.thumbnail && (
-          <div className="relative w-full h-96 md:h-[500px] rounded-2xl overflow-hidden mb-8 md:mb-12 shadow-lg">
-            <img
-              src={getImageUrl(news.thumbnail)}
-              alt={news.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <FeaturedImage thumbnail={news.thumbnail} title={news.title} />
 
         {/* Article Content */}
         <div className="prose prose-sm md:prose-base max-w-none mb-12">
