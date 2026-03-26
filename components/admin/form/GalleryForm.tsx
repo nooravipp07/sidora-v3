@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowLeft, Save, Loader, Trash2, Plus } from 'lucide-react';
 import ImageUpload from '@/components/admin/form/ImageUpload';
 import { Gallery, GalleryItem } from '@/types/gallery';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface GalleryFormProps {
   initialData?: Gallery;
@@ -313,11 +314,11 @@ const GalleryForm: React.FC<GalleryFormProps> = ({ initialData, isEdit = false }
                     <div className="relative w-full h-40 bg-gray-200">
                       {item.imageUrl ? (
                         <img
-                          src={item.imageUrl}
+                          src={getImageUrl(item.imageUrl)}
                           alt={item.caption || 'Gallery item'}
                           className="w-full h-40 object-cover"
                           onError={(e) => {
-                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3EImage Not Found%3C/text%3E%3C/svg%3E';
+                            e.currentTarget.src = getImageErrorSrc();
                           }}
                         />
                       ) : (

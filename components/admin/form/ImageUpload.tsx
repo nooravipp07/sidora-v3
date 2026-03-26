@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface ImageUploadProps {
   value: string;
@@ -49,7 +50,19 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
       }
 
       const data = await response.json();
-      onChange(data.url);
+      
+      // Build full URL for production
+      let imageUrl = data.url;
+      if (typeof window !== 'undefined') {
+        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isDev && !imageUrl.startsWith('http')) {
+          // In production, ensure full URL is used
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+          imageUrl = `${baseUrl}${imageUrl}`;
+        }
+      }
+      
+      onChange(imageUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload gagal');
       console.error('Upload error:', err);
@@ -71,11 +84,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
       {value && (
         <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden group">
           <img
-            src={value}
+            src={getImageUrl(value)}
             alt="Image preview"
             className="w-full h-48 object-cover"
             onError={(e) => {
-              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3EImage Not Found%3C/text%3E%3C/svg%3E';
+              e.currentTarget.src = getImageErrorSrc();
             }}
           />
           <button

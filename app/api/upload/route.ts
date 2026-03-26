@@ -31,10 +31,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine upload directory based on environment
+    // For production: use /app/public or /tmp
+    // For development: use project's /public
+    let uploadsDir: string;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Try container's public path first, then /tmp
+      uploadsDir = process.env.UPLOADS_DIR || join('/', 'app', 'public', 'uploads', 'berita');
+      
+      // If /app/public doesn't exist, use /tmp
+      try {
+        if (!existsSync(join(uploadsDir, '..'))) {
+          uploadsDir = join('/tmp', 'uploads', 'berita');
+        }
+      } catch (e) {
+        uploadsDir = join('/tmp', 'uploads', 'berita');
+      }
+    } else {
+      // Development: use project's public folder
+      uploadsDir = join(process.cwd(), 'public', 'uploads', 'berita');
+    }
+
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'berita');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
+    try {
+      if (!existsSync(uploadsDir)) {
+        await mkdir(uploadsDir, { recursive: true });
+      }
+    } catch (mkdirError) {
+      console.error('Failed to create uploads directory:', mkdirError);
+      // Fallback to /tmp if primary location fails
+      if (uploadsDir !== join('/tmp', 'uploads', 'berita')) {
+        uploadsDir = join('/tmp', 'uploads', 'berita');
+        await mkdir(uploadsDir, { recursive: true });
+      }
     }
 
     // Generate unique filename
@@ -48,13 +78,19 @@ export async function POST(request: NextRequest) {
     await writeFile(filepath, Buffer.from(buffer));
 
     // Return public URL
-    const url = `/uploads/berita/${filename}`;
+    // In production, adjust domain based on environment variable
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const url = baseUrl 
+      ? `${baseUrl}/uploads/berita/${filename}`
+      : `/uploads/berita/${filename}`;
+
+    console.log(`File uploaded successfully: ${url}`);
 
     return NextResponse.json({ url }, { status: 201 });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: error instanceof Error ? error.message : 'Failed to upload image' },
       { status: 500 }
     );
   }
