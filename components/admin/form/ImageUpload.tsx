@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Image from 'next/image';
 import { Upload, X } from 'lucide-react';
 
 interface ImageUploadProps {
@@ -71,11 +70,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
       {/* Preview */}
       {value && (
         <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden group">
-          <Image
+          <img
             src={value}
-            alt="Thumbnail preview"
-            fill
-            className="object-cover"
+            alt="Image preview"
+            className="w-full h-48 object-cover"
+            onError={(e) => {
+              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3EImage Not Found%3C/text%3E%3C/svg%3E';
+            }}
           />
           <button
             onClick={handleRemove}

@@ -14,9 +14,21 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'via.placeholder.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'sidorav3.cloud',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'http',
+        hostname: '127.0.0.1',
+      },
     ],
-    // Support local images from public folder
-    unoptimized: process.env.NODE_ENV === 'development' ? false : false,
+    // Disable optimization in development for local files
+    unoptimized: process.env.NODE_ENV === 'development' ? true : false,
   },
 };
 
