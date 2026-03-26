@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Bold,
   Italic,
@@ -20,10 +20,30 @@ interface RichTextEditorProps {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, disabled = false }) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
-  const executeCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    updateContent();
+  // Initialize content on mount and when value changes from outside
+  useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value;
+    }
+  }, [value]);
+
+  const executeCommand = (command: string, val?: string) => {
+    try {
+      editorRef.current?.focus();
+      // Ensure selection is in the editor
+      const selection = window.getSelection();
+      if (selection && editorRef.current?.contains(selection.anchorNode || null)) {
+        document.execCommand(command, false, val);
+      } else {
+        // If no selection, put cursor at end
+        editorRef.current?.focus();
+        document.execCommand('selectAll', false);
+        document.execCommand(command, false, val);
+      }
+      updateContent();
+    } catch (error) {
+      console.error('Command failed:', error);
+    }
   };
 
   const updateContent = () => {
@@ -39,8 +59,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, disabl
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const text = e.clipboardData.getData('text/plain');
-    document.execCommand('insertText', false, text);
-    updateContent();
+    try {
+      document.execCommand('insertText', false, text);
+      updateContent();
+    } catch (error) {
+      console.error('Paste failed:', error);
+    }
   };
 
   return (
@@ -141,12 +165,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, disabl
         suppressContentEditableWarning
         onInput={handleInput}
         onPaste={handlePaste}
-        className="min-h-[300px] p-4 focus:outline-none prose prose-sm max-w-none overflow-y-auto"
+        className="min-h-[300px] p-4 focus:outline-none prose prose-sm max-w-none overflow-y-auto text-left"
         style={{
           whiteSpace: 'pre-wrap',
           wordWrap: 'break-word',
+          direction: 'ltr',
+          textAlign: 'left',
         }}
-        dangerouslySetInnerHTML={{ __html: value }}
       />
     </div>
   );

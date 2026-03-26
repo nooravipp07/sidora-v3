@@ -22,9 +22,82 @@ interface GalleryCardProps {
 
 export default function GalleryCard({ item }: GalleryCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   // Get the first image from the items array
-  const firstImage = item.items?.[0]?.imageUrl || '/images/placeholder.jpg';
+  const rawImageUrl = item.items?.[0]?.imageUrl;
+  const defaultImage = 'https://images.pexels.com/photos/863988/pexels-photo-863988.jpeg?auto=compress&cs=tinysrgb&w=400';
+  
+  // Normalize image URL - support both local and remote URLs
+  const getImageUrl = (url?: string) => {
+    if (!url) return defaultImage;
+    
+    // If it's already a remote URL (starts with http/https), use as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If it's a local path but doesn't start with /, add it
+    if (!url.startsWith('/')) {
+      return `/${url}`;
+    }
+    
+    return url;
+  };
+  
+  // Parse date safely
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    
+    try {
+      // Try parsing as ISO string or standard date format
+      const date = new Date(dateStr);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      
+      return date;
+    } catch {
+      return null;
+    }
+  };
+  
+  // Format date for display
+  const formatDateShort = (dateStr: string) => {
+    const date = parseDate(dateStr);
+    if (!date) return 'Tanggal tidak diketahui';
+    
+    try {
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: '2-digit'
+      });
+    } catch {
+      return 'Tanggal tidak diketahui';
+    }
+  };
+  
+  // Format date for modal
+  const formatDateLong = (dateStr: string) => {
+    const date = parseDate(dateStr);
+    if (!date) return 'Tanggal tidak diketahui';
+    
+    try {
+      return date.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Tanggal tidak diketahui';
+    }
+  };
+  
+  const firstImage = imageError ? defaultImage : getImageUrl(rawImageUrl) || defaultImage;
 
   return (
     <>
@@ -34,12 +107,26 @@ export default function GalleryCard({ item }: GalleryCardProps) {
           className="relative h-56 bg-gray-200 overflow-hidden"
           onClick={() => setIsModalOpen(true)}
         >
-          <Image
-            src={firstImage}
-            alt={item.title}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
-          />
+          {imageError ? (
+            // Fallback: Regular img tag if Next Image fails
+            <img
+              src={firstImage}
+              alt={item.title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              loading="lazy"
+            />
+          ) : (
+            // Primary: Next.js Image component
+            <Image
+              src={firstImage}
+              alt={item.title}
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={false}
+              onError={() => setImageError(true)}
+            />
+          )}
           {/* Overlay on hover */}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
             <div className="text-white text-center">
@@ -64,11 +151,7 @@ export default function GalleryCard({ item }: GalleryCardProps) {
           <div className="flex items-center gap-2 text-xs text-gray-500 border-t border-gray-200 pt-3">
             <Calendar className="w-3 h-3" />
             <time dateTime={item.createdAt}>
-              {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: '2-digit'
-              })}
+              {formatDateShort(item.createdAt)}
             </time>
           </div>
         </div>
@@ -94,14 +177,26 @@ export default function GalleryCard({ item }: GalleryCardProps) {
 
             {/* Image */}
             <div className="relative w-full h-full bg-black rounded-lg overflow-hidden flex items-center justify-center">
-              <Image
-                src={firstImage}
-                alt={item.title}
-                width={1200}
-                height={800}
-                className="object-contain"
-                priority
-              />
+              {imageError ? (
+                // Fallback: Regular img tag
+                <img
+                  src={firstImage}
+                  alt={item.title}
+                  className="max-w-full max-h-full object-contain"
+                  loading="lazy"
+                />
+              ) : (
+                // Primary: Next.js Image component
+                <Image
+                  src={firstImage}
+                  alt={item.title}
+                  width={1200}
+                  height={800}
+                  className="object-contain"
+                  priority
+                  onError={() => setImageError(true)}
+                />
+              )}
             </div>
 
             {/* Info below image */}
@@ -110,12 +205,7 @@ export default function GalleryCard({ item }: GalleryCardProps) {
               <p className="text-gray-300">{item.description || 'Koleksi foto tanpa deskripsi'}</p>
               <div className="flex items-center justify-end pt-2 border-t border-gray-700">
                 <time dateTime={item.createdAt} className="text-sm text-gray-400">
-                  {new Date(item.createdAt).toLocaleDateString('id-ID', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  {formatDateLong(item.createdAt)}
                 </time>
               </div>
             </div>

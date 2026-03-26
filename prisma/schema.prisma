@@ -194,7 +194,7 @@ model News {
   id          Int       @id @default(autoincrement())
   title       String
   slug        String    @unique
-  content     String
+  content     String    @db.LongText
   thumbnail   String?
   author      String?
   isPublished Boolean   @default(false)

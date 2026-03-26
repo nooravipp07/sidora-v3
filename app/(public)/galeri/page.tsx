@@ -35,7 +35,7 @@ function GaleriPageContent() {
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get('page') || '1', 10);
 
-  const [galleries, setGalleries] = useState<any[]>([]);
+  const [galleries, setGalleries] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
@@ -59,18 +59,12 @@ function GaleriPageContent() {
 
         // Transform gallery data with items
         const transformedGalleries = data.data.map((gallery: GalleryItem) => {
-          // Get first image from items as thumbnail
-          const thumbnail = gallery.items?.[0]?.imageUrl || '/placeholder-gallery.jpg';
-          const allImages = gallery.items || [];
-
           return {
-            id: gallery.id.toString(),
+            id: gallery.id,
             title: gallery.title,
             description: gallery.description || '',
-            image: thumbnail,
-            category: 'Gallery',
-            postedAt: new Date(gallery.createdAt).toLocaleDateString('id-ID'),
-            allImages: allImages, // Include all images for detail view
+            items: gallery.items || [],  // Keep array structure for GalleryCard
+            createdAt: gallery.createdAt,  // Keep raw date for GalleryCard
           };
         });
 

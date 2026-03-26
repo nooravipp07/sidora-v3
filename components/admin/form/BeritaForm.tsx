@@ -16,6 +16,7 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEdit);
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     slug: initialData?.slug || '',
@@ -24,6 +25,17 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
     author: initialData?.author || '',
     isPublished: initialData?.isPublished || false,
   });
+
+  // Helper function to generate slug from title
+  const generateSlugFromTitle = (title: string): string => {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,8 +126,8 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
               setFormData(prev => ({
                 ...prev,
                 title: newTitle,
-                // Auto-generate slug only if it's empty
-                slug: prev.slug || newTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+                // Auto-generate slug only if user hasn't manually edited it
+                slug: slugManuallyEdited ? prev.slug : generateSlugFromTitle(newTitle),
               }));
             }}
             disabled={loading}
@@ -131,7 +143,10 @@ const BeritaForm: React.FC<BeritaFormProps> = ({ initialData, isEdit = false }) 
           <input
             type="text"
             value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, slug: e.target.value });
+              setSlugManuallyEdited(true);
+            }}
             disabled={loading}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           />

@@ -15,6 +15,8 @@ const nextConfig = {
         hostname: 'via.placeholder.com',
       },
     ],
+    // Support local images from public folder
+    unoptimized: process.env.NODE_ENV === 'development' ? false : false,
   },
 };
 

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ChevronLeft, Calendar, User, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { DetailArticleTracker } from '@/components/public/news/DetailArticleTracker';
+import { ArticleContentRenderer } from '@/components/public/news/ArticleContentRenderer';
 import { prisma } from '@/lib/prisma';
 
 interface PageProps {
@@ -71,6 +72,17 @@ export async function generateStaticParams() {
 
 export const dynamicParams = true;
 
+// Helper function for consistent date formatting
+function formatDateIndonesian(date: Date): string {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  };
+  return new Date(date).toLocaleDateString('id-ID', options);
+}
+
 export default async function BeritaDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const news = await getNewsBySlug(slug);
@@ -113,12 +125,7 @@ export default async function BeritaDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
             <time dateTime={news.publishedAt?.toISOString()}>
-              {news.publishedAt?.toLocaleDateString('id-ID', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              {news.publishedAt ? formatDateIndonesian(news.publishedAt) : 'Tanpa tanggal'}
             </time>
           </div>
           {news.author && (
@@ -153,12 +160,7 @@ export default async function BeritaDetailPage({ params }: PageProps) {
 
         {/* Article Content */}
         <div className="prose prose-sm md:prose-base max-w-none mb-12">
-          <div
-            className="text-gray-700 leading-relaxed"
-            dangerouslySetInnerHTML={{
-              __html: news.content
-            }}
-          />
+          <ArticleContentRenderer content={news.content} />
         </div>
 
         {/* Article Footer */}
