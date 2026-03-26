@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import { getImageUrl, getImageErrorSrc } from '@/lib/image-utils';
 
 interface NewsItem {
   id: number;
@@ -24,7 +24,9 @@ interface HeadlineNewsProps {
 }
 
 const HeadlineNews: React.FC<HeadlineNewsProps> = ({ news }) => {
+  const [imageError, setImageError] = useState(false);
   const hasImage = news.thumbnail && news.thumbnail.trim();
+  const imageUrl = imageError ? getImageErrorSrc() : getImageUrl(news.thumbnail);
   
   return (
     <Link href={`/berita/${news.slug}`} prefetch={false}>
@@ -33,13 +35,11 @@ const HeadlineNews: React.FC<HeadlineNewsProps> = ({ news }) => {
         <div className="relative h-[400px] sm:h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
           {hasImage ? (
             <>
-              <Image
-                src={news.thumbnail}
+              <img
+                src={imageUrl}
                 alt={news.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 768px) 100vw, 100vw"
-                priority
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                onError={() => setImageError(true)}
               />
               {/* Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

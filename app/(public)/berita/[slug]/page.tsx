@@ -1,11 +1,11 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronLeft, Calendar, User, Eye } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { DetailArticleTracker } from '@/components/public/news/DetailArticleTracker';
 import { ArticleContentRenderer } from '@/components/public/news/ArticleContentRenderer';
+import { getImageUrl } from '@/lib/image-utils';
 import { prisma } from '@/lib/prisma';
 
 interface PageProps {
@@ -148,12 +148,10 @@ export default async function BeritaDetailPage({ params }: PageProps) {
         {/* Featured Image */}
         {news.thumbnail && (
           <div className="relative w-full h-96 md:h-[500px] rounded-2xl overflow-hidden mb-8 md:mb-12 shadow-lg">
-            <Image
-              src={news.thumbnail}
+            <img
+              src={getImageUrl(news.thumbnail)}
               alt={news.title}
-              fill
-              className="object-cover"
-              priority
+              className="w-full h-full object-cover"
             />
           </div>
         )}
@@ -233,12 +231,10 @@ async function RelatedArticlesSection({ currentNewsId }: RelatedArticleProps) {
               >
                 <div className="relative h-40 overflow-hidden bg-gray-200">
                   {item.thumbnail && item.thumbnail.trim() ? (
-                    <Image
-                      src={item.thumbnail}
+                    <img
+                      src={getImageUrl(item.thumbnail)}
                       alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="w-full h-40 object-cover group-hover:scale-110 transition-transform"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
