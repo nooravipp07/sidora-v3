@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 interface FormData {
   email: string;
@@ -116,10 +116,22 @@ const LoginPage = () => {
     }
   };
 
+  const handleBackClick = () => {
+		router.push('/');
+	};
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Card */}
+        <button
+			onClick={handleBackClick}
+			className="absolute top-6 left-6 flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+			aria-label="Go back home"
+		>
+			<ArrowLeft size={20} />
+			<span className="text-sm font-medium">Kembali</span>
+		</button>
         <div className="bg-white rounded-lg shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
@@ -218,7 +230,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 rounded-lg transition flex items-center justify-center gap-2"
+              className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold"
             >
               {isLoading ? (
                 <>
