@@ -49,6 +49,9 @@ export default function DashboardMap({ districts }: DashboardMapProps) {
     const container = document.getElementById('map-container');
     if (!container) return;
 
+    // cast ke any
+    const leafletContainer = container as any;
+
     // Clean up previous map instance properly
     if (map) {
       try {
@@ -62,8 +65,8 @@ export default function DashboardMap({ districts }: DashboardMapProps) {
     }
 
     // Check if Leaflet map is already attached to container
-    if (container._leaflet_id) {
-      delete container._leaflet_id;
+    if (leafletContainer._leaflet_id) {
+      delete leafletContainer._leaflet_id;
     }
 
     // Prepare districts: use real coordinates if available, otherwise generate grid positions
