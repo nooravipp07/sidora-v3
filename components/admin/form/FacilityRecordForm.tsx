@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader, Trash2, Plus } from 'lucide-react';
 import ImageUpload from '@/components/admin/form/ImageUpload';
 import { FacilityRecord } from '@/types/masterdata';
+import { getImageUrl } from '@/lib/image-utils';
 
 interface FacilityRecordFormProps {
   initialData?: FacilityRecord;
@@ -33,6 +34,12 @@ interface FacilityRecordPhoto {
   uploadedAt: string;
 }
 
+interface PendingPhoto {
+  id: string;
+  fileUrl: string;
+  description: string;
+}
+
 const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -42,6 +49,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
   const [desaKelurahanList, setDesaKelurahanList] = useState<DesaKelurahan[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [photos, setPhotos] = useState<FacilityRecordPhoto[]>([]);
+  const [pendingPhotos, setPendingPhotos] = useState<PendingPhoto[]>([]);
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [newPhotoDescription, setNewPhotoDescription] = useState('');
   const [loadingPhotos, setLoadingPhotos] = useState(false);
@@ -105,6 +113,28 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
     }
   }, [isEdit, initialData?.id]);
 
+  const handleAddPendingPhoto = () => {
+    if (!newPhotoUrl.trim()) {
+      setError('Foto URL tidak boleh kosong');
+      return;
+    }
+
+    const pendingPhoto: PendingPhoto = {
+      id: Date.now().toString(),
+      fileUrl: newPhotoUrl,
+      description: newPhotoDescription.trim(),
+    };
+
+    setPendingPhotos([pendingPhoto, ...pendingPhotos]);
+    setNewPhotoUrl('');
+    setNewPhotoDescription('');
+    setSuccess('Foto ditambahkan ke daftar pengunggahan');
+  };
+
+  const handleRemovePendingPhoto = (photoId: string) => {
+    setPendingPhotos(pendingPhotos.filter(photo => photo.id !== photoId));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -131,19 +161,29 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
       const url = isEdit ? `/api/facility-records/${initialData?.id}` : '/api/facility-records';
       const method = isEdit ? 'PUT' : 'POST';
 
+      const requestBody: any = {
+        desaKelurahanId: parseInt(formData.desaKelurahanId as string),
+        prasaranaId: parseInt(formData.prasaranaId as string),
+        year: formData.year,
+        condition: formData.condition.trim() || null,
+        ownershipStatus: formData.ownershipStatus || null,
+        address: formData.address.trim() || null,
+        notes: formData.notes.trim() || null,
+        isActive: formData.isActive,
+      };
+
+      // Include pending photos in the request (for new records)
+      if (!isEdit && pendingPhotos.length > 0) {
+        requestBody.photos = pendingPhotos.map(photo => ({
+          fileUrl: photo.fileUrl,
+          description: photo.description || null,
+        }));
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          desaKelurahanId: parseInt(formData.desaKelurahanId as string),
-          prasaranaId: parseInt(formData.prasaranaId as string),
-          year: formData.year,
-          condition: formData.condition.trim() || null,
-          ownershipStatus: formData.ownershipStatus || null,
-          address: formData.address.trim() || null,
-          notes: formData.notes.trim() || null,
-          isActive: formData.isActive,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -170,9 +210,14 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
       return;
     }
 
+    if (!isEdit || !initialData?.id) {
+      setError('Dapat hanya menambah foto ke record yang sudah ada');
+      return;
+    }
+
     try {
       setLoadingPhotos(true);
-      const response = await fetch(`/api/facility-records/${initialData?.id}/photos`, {
+      const response = await fetch(`/api/facility-records/${initialData.id}/photos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -201,8 +246,12 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
   const handleRemovePhoto = async (photoId: number) => {
     if (!confirm('Yakin ingin menghapus foto ini?')) return;
 
+    if (!isEdit || !initialData?.id) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/facility-records/${initialData?.id}/photos/${photoId}`, {
+      const response = await fetch(`/api/facility-records/${initialData.id}/photos/${photoId}`, {
         method: 'DELETE',
       });
 
@@ -244,7 +293,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
               {isEdit ? 'Edit Prasarana' : 'Tambah Prasarana Baru'}
             </h1>
             <p className="text-gray-600 text-sm mt-1">
-              {isEdit ? 'Ubah data prasarana' : 'Tambah data prasarana baru'}
+              {isEdit ? 'Ubah data prasarana' : 'Tambah data prasarana baru dan upload foto'}
             </p>
           </div>
         </div>
@@ -254,7 +303,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50"
         >
           {loading && <Loader className="w-4 h-4 animate-spin" />}
-          {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Data'}
+          {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Simpan & Unggah Foto'}
         </button>
       </div>
 
@@ -265,164 +314,168 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-        {/* Prasarana Selection */}
+      {/* Success Message */}
+      {success && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+          {success}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
+        {/* SECTION: Info Dasar Prasarana */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Prasarana <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.prasaranaId}
-            onChange={(e) => setFormData({ ...formData, prasaranaId: e.target.value })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          >
-            <option value="">-- Pilih Prasarana --</option>
-            {prasaranaList.map((prasarana) => (
-              <option key={prasarana.id} value={prasarana.id}>
-                {prasarana.nama}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Desa/Kelurahan Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Desa/Kelurahan <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.desaKelurahanId}
-            onChange={(e) => setFormData({ ...formData, desaKelurahanId: e.target.value })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          >
-            <option value="">-- Pilih Desa/Kelurahan --</option>
-            {desaKelurahanList.map((desa) => (
-              <option key={desa.id} value={desa.id}>
-                {desa.kecamatan?.nama} - {desa.nama}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Year Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tahun <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.year}
-            onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Alamat
-          </label>
-          <input
-            type="text"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          />
-        </div>
-
-        {/* Condition */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Kondisi
-          </label>
-          <select
-            value={formData.condition}
-            onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          >
-            <option value="">-- Pilih Kondisi --</option>
-            <option value="Baik">Baik</option>
-            <option value="Cukup">Cukup</option>
-            <option value="Rusak Ringan">Rusak Ringan</option>
-            <option value="Rusak Berat">Rusak Berat</option>
-          </select>
-        </div>
-
-        {/* Ownership Status */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Status Kepemilikan
-          </label>
-          <select
-            value={formData.ownershipStatus}
-            onChange={(e) => setFormData({ ...formData, ownershipStatus: e.target.value })}
-            disabled={loading}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          >
-            <option value="OWNED">Milik Sendiri</option>
-            <option value="RENTED">Sewa</option>
-            <option value="SHARED">Bersama</option>
-          </select>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Catatan
-          </label>
-          <textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            disabled={loading}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-            placeholder="Masukkan catatan tambahan..."
-          />
-        </div>
-
-        {/* Active Status */}
-        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-          <input
-            type="checkbox"
-            id="isActive"
-            checked={formData.isActive}
-            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            disabled={loading}
-            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
-            Aktif
-          </label>
-        </div>
-      </div>
-    </form>
-
-    {/* Photo Management Section - only show if editing */}
-    {isEdit && initialData && (
-      <div className="mt-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Kelola Foto</h2>
-
-          {/* Success Message */}
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-              {success}
+          <h2 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b">Info Dasar Prasarana</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Prasarana Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prasarana <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.prasaranaId}
+                onChange={(e) => setFormData({ ...formData, prasaranaId: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">-- Pilih Prasarana --</option>
+                {prasaranaList.map((prasarana) => (
+                  <option key={prasarana.id} value={prasarana.id}>
+                    {prasarana.nama}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
 
+            {/* Desa/Kelurahan Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Desa/Kelurahan <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.desaKelurahanId}
+                onChange={(e) => setFormData({ ...formData, desaKelurahanId: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">-- Pilih Desa/Kelurahan --</option>
+                {desaKelurahanList.map((desa) => (
+                  <option key={desa.id} value={desa.id}>
+                    {desa.kecamatan?.nama} - {desa.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Year Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tahun <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Condition */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kondisi
+              </label>
+              <select
+                value={formData.condition}
+                onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">-- Pilih Kondisi --</option>
+                <option value="Baik">Baik</option>
+                <option value="Cukup">Cukup</option>
+                <option value="Rusak Ringan">Rusak Ringan</option>
+                <option value="Rusak Berat">Rusak Berat</option>
+              </select>
+            </div>
+
+            {/* Ownership Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status Kepemilikan
+              </label>
+              <select
+                value={formData.ownershipStatus}
+                onChange={(e) => setFormData({ ...formData, ownershipStatus: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="OWNED">Milik Sendiri</option>
+                <option value="RENTED">Sewa</option>
+                <option value="SHARED">Bersama</option>
+              </select>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Alamat
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Catatan
+            </label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              disabled={loading}
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              placeholder="Masukkan catatan tambahan..."
+            />
+          </div>
+
+          {/* Active Status */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg mt-6">
+            <input
+              type="checkbox"
+              id="isActive"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              disabled={loading}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+              Aktif
+            </label>
+          </div>
+        </div>
+
+        {/* SECTION: Unggah Foto */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6 pb-3 border-b">Unggah Foto</h2>
+          
           {/* Add New Photo */}
-          <div className="mb-8 pb-6 border-b">
-            <h3 className="text-lg font-medium text-gray-700 mb-4">Tambah Foto Baru</h3>
+          <div className="mb-8">
+            <h3 className="text-base font-medium text-gray-700 mb-4">Tambah Foto Baru</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -450,7 +503,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
 
               <button
                 type="button"
-                onClick={handleAddPhoto}
+                onClick={!isEdit ? handleAddPendingPhoto : handleAddPhoto}
                 disabled={!newPhotoUrl.trim() || loadingPhotos}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
@@ -460,19 +513,58 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
             </div>
           </div>
 
-          {/* Photos List */}
-          {photos.length > 0 ? (
+          {/* Pending Photos (during creation) */}
+          {!isEdit && pendingPhotos.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-base font-medium text-gray-700 mb-4">
+                Foto yang akan diunggah ({pendingPhotos.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingPhotos.map(photo => (
+                  <div key={photo.id} className="relative group border rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={getImageUrl(photo.fileUrl)}
+                      alt={photo.description}
+                      className="w-full h-40 object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3EGambar Tidak Ditemukan%3C/text%3E%3C/svg%3E';
+                      }}
+                    />
+                    <div className="p-3">
+                      {photo.description && (
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{photo.description}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePendingPhoto(photo.id)}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Existing Photos (during editing) */}
+          {isEdit && photos.length > 0 && (
             <div>
-              <h3 className="text-lg font-medium text-gray-700 mb-4">
+              <h3 className="text-base font-medium text-gray-700 mb-4">
                 Foto ({photos.length})
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {photos.map(photo => (
                   <div key={photo.id} className="relative group border rounded-lg overflow-hidden bg-gray-100">
                     <img
-                      src={photo.fileUrl}
+                      src={getImageUrl(photo.fileUrl)}
                       alt={photo.description}
                       className="w-full h-40 object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="16"%3EGambar Tidak Ditemukan%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                     <div className="p-3">
                       {photo.description && (
@@ -491,12 +583,18 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
                 ))}
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* Empty State */}
+          {!isEdit && pendingPhotos.length === 0 && photos.length === 0 && (
+            <p className="text-center text-gray-500 py-8">Belum ada foto. Tambahkan foto untuk prasarana ini.</p>
+          )}
+          {isEdit && photos.length === 0 && (
             <p className="text-center text-gray-500 py-8">Belum ada foto untuk prasarana ini</p>
           )}
         </div>
       </div>
-    )}
+    </form>
     </>
   );
 };

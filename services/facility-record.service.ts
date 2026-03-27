@@ -52,7 +52,7 @@ export const FacilityRecordService = {
         return FacilityRecordRepo.findByIdWithRelations(id);
     },
 
-    async create(data: FacilityRecordCreateInput & { createdBy?: string }) {
+    async create(data: FacilityRecordCreateInput & { createdBy?: string }, photos: any[] = []) {
         const {
             desaKelurahanId,
             prasaranaId,
@@ -77,26 +77,51 @@ export const FacilityRecordService = {
             throw new Error(`Facility record untuk prasarana dan tahun ini sudah ada`);
         }
 
-        const facilityRecord = await prisma.facilityRecord.create({
-            data: {
-                desaKelurahanId,
-                prasaranaId,
-                year,
-                condition: condition?.trim() || null,
-                ownershipStatus: ownershipStatus?.trim() || null,
-                address: address?.trim() || null,
-                notes: notes?.trim() || null,
-                isActive,
-                createdBy: createdBy || null
-            },
-            include: {
-                prasarana: true,
-                desaKelurahan: {
-                    include: {
-                        kecamatan: true
+        // Use transaction to create facility record with photos
+        const facilityRecord = await prisma.$transaction(async (tx) => {
+            // Create the facility record
+            const record = await tx.facilityRecord.create({
+                data: {
+                    desaKelurahanId,
+                    prasaranaId,
+                    year,
+                    condition: condition?.trim() || null,
+                    ownershipStatus: ownershipStatus?.trim() || null,
+                    address: address?.trim() || null,
+                    notes: notes?.trim() || null,
+                    isActive,
+                    createdBy: createdBy || null
+                },
+                include: {
+                    prasarana: true,
+                    desaKelurahan: {
+                        include: {
+                            kecamatan: true
+                        }
+                    }
+                }
+            });
+
+            // Create photos if provided
+            if (Array.isArray(photos) && photos.length > 0) {
+                for (const photo of photos) {
+                    if (photo.fileUrl) {
+                        await tx.facilityRecordPhoto.create({
+                            data: {
+                                facilityRecordId: record.id,
+                                fileUrl: photo.fileUrl,
+                                description: photo.description || null,
+                                fileName: photo.fileName || null,
+                                fileSize: photo.fileSize || null,
+                                mimeType: photo.mimeType || null,
+                                uploadedBy: createdBy || null
+                            }
+                        });
                     }
                 }
             }
+
+            return record;
         });
 
         return facilityRecord;

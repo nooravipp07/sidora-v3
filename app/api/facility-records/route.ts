@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
             ownershipStatus,
             address,
             notes,
-            isActive
+            isActive,
+            photos = [] // Accept photos array
         } = body;
 
         if (!desaKelurahanId || !prasaranaId || !year) {
@@ -47,6 +48,18 @@ export async function POST(request: NextRequest) {
                 { error: 'Desa/Kelurahan, prasarana, dan tahun tidak boleh kosong' },
                 { status: 400 }
             );
+        }
+
+        // Validate each photo in the array
+        if (Array.isArray(photos)) {
+            for (const photo of photos) {
+                if (!photo.fileUrl) {
+                    return NextResponse.json(
+                        { error: 'Setiap foto harus memiliki fileUrl' },
+                        { status: 400 }
+                    );
+                }
+            }
         }
 
         const facilityRecord = await FacilityRecordService.create({
@@ -58,7 +71,7 @@ export async function POST(request: NextRequest) {
             address,
             notes,
             isActive
-        });
+        }, photos);
 
         return NextResponse.json(facilityRecord, { status: 201 });
     } catch (error: any) {
