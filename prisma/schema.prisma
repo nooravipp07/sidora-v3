@@ -31,6 +31,7 @@ model User {
 
   // Relations
   role          Role?          @relation(fields: [roleId], references: [id])
+  kecamatan     Kecamatan?   @relation(fields: [kecamatanId], references: [id])
   refreshTokens RefreshToken[]
   loginHistory  LoginHistory[]
 
@@ -118,8 +119,9 @@ model Kecamatan {
   deletedAt DateTime?
 
   // Relations
-  desaKelurahanList DesaKelurahan[]
-  Registration      Registration[]
+  desaKelurahanList   DesaKelurahan[]
+  Registration        Registration[]
+  users               User[]
 
   @@map("m_kecamatan")
 }

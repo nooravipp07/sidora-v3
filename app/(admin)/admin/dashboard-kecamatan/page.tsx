@@ -19,15 +19,31 @@ interface DashboardSummary {
   };
 }
 
+interface DesaSummary {
+  id: number;
+  nama: string;
+  tipe: string;
+  totalFacility: number;
+  totalSportsGroups: number;
+  totalAthlete: number;
+  totalAchievement: number;
+  latitude?: string;
+  longitude?: string;
+}
+
 interface DashboardData {
   success: boolean;
   kecamatan: any;
   summary: DashboardSummary;
   data: {
-    desaKelurahan: any[];
+    desaKelurahan: DesaSummary[];
     facilityRecords: any[];
     sportsGroups: any[];
     athletes: any[];
+  };
+  filters?: {
+    year: number;
+    desaKelurahanId: number | null;
   };
 }
 
@@ -36,6 +52,8 @@ export default function DashboardKecamatanPage() {
   const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
   
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [filterYear, setFilterYear] = useState<number>(new Date().getFullYear());
+  const [filterDesaKelurahanId, setFilterDesaKelurahanId] = useState<string>('');
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +85,12 @@ export default function DashboardKecamatanPage() {
       const fetchDashboardData = async () => {
         try {
           setLoading(true);
-          const response = await fetch(
-            `/api/dashboard/kecamatan?kecamatanId=${user.kecamatanId}`
-          );
+          let url = `/api/dashboard/kecamatan?kecamatanId=${user.kecamatanId}&year=${filterYear}`;
+          if (filterDesaKelurahanId) {
+            url += `&desaKelurahanId=${filterDesaKelurahanId}`;
+          }
+          
+          const response = await fetch(url);
           
           if (!response.ok) {
             throw new Error('Failed to fetch dashboard data');
@@ -88,7 +109,7 @@ export default function DashboardKecamatanPage() {
 
       fetchDashboardData();
     }
-  }, [authLoading, isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router, filterYear, filterDesaKelurahanId]);
 
   // Show loading state
   if (authLoading) {
@@ -182,17 +203,63 @@ export default function DashboardKecamatanPage() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="mb-6 pb-4 border-b border-gray-200">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Dashboard Kecamatan
-        </h1>
-        <p className="text-gray-600 mt-2">
-          {dashboardData.kecamatan?.nama || 'Ringkasan data kecamatan'}
-        </p>
-      </div>
+      {/* Header with Top-Right Filter */}
+      <div className="mb-6 pb-4 border-b border-gray-200 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Dashboard Kecamatan
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {dashboardData.kecamatan?.nama || 'Ringkasan data kecamatan'}
+          </p>
+        </div>
 
-      {/* Filter Section */}
+        {/* Compact Filter Section */}
+        <div className="flex gap-2 items-end">
+          {/* Year Filter Dropdown */}
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-gray-700 mb-1">
+              Tahun
+            </label>
+            <select
+              value={filterYear.toString()}
+              onChange={(e) => {
+                setFilterYear(parseInt(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+            >
+              {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                <option key={year} value={year.toString()}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Desa/Kelurahan Filter Dropdown */}
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-gray-700 mb-1">
+              Desa / Kelurahan
+            </label>
+            <select
+              value={filterDesaKelurahanId}
+              onChange={(e) => {
+                setFilterDesaKelurahanId(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+            >
+              <option value="">Semua Desa</option>
+              {allDistricts && allDistricts.map((desa) => (
+                <option key={desa.id} value={desa.id}>
+                  {desa.nama}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -247,9 +314,9 @@ export default function DashboardKecamatanPage() {
       {/* Map Section */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Peta Distribusi
+          Peta Distribusi Desa / Kelurahan
         </h2>
-        {/* <DashboardMap districts={allDistricts} /> */}
+        <DashboardMap districts={allDistricts} />
       </div>
 
       {/* Table Section */}

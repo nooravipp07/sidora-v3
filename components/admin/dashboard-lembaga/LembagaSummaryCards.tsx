@@ -11,14 +11,6 @@ interface LembagaSummaryCardsProps {
 export default function LembagaSummaryCards({ summary }: LembagaSummaryCardsProps) {
   const cards = [
     {
-      icon: Building2,
-      label: 'Total Lembaga',
-      value: summary.totalInstitutions,
-      color: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-      textColor: 'text-blue-600',
-    },
-    {
       icon: Users,
       label: 'Total Atlet',
       value: summary.totalAthletes,
@@ -45,7 +37,7 @@ export default function LembagaSummaryCards({ summary }: LembagaSummaryCardsProp
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {cards.map((card, idx) => {
         const Icon = card.icon;
         return (

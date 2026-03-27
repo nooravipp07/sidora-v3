@@ -2,14 +2,25 @@
 
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Eye, Download } from 'lucide-react';
-import { DistrictData } from '@/types/district';
+
+interface DesaSummary {
+  id: number;
+  nama: string;
+  tipe: string;
+  totalFacility: number;
+  totalSportsGroups: number;
+  totalAthlete: number;
+  totalAchievement: number;
+  latitude?: string;
+  longitude?: string;
+}
 
 interface DistrictTableProps {
-  districts: DistrictData[];
+  districts: DesaSummary[];
   currentPage?: number;
   onPageChange?: (page: number) => void;
   itemsPerPage?: number;
-  onViewDetail?: (district: DistrictData) => void;
+  onViewDetail?: (district: DesaSummary) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -28,13 +39,13 @@ export default function DistrictTable({
     return districts.slice(startIndex, startIndex + itemsPerPage);
   }, [districts, startIndex, itemsPerPage]);
 
-  const handleExportRow = (district: DistrictData) => {
-    const data = `Kecamatan: ${district.kecamatan}\nInfrastruktur: ${district.totalInfrastructure}\nKelompok Olahraga: ${district.totalSportsGroups}\nPrestasi Atlet: ${district.totalAchievements}\nTotal Atlet: ${district.totalAthletes}\nTotal Pelatih: ${district.totalCoaches}`;
+  const handleExportRow = (district: DesaSummary) => {
+    const data = `Desa/Kelurahan: ${district.nama}\nPrasarana: ${district.totalFacility}\nKelompok Olahraga: ${district.totalSportsGroups}\nTotal Atlet: ${district.totalAthlete}\nTotal Prestasi: ${district.totalAchievement}`;
     const blob = new Blob([data], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${district.kecamatan}-data.txt`;
+    link.download = `${district.nama}-data.txt`;
     link.click();
   };
 
@@ -53,11 +64,11 @@ export default function DistrictTable({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Kecamatan</th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Jumlah Sarana</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Desa / Kelurahan</th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Prasarana</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Kelompok Olahraga</th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Prestasi Atlet</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Total Atlet</th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Prestasi Atlet</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Actions</th>
             </tr>
           </thead>
@@ -69,11 +80,11 @@ export default function DistrictTable({
                   idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                 }`}
               >
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">{district.kecamatan}</td>
-                <td className="px-6 py-4 text-center text-sm font-medium text-blue-600">{district.totalInfrastructure}</td>
+                <td className="px-6 py-4 text-sm font-semibold text-gray-900">{district.nama}</td>
+                <td className="px-6 py-4 text-center text-sm font-medium text-blue-600">{district.totalFacility}</td>
                 <td className="px-6 py-4 text-center text-sm font-medium text-green-600">{district.totalSportsGroups}</td>
-                <td className="px-6 py-4 text-center text-sm font-medium text-orange-600">{district.totalAchievements}</td>
-                <td className="px-6 py-4 text-center text-sm font-medium text-purple-600">{district.totalAthletes}</td>
+                <td className="px-6 py-4 text-center text-sm font-medium text-purple-600">{district.totalAthlete}</td>
+                <td className="px-6 py-4 text-center text-sm font-medium text-orange-600">{district.totalAchievement}</td>
                 <td className="px-6 py-4 text-center">
                   <div className="flex items-center justify-center gap-2">
                     <button
@@ -103,24 +114,25 @@ export default function DistrictTable({
         {paginatedDistricts.map((district) => (
           <div key={district.id} className="p-4 hover:bg-blue-50 transition-colors">
             <div className="mb-3">
-              <h4 className="font-bold text-gray-900 text-lg">{district.kecamatan}</h4>
+              <h4 className="font-bold text-gray-900 text-lg">{district.nama}</h4>
+              <p className="text-xs text-gray-500">{district.tipe}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 mb-4">
               <div className="bg-blue-50 p-2 rounded">
-                <p className="text-xs text-gray-600">Sarana</p>
-                <p className="font-bold text-blue-600">{district.totalInfrastructure}</p>
+                <p className="text-xs text-gray-600">Prasarana</p>
+                <p className="font-bold text-blue-600">{district.totalFacility}</p>
               </div>
               <div className="bg-green-50 p-2 rounded">
                 <p className="text-xs text-gray-600">Kelompok</p>
                 <p className="font-bold text-green-600">{district.totalSportsGroups}</p>
               </div>
+              <div className="bg-purple-50 p-2 rounded">
+                <p className="text-xs text-gray-600">Total Atlet</p>
+                <p className="font-bold text-purple-600">{district.totalAthlete}</p>
+              </div>
               <div className="bg-orange-50 p-2 rounded">
                 <p className="text-xs text-gray-600">Prestasi</p>
-                <p className="font-bold text-orange-600">{district.totalAchievements}</p>
-              </div>
-              <div className="bg-purple-50 p-2 rounded">
-                <p className="text-xs text-gray-600">Atlet</p>
-                <p className="font-bold text-purple-600">{district.totalAthletes}</p>
+                <p className="font-bold text-orange-600">{district.totalAchievement}</p>
               </div>
             </div>
             <div className="flex gap-2">

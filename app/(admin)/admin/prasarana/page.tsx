@@ -116,12 +116,11 @@ const Prasarana: React.FC = () => {
       // 🔥 AUTO FILTER BERDASARKAN ROLE
       if (user?.roleId === 3 && user.kecamatanId) {
         params.append('kecamatanId', String(user.kecamatanId));
-      } else {
+      } else if (filters.kecamatanId) {
         // hanya gunakan filter user kalau bukan role 3
-        if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
+        params.append('kecamatanId', filters.kecamatanId);
       }
 
-      if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
 

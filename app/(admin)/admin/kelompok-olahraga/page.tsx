@@ -61,20 +61,6 @@ const KelompokOlahraga: React.FC = () => {
     }
   };
 
-  const fields = [
-    { name: 'cabangOlahraga', label: 'Cabang Olahraga', type: 'select', options: ['Sepak Bola', 'Basket', 'Voli', 'Tenis', 'Badminton', 'Renang'], required: true },
-    { name: 'namaKlub', label: 'Nama Klub', type: 'text', required: true },
-    { name: 'namaKetua', label: 'Nama Ketua', type: 'text', required: true },
-    { name: 'jumlahAnggota', label: 'Jumlah Anggota', type: 'number', required: true },
-    { name: 'verifikasi', label: 'Verifikasi', type: 'select', options: ['Ya', 'Tidak'], required: true },
-    { name: 'nomorSK', label: 'Nomor SK', type: 'text', required: false },
-    { name: 'kecamatan', label: 'Kecamatan', type: 'select', options: ['Kecamatan Utara', 'Kecamatan Selatan', 'Kecamatan Timur', 'Kecamatan Barat'], required: true },
-    { name: 'desa', label: 'Desa/Kelurahan', type: 'text', required: true },
-    { name: 'alamatSekretariat', label: 'Alamat Sekretariat', type: 'textarea', required: true },
-    { name: 'tahun', label: 'Tahun', type: 'number', required: true },
-    { name: 'fotoKlub', label: 'Foto Klub', type: 'file', required: false }
-  ];
-
   return (
     <div className="p-6">
         <div className="mb-6">

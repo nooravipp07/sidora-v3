@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/lib/auth/useAuth';
 
 interface PaginationMeta {
   total: number;
@@ -21,6 +22,8 @@ const Athlete: React.FC = () => {
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -167,8 +170,15 @@ const Athlete: React.FC = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  const filteredDesaKelurahan = filters.kecamatanId
-    ? desaKelurahanList.filter(d => d.kecamatan?.id === parseInt(filters.kecamatanId))
+  const effectiveKecamatanId =
+    user?.roleId === 3
+      ? user.kecamatanId
+      : filters.kecamatanId;
+
+  const filteredDesaKelurahan = effectiveKecamatanId
+    ? desaKelurahanList.filter(
+        d => d.kecamatan?.id === Number(effectiveKecamatanId)
+      )
     : desaKelurahanList;
 
   return (
@@ -215,11 +225,18 @@ const Athlete: React.FC = () => {
                 Kecamatan
               </label>
               <select
-                value={filters.kecamatanId}
+                value={
+                  user?.roleId === 3
+                    ? String(user.kecamatanId)
+                    : filters.kecamatanId
+                }
                 onChange={(e) => {
-                  handleFilterChange('kecamatanId', e.target.value);
-                  setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  if (user?.roleId !== 3) {
+                    handleFilterChange('kecamatanId', e.target.value);
+                    setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  }
                 }}
+                disabled={user?.roleId === 3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua Kecamatan --</option>
@@ -239,7 +256,7 @@ const Athlete: React.FC = () => {
               <select
                 value={filters.desaKelurahanId}
                 onChange={(e) => handleFilterChange('desaKelurahanId', e.target.value)}
-                disabled={!filters.kecamatanId}
+                disabled={!effectiveKecamatanId}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">-- Semua Desa/Kelurahan --</option>
@@ -334,6 +351,7 @@ const Athlete: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">JK</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Organisasi</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Prestasi</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -347,6 +365,7 @@ const Athlete: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.sport?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.gender || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{athlete.organization || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {athlete.achievements?.length > 0 ? (
                         <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">

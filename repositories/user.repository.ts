@@ -39,7 +39,7 @@ class UserRepository extends AbstractRepository<UserWithRole> {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { role: true }
+        include: { role: true, kecamatan: true }
       }),
       prisma.user.count({ where })
     ]);

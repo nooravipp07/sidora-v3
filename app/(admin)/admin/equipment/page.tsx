@@ -188,8 +188,15 @@ const Equipment: React.FC = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  const filteredDesaKelurahan = filters.kecamatanId
-    ? desaKelurahanList.filter(d => d.kecamatan?.id === parseInt(filters.kecamatanId))
+  const effectiveKecamatanId =
+    user?.roleId === 3
+      ? user.kecamatanId
+      : filters.kecamatanId;
+
+  const filteredDesaKelurahan = effectiveKecamatanId
+    ? desaKelurahanList.filter(
+        d => d.kecamatan?.id === Number(effectiveKecamatanId)
+      )
     : desaKelurahanList;
 
   return (
@@ -236,11 +243,18 @@ const Equipment: React.FC = () => {
                 Kecamatan
               </label>
               <select
-                value={filters.kecamatanId}
+                value={
+                  user?.roleId === 3
+                    ? String(user.kecamatanId)
+                    : filters.kecamatanId
+                }
                 onChange={(e) => {
-                  handleFilterChange('kecamatanId', e.target.value);
-                  setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  if (user?.roleId !== 3) {
+                    handleFilterChange('kecamatanId', e.target.value);
+                    setFilters(prev => ({ ...prev, desaKelurahanId: '' }));
+                  }
                 }}
+                disabled={user?.roleId === 3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua Kecamatan --</option>
@@ -260,7 +274,7 @@ const Equipment: React.FC = () => {
               <select
                 value={filters.desaKelurahanId}
                 onChange={(e) => handleFilterChange('desaKelurahanId', e.target.value)}
-                disabled={!filters.kecamatanId}
+                disabled={!effectiveKecamatanId}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">-- Semua Desa/Kelurahan --</option>
