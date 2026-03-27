@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader, Plus, Trash2, Upload, X } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { getImageUrl } from '@/lib/image-utils';
 
 interface AthleteFormProps {
   initialData?: any;
@@ -505,9 +506,12 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
               {formData.photoUrl ? (
                 <div className="relative w-32 h-40">
                   <img
-                    src={formData.photoUrl}
+                    src={getImageUrl(formData.photoUrl)}
                     alt="Foto Atlet"
                     className="w-full h-full object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240"%3E%3Crect fill="%23ddd" width="200" height="240"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ENot Found%3C/text%3E%3C/svg%3E';
+                    }}
                   />
                   <button
                     type="button"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Award, MapPin, Zap } from 'lucide-react';
+import { getImageUrl } from '@/lib/image-utils';
 
 interface AthleteDetailModalProps {
   athlete: any;
@@ -47,9 +48,12 @@ const AthleteDetailModal: React.FC<AthleteDetailModalProps> = ({
             <div className="flex-shrink-0">
               {athlete.photoUrl ? (
                 <img
-                  src={athlete.photoUrl}
+                  src={getImageUrl(athlete.photoUrl)}
                   alt={athlete.fullName}
                   className="w-40 h-48 object-cover rounded-lg border-2 border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240"%3E%3Crect fill="%23ddd" width="200" height="240"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3ENot Found%3C/text%3E%3C/svg%3E';
+                  }}
                 />
               ) : (
                 <div className="w-40 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 flex items-center justify-center">

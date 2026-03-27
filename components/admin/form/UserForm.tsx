@@ -158,16 +158,15 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, isEdit = false }) => {
 
   const roles = [
     { label: 'Superadmin', value: 1 },
-    { label: 'Admin Lembaga (KONI, NPCI, KORMI)', value: 2 },
-    { label: 'Admin Kecamatan', value: 3 },
-    { label: 'Verifikator', value: 4 },
-    { label: 'Operator', value: 5 },
+    { label: 'Operator / Verifikator', value: 2 },
+    { label: 'Kecamatan', value: 3 },
+    { label: 'Lembaga', value: 4 },
+    { label: 'Guest User', value: 5 }
   ];
 
   const lembagaOptions = [
     { label: 'KONI', value: 1 },
-    { label: 'KORMI', value: 2 },
-    { label: 'NPCI', value: 3 },
+    { label: 'NPCI', value: 2 }
   ];
 
   return (
@@ -330,7 +329,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, isEdit = false }) => {
         </div>
 
         {/* Conditional Fields */}
-        {selectedRole === 2 && (
+        {selectedRole === 4 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Lembaga <span className="text-red-500">*</span>
