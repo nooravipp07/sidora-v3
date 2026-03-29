@@ -70,8 +70,8 @@ export default function DashboardMap({ districts }: DashboardMapProps) {
     }
 
     // Prepare districts: use real coordinates if available, otherwise generate grid positions
-    const centerLat = -6.9;
-    const centerLng = 107.6;
+    const centerLat = -7.06910;
+    const centerLng = 107.64881;
     const gridSpacing = 0.01; // ~1km spacing in lat/lng degrees
     
     const preparedDistricts = districts.map((d, index) => {

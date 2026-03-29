@@ -1,478 +1,524 @@
 'use client';
 
 import React, { FC, useEffect, useState } from 'react';
-import Link from 'next/link';
+import dynamic from 'next/dynamic';
+// ApexCharts (dynamic import for SSR)
+const ReactApexChart = dynamic(() => import('react-apexcharts'), { ssr: false });
 import {
   Users,
   Trophy,
   Building2,
-  Calendar,
   TrendingUp,
-  Clock,
-  Plus,
-  ArrowRight,
-  Eye,
   TrendingDown,
   BarChart3,
-  CheckCircle,
-  AlertCircle
+  AlertTriangle,
+  MapPin,
+  Award,
+  PieChart,
+  LineChart,
+  Loader
 } from 'lucide-react';
+import DashboardMap from '@/components/admin/dashboard/DashboardMap';
+import DistrictTable from '@/components/admin/dashboard/DistrictTable';
 
-interface StatCard {
-  title: string;
-  value: string;
-  change: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-}
-
-interface ActivityItem {
+interface KecamatanSummary {
   id: number;
-  user: string;
-  role: string;
-  action: string;
-  time: string;
-  avatar: string;
-  color: string;
+  nama: string;
+  latitude?: string | null;
+  longitude?: string | null;
+  totalEquipment: number;
+  totalEquipmentQuantity: number;
+  totalPrasarana: number;
+  totalSportsGroups: number;
+  totalAthletes: number;
+  totalAchievement: number;
 }
 
-interface QuickAction {
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  bgColor: string;
-}
-
-interface VerificationItem {
-  id: number;
-  namaLengkap: string;
-  email: string;
-  noTelepon: string;
-  jenisAkun: string;
-  kecamatan: string;
-  status: 'Waiting For Approve' | 'Approved' | 'Rejected';
-  tanggalPendaftaran: string;
-}
-
-interface VisitorStats {
-  totalVisitors: number;
-  previousPeriodVisitors: number;
-  todayVisitors: number;
-  averageDailyVisitors: number;
-  lastUpdated: string;
-  trend: {
-    difference: number;
-    percentage: number;
-    isPositive: boolean;
-  };
-  period: {
-    current: string;
-    previous: string;
-  };
+interface DashboardSummary {
+  totalKecamatan: number;
+  totalEquipment: number;
+  totalEquipmentQuantity: number;
+  totalPrasarana: number;
+  totalSportsGroups: number;
+  totalAthletes: number;
+  totalAchievement: number;
 }
 
 const Dashboard: FC = () => {
-  const [visitorData, setVisitorData] = useState<VisitorStats | null>(null);
-  const [isLoadingVisitors, setIsLoadingVisitors] = useState(true);
-  const [visitorError, setVisitorError] = useState<string | null>(null);
-  const [verificationData, setVerificationData] = useState<VerificationItem[]>([]);
-  const [isLoadingVerification, setIsLoadingVerification] = useState(true);
+  // State untuk chart data
+  const [sports, setSports] = useState<{ id: number; nama: string }[]>([]);
+  const [athleteDist, setAthleteDist] = useState<{ labels: string[]; series: number[] }>({ labels: [], series: [] });
+  const [groupDist, setGroupDist] = useState<{ labels: string[]; series: number[] }>({ labels: [], series: [] });
 
-  // Fetch verification data from API
-  const fetchVerificationData = async () => {
-    try {
-      setIsLoadingVerification(true);
-      const response = await fetch('/api/registration?page=1&limit=10&status=1');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch verification data');
+  // Fetch cabang olahraga
+  useEffect(() => {
+    const fetchSports = async () => {
+      const res = await fetch('/api/masterdata/cabang-olahraga?page=1&limit=100');
+      const data = await res.json();
+      setSports(data?.data || []);
+    };
+    fetchSports();
+  }, []);
+
+  // Fetch distribusi atlet per cabang olahraga
+  useEffect(() => {
+    if (sports.length === 0) return;
+    const fetchAthleteDist = async () => {
+      const labels: string[] = [];
+      const series: number[] = [];
+      for (const sport of sports) {
+        const res = await fetch(`/api/masterdata/athlete?page=1&limit=1&sportId=${sport.id}`);
+        const data = await res.json();
+        labels.push(sport.nama);
+        series.push(data?.meta?.total || 0);
       }
-      
-      const data = await response.json();
-      const registrations = data.data || [];
-      
-      // Map API response to VerificationItem format
-      const mappedData = registrations.map((reg: any) => ({
-        id: reg.id,
-        namaLengkap: reg.namaLengkap,
-        email: reg.email,
-        noTelepon: reg.noTelepon,
-        jenisAkun: reg.jenisAkun === 1 ? 'KONI' : reg.jenisAkun === 2 ? 'KECAMATAN' : 'USER',
-        kecamatan: reg.kecamatan?.nama || '',
-        status: 'Waiting For Approve' as const,
-        tanggalPendaftaran: new Date(reg.createdAt).toLocaleString('id-ID')
-      }));
-      
-      setVerificationData(mappedData);
-    } catch (error) {
-      console.error('Error fetching verification data:', error);
-    } finally {
-      setIsLoadingVerification(false);
-    }
+      setAthleteDist({ labels, series });
+    };
+    fetchAthleteDist();
+  }, [sports]);
+
+  // Fetch distribusi kelompok olahraga per cabang olahraga (jika sudah ada relasi sportId di kelompok)
+  useEffect(() => {
+    if (sports.length === 0) return;
+    const fetchGroupDist = async () => {
+      const labels: string[] = [];
+      const series: number[] = [];
+      for (const sport of sports) {
+        // NOTE: pastikan endpoint /api/masterdata/sports-group support filter sportId jika sudah ada di schema
+        const res = await fetch(`/api/masterdata/sports-group?page=1&limit=1&sportId=${sport.id}`);
+        const data = await res.json();
+        labels.push(sport.nama);
+        series.push(data?.meta?.total || 0);
+      }
+      setGroupDist({ labels, series });
+    };
+    fetchGroupDist();
+  }, [sports]);
+
+  // Tahun filter
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+
+  const [kecamatanData, setKecamatanData] = useState<KecamatanSummary[]>([]);
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Handler export
+  const handleExport = () => {
+    // Export data summary per kecamatan ke CSV
+    const headers = [
+      'ID', 'Nama', 'Total Prasarana', 'Total Sarana', 'Total Kelompok Olahraga', 'Total Atlet', 'Total Prestasi', 'Latitude', 'Longitude'
+    ];
+    const rows = kecamatanData.map(item => [
+      item.id,
+      item.nama,
+      item.totalPrasarana,
+      item.totalEquipment,
+      item.totalSportsGroups,
+      item.totalAthletes,
+      item.totalAchievement,
+      item.latitude ?? '',
+      item.longitude ?? ''
+    ]);
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `kecamatan-summary-${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
-  // Fetch visitor statistics from API
-  const fetchVisitorStats = async () => {
+  const fetchDashboardData = async () => {
     try {
-      setIsLoadingVisitors(true);
-      setVisitorError(null);
-      const response = await fetch('/api/analytics/visitors');
-      
+      setError(null);
+      setIsLoading(true);
+
+      const response = await fetch('/api/dashboard/kecamatan-summary');
+
       if (!response.ok) {
-        throw new Error('Failed to fetch visitor statistics');
+        const err = await response.json().catch(() => ({ message: 'Unknown response error' }));
+        throw new Error(err?.error || 'Failed to load dashboard data');
       }
-      
-      const data = await response.json();
-      setVisitorData(data);
-    } catch (error) {
-      console.error('Error fetching visitor statistics:', error);
-      setVisitorError(error instanceof Error ? error.message : 'Failed to load visitor data');
+
+      const payload = await response.json();
+
+      if (!payload?.success || !payload?.data) {
+        throw new Error('Invalid dashboard response from server');
+      }
+
+      setDashboardSummary(payload.data.summary);
+      setKecamatanData(payload.data.kecamatan || []);
+    } catch (fetchError) {
+      const msg = fetchError instanceof Error ? fetchError.message : 'Terjadi kesalahan saat memuat data dashboard';
+      setError(msg);
+      console.error('Dashboard data fetch failed:', fetchError);
     } finally {
-      setIsLoadingVisitors(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Fetch visitor stats immediately on mount
-    fetchVisitorStats();
-    // Fetch verification data immediately on mount
-    fetchVerificationData();
-
-    // Set up interval to refetch every minute
-    const interval = setInterval(fetchVisitorStats, 60000);
-
-    return () => clearInterval(interval);
+    fetchDashboardData();
   }, []);
 
-  const stats: StatCard[] = [
-    {
-      title: 'Total Atlet',
-      value: '1,247',
-      change: '+12%',
-      icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      title: 'Klub Aktif',
-      value: '156',
-      change: '+8%',
-      icon: Trophy,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
-    },
-    {
-      title: 'Sarana Olahraga',
-      value: '89',
-      change: '+5%',
-      icon: Building2,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
-    },
-    {
-      title: 'Event Aktif',
-      value: '23',
-      change: '-2%',
-      icon: Calendar,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
-    }
-  ];
+  const supply = dashboardSummary?.totalEquipment ?? 0;
+  const demand = dashboardSummary?.totalAthletes ?? 0;
+  const maxVal = Math.max(supply, demand, 1);
+  const supplyPercent = Math.round((supply / maxVal) * 100);
+  const demandPercent = Math.round((demand / maxVal) * 100);
 
-  const activities: ActivityItem[] = [
-    {
-      id: 1,
-      user: 'Admin Kecamatan A',
-      role: 'Admin',
-      action: 'Menambahkan data atlet baru',
-      time: '2 jam yang lalu',
-      avatar: '👤',
-      color: 'bg-green-500'
-    },
-    {
-      id: 2,
-      user: 'Verifikator',
-      role: 'Verifikasi',
-      action: 'Memverifikasi data klub',
-      time: '4 jam yang lalu',
-      avatar: '✓',
-      color: 'bg-blue-500'
-    },
-    {
-      id: 3,
-      user: 'Admin Kota',
-      role: 'Admin',
-      action: 'Menghapus data sarana',
-      time: '1 hari yang lalu',
-      avatar: '✕',
-      color: 'bg-red-500'
-    },
-    {
-      id: 4,
-      user: 'Operator',
-      role: 'Operator',
-      action: 'Menambahkan berita baru',
-      time: '2 hari yang lalu',
-      avatar: '📝',
-      color: 'bg-green-500'
-    }
-  ];
+  const topStats = dashboardSummary
+    ? [
+        {
+          label: 'Total Atlet',
+          value: dashboardSummary.totalAthletes,
+          trend: 8.2,
+          status: 'positive' as const,
+        },
+        {
+          label: 'Kelompok Olahraga',
+          value: dashboardSummary.totalSportsGroups,
+          trend: 2.1,
+          status: 'positive' as const,
+        },
+        {
+          label: 'Sarana',
+          value: dashboardSummary.totalEquipment,
+          trend: -0.5,
+          status: 'negative' as const,
+        },
+        {
+          label: 'Prasarana',
+          value: dashboardSummary.totalPrasarana,
+          trend: 3.7,
+          status: 'positive' as const,
+        },
+        {
+          label: 'Prestasi Atlet',
+          value: dashboardSummary.totalAchievement,
+          trend: 12.3,
+          status: 'positive' as const,
+        },
+      ]
+    : [];
 
-  // Verification data is now fetched from API in fetchVerificationData()
+  if (isLoading) {
+    return (
+      <main className="space-y-6 p-6">
+        <section>
+          <h1 className="text-3xl font-bold">Dashboard Admin</h1>
+          <p className="text-gray-600 mt-1">Memuat data...</p>
+        </section>
+        <section className="h-64 rounded-xl bg-gray-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader className="w-10 h-10 text-blue-600 animate-spin" />
+            <p className="text-gray-600">Loading dashboard data...</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="space-y-6 p-6">
+        <section>
+          <h1 className="text-3xl font-bold">Dashboard Admin</h1>
+          <p className="text-gray-600 mt-1">Error loading data</p>
+        </section>
+        <section className="rounded-xl bg-red-50 border border-red-200 p-6">
+          <p className="text-red-700 font-semibold">{error}</p>
+          <button
+            onClick={() => fetchDashboardData()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Selamat datang, superadmin</p>
-      </div>
+    <main className="space-y-6 p-6">
+      <section className="flex flex-col gap-1">
+        <h1 className="text-3xl font-bold">Dashboard Admin</h1>
+        <div className="flex flex-row items-center justify-between mt-1">
+          <p className="text-gray-600">Ringkasan data real per kecamatan</p>
+          <div className="flex flex-row gap-2 items-center">
+            {/* Filter Tahun */}
+            <select
+              className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedYear}
+              onChange={e => setSelectedYear(Number(e.target.value))}
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            {/* Tombol Export */}
+            <button
+              className="ml-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-1"
+              onClick={handleExport}
+              type="button"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
+              Export
+            </button>
+          </div>
+        </div>
+      </section>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                <stat.icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              <span className="text-green-600 text-sm font-semibold flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                {stat.change}
-              </span>
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        {topStats.map((item) => (
+          <div key={item.label} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div className="text-sm text-gray-500">{item.label}</div>
+            <div className="text-3xl font-bold mt-1">{item.value.toLocaleString('id-ID')}</div>
+            <div className={`inline-flex items-center text-sm font-medium mt-2 ${item.status === 'positive' ? 'text-emerald-600' : 'text-rose-600'}`}>
+              {item.status === 'positive' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+              {item.trend > 0 ? '+' : ''}{item.trend}% dari bulan lalu
             </div>
-            <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
           </div>
         ))}
-      </div>
+      </section>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Statistics Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Statistik Bulanan</h2>
-          <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <p className="text-gray-500">Chart akan ditampilkan di sini</p>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Aktivitas Terkini</h2>
-            <Clock className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="space-y-4">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b last:border-b-0">
-                <div className={`${activity.color} w-10 h-10 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0`}>
-                  {activity.avatar}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{activity.user}</p>
-                  <p className="text-xs text-gray-600">{activity.action}</p>
-                  <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                </div>
+      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <article className="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-3">Supply vs Demand</h2>
+          <div className="grid grid-cols-2 gap-6 items-center">
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-2 relative">
+                <svg viewBox="0 0 80 80" className="w-full h-full">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="12" />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="32"
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="12"
+                    strokeDasharray={`${(200.53 * supplyPercent) / 100} 200.53`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 40 40)"
+                  />
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-700">
+                    {supplyPercent}%
+                  </text>
+                </svg>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Visitor Counter Section */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Verifikasi Data Pendaftaran & Akun</h2>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              <span className="text-sm text-gray-600">
-                Total menunggu persetujuan: <span className="font-bold text-orange-600">{verificationData.filter(v => v.status === 'Waiting For Approve').length}</span>
-              </span>
+              <p className="text-sm font-semibold">Sarana ({supply})</p>
             </div>
-            <Link 
-              href="/admin/verifikasi"
-              className="inline-flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-medium"
-            >
-              Lihat Semua
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="text-center">
+              <div className="w-20 h-20 mx-auto mb-2 relative">
+                <svg viewBox="0 0 80 80" className="w-full h-full">
+                  <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="12" />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="32"
+                    fill="none"
+                    stroke="#f97316"
+                    strokeWidth="12"
+                    strokeDasharray={`${(200.53 * demandPercent) / 100} 200.53`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 40 40)"
+                  />
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-700">
+                    {demandPercent}%
+                  </text>
+                </svg>
+              </div>
+              <p className="text-sm font-semibold">Atlet ({demand})</p>
+            </div>
           </div>
+        </article>
 
-          {/* Verification Table */}
-          <div className="overflow-x-auto">
-            {isLoadingVerification ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <article className="lg:col-span-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-bold">Distribusi Wilayah (Kecamatan)</h2>
+            <MapPin className="w-5 h-5 text-slate-500" />
+          </div>
+          <div className="h-95">
+            <DashboardMap
+              districts={kecamatanData.map((kecamatan) => ({
+                id: kecamatan.id,
+                nama: kecamatan.nama,
+                tipe: 'kecamatan',
+                totalFacility: kecamatan.totalPrasarana,
+                totalSportsGroups: kecamatan.totalSportsGroups,
+                totalAthlete: kecamatan.totalAthletes,
+                totalAchievement: kecamatan.totalAchievement,
+                latitude: kecamatan.latitude ?? undefined,
+                longitude: kecamatan.longitude ?? undefined,
+              }))}
+            />
+          </div>
+        </article>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <article className="xl:col-span-1 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-4">Sarana Summary</h2>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-600">Total Records</span>
+                <span className="font-bold text-blue-600">{dashboardSummary?.totalEquipment ?? 0}</span>
               </div>
-            ) : verificationData.length === 0 ? (
-              <div className="p-8 text-center text-gray-600">
-                Tidak ada pendaftaran yang menunggu persetujuan
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }} />
               </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-600">Total Quantity</span>
+                <span className="font-bold text-cyan-600">{dashboardSummary?.totalEquipmentQuantity ?? 0}</span>
+              </div>
+              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="bg-cyan-500 h-2 rounded-full" style={{ width: '75%' }} />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="xl:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-4">Prasarana - Distribusi</h2>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>Total Prasarana</span>
+                <span className="font-bold">{dashboardSummary?.totalPrasarana ?? 0}</span>
+              </div>
+              <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                <div className="bg-orange-500 h-3 rounded-full" style={{ width: '85%' }} />
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold">ATLET & KELOMPOK OLAHRAGA</h2>
+            <Award className="w-5 h-5 text-indigo-500" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm font-semibold mb-3 text-slate-700">Atlet (Total: {dashboardSummary?.totalAthletes ?? 0})</div>
+              <div className="h-48 flex items-center justify-center">
+                {athleteDist.series.length > 0 ? (
+                  <ReactApexChart
+                    type="pie"
+                    width={220}
+                    height={200}
+                    series={athleteDist.series}
+                    options={{
+                      labels: athleteDist.labels,
+                      legend: { position: 'bottom' },
+                      title: { text: 'Distribusi Atlet per Cabang Olahraga', align: 'center', style: { fontSize: '14px' } },
+                      dataLabels: { enabled: true },
+                      tooltip: { y: { formatter: (val: number) => `${val} atlet` } },
+                    }}
+                  />
+                ) : (
+                  <span className="text-slate-400">Memuat chart...</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold mb-3 text-slate-700">Kelompok (Total: {dashboardSummary?.totalSportsGroups ?? 0})</div>
+              <div className="h-48 flex items-center justify-center">
+                {groupDist.series.length > 0 ? (
+                  <ReactApexChart
+                    type="pie"
+                    width={220}
+                    height={200}
+                    series={groupDist.series}
+                    options={{
+                      labels: groupDist.labels,
+                      legend: { position: 'bottom' },
+                      title: { text: 'Distribusi Kelompok per Cabang Olahraga', align: 'center', style: { fontSize: '14px' } },
+                      dataLabels: { enabled: true },
+                      tooltip: { y: { formatter: (val: number) => `${val} kelompok` } },
+                    }}
+                  />
+                ) : (
+                  <span className="text-slate-400">Memuat chart...</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold">PRESTASI ATLET (Tren)</h2>
+            <LineChart className="w-5 h-5 text-cyan-600" />
+          </div>
+          <div className="h-56 relative">
+            {kecamatanData.length > 0 ? (
+              <svg viewBox="0 0 330 170" className="w-full h-full">
+                <polyline
+                  fill="none"
+                  stroke="#0ea5e9"
+                  strokeWidth="3"
+                  points={kecamatanData
+                    .map((item, index) => {
+                      const x = 20 + (index / Math.max(kecamatanData.length - 1, 1)) * 290;
+                      const value = item.totalAchievement;
+                      const maxAchievement = Math.max(...kecamatanData.map((i) => i.totalAchievement), 1);
+                      const y = 150 - (value / maxAchievement) * 130;
+                      return `${x},${y}`;
+                    })
+                    .join(' ')}
+                />
+                {kecamatanData.map((item, index) => {
+                  const x = 20 + (index / Math.max(kecamatanData.length - 1, 1)) * 290;
+                  const maxAchievement = Math.max(...kecamatanData.map((i) => i.totalAchievement), 1);
+                  const y = 150 - (item.totalAchievement / maxAchievement) * 130;
+                  return <circle key={item.id} cx={x} cy={y} r="4" fill="#0ea5e9" />;
+                })}
+              </svg>
             ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 border-b-2 border-gray-200">
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Nama Lengkap</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">No. Telepon</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Jenis Akun</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Kecamatan</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Tanggal Pendaftaran</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {verificationData.slice(0, 6).map((item) => (
-                  <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.namaLengkap}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.noTelepon}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        {item.jenisAkun}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.kecamatan || '-'}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
-                        {item.status === 'Waiting For Approve' ? 'Menunggu' : item.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.tanggalPendaftaran}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <button className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium">
-                        <CheckCircle className="w-4 h-4" />
-                        Approve
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <div className="flex items-center justify-center h-full text-slate-500">Tidak ada data</div>
             )}
+            <div className="absolute bottom-0 left-0 right-0 px-4 pb-1 text-xs text-slate-500 flex justify-between">
+              {kecamatanData.map((item) => (
+                <span key={item.id}>{item.nama.substring(0, 8)}</span>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
-      {/* Visitor Counter Section */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Statistik Pengunjung</h2>
-        
-        {visitorError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">⚠️ {visitorError}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Total Visitors Card */}
-          <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-            {isLoadingVisitors ? (
-              <div className="animate-pulse">
-                <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            ) : visitorData ? (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="bg-indigo-100 p-4 rounded-lg">
-                    <Eye className="w-8 h-8 text-indigo-600" />
-                  </div>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${visitorData.trend.isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
-                    {visitorData.trend.isPositive ? (
-                      <TrendingUp className={`w-4 h-4 text-green-600`} />
-                    ) : (
-                      <TrendingDown className={`w-4 h-4 text-red-600`} />
-                    )}
-                    <span className={`text-sm font-semibold ${visitorData.trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                      {visitorData.trend.isPositive ? '+' : ''}{visitorData.trend.percentage}%
-                    </span>
-                  </div>
-                </div>
-                <h3 className="text-gray-600 text-sm font-medium mb-2">Total Pengunjung</h3>
-                <p className="text-4xl font-bold text-gray-900 mb-4">
-                  {visitorData.totalVisitors.toLocaleString('id-ID')}
-                </p>
-                <div className="space-y-2 text-xs text-gray-500">
-                  <p>Periode sebelumnya: {visitorData.previousPeriodVisitors.toLocaleString('id-ID')}</p>
-                  <p className={`flex items-center gap-1 ${visitorData.trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    <BarChart3 className="w-3 h-3" />
-                    {visitorData.trend.isPositive ? 'Meningkat' : 'Menurun'} {Math.abs(visitorData.trend.difference).toLocaleString('id-ID')}
-                  </p>
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          {/* Today Visitors Card */}
-          <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-            {isLoadingVisitors ? (
-              <div className="animate-pulse">
-                <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            ) : visitorData ? (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="bg-cyan-100 p-4 rounded-lg">
-                    <BarChart3 className="w-8 h-8 text-cyan-600" />
-                  </div>
-                  <span className="text-cyan-600 text-xs font-semibold bg-cyan-100 px-3 py-1 rounded-full">Hari Ini</span>
-                </div>
-                <h3 className="text-gray-600 text-sm font-medium mb-2">Pengunjung Hari Ini</h3>
-                <p className="text-4xl font-bold text-gray-900 mb-4">
-                  {visitorData.todayVisitors.toLocaleString('id-ID')}
-                </p>
-                <div className="text-xs text-gray-500 flex items-center gap-2">
-                  <Clock className="w-3 h-3" />
-                  <span>Update: {visitorData.lastUpdated}</span>
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          {/* Visitor Insights Card */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow-md p-8 border border-indigo-100 hover:shadow-lg transition-shadow">
-            {isLoadingVisitors ? (
-              <div className="animate-pulse">
-                <div className="h-12 bg-gray-300 rounded mb-4"></div>
-                <div className="h-6 bg-gray-300 rounded w-3/4"></div>
-              </div>
-            ) : visitorData ? (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="bg-indigo-600 p-4 rounded-lg">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-gray-600 text-sm font-medium mb-4">Wawasan Pengunjung</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Rata-rata Harian</span>
-                    <span className="font-semibold text-gray-900">{visitorData.averageDailyVisitors.toLocaleString('id-ID')}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-indigo-600 h-2 rounded-full" 
-                      style={{ 
-                        width: `${Math.min((visitorData.averageDailyVisitors / 1000) * 100, 100)}%` 
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">
-                    Data diperbarui setiap menit dari backend analytics
-                  </p>
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </div>
+      <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <h2 className="text-lg font-bold mb-4">Data Summary per Kecamatan</h2>
+        <DistrictTable
+          districts={kecamatanData.map((item) => ({
+            id: item.id,
+            nama: item.nama,
+            tipe: 'kecamatan',
+            totalFacility: item.totalPrasarana,
+            totalSportsGroups: item.totalSportsGroups,
+            totalAthlete: item.totalAthletes,
+            totalAchievement: item.totalAchievement,
+            latitude: item.latitude ?? undefined,
+            longitude: item.longitude ?? undefined,
+          }))}
+          currentPage={1}
+          onPageChange={() => {}}
+        />
+      </section>
+    </main>
   );
 };
 
