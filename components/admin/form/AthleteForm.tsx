@@ -48,6 +48,7 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
     fullAddress: initialData?.fullAddress || '',
     organization: initialData?.organization || '',
     category: initialData?.category || '',
+    status: initialData?.status || 'aktif',
     sportId: initialData?.sportId || '',
     photoUrl: initialData?.photoUrl || '',
   });
@@ -221,6 +222,11 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
       return;
     }
 
+    if (!formData.status) {
+      setError('Status atlet harus dipilih');
+      return;
+    }
+
     if (!formData.desaKelurahanId) {
       setError('Desa/Kelurahan harus dipilih');
       return;
@@ -252,6 +258,7 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
           category: formData.category.trim() || null,
           sportId: formData.sportId ? parseInt(formData.sportId as string) : null,
           photoUrl: formData.photoUrl || null,
+          status: formData.status || 'aktif',
           achievements: achievementsData,
         }),
       });
@@ -505,6 +512,22 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
               <option value="WASIT">WASIT - JURI</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status Atlet
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              disabled={loading}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+            >
+              <option value="aktif">Aktif</option>
+              <option value="non-aktif">Non-Aktif</option>
+            </select>
+          </div>
+
 
           {/* Photo Upload */}
           <div>

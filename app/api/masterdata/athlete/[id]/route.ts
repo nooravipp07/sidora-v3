@@ -55,6 +55,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Desa/Kelurahan harus dipilih' }, { status: 400 });
     }
 
+    if (body.status && !['aktif', 'non-aktif'].includes(String(body.status).toLowerCase())) {
+      return NextResponse.json({ error: 'Status harus "aktif" atau "non-aktif"' }, { status: 400 });
+    }
+
     const result = await athleteService.update(id, body);
 
     return NextResponse.json(result, { status: 200 });

@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
       desaKelurahanId: searchParams.get('desaKelurahanId'),
       sportId: searchParams.get('sportId'),
       gender: searchParams.get('gender'),
+      status: searchParams.get('status'),
       birthYear: searchParams.get('birthYear'),
       search: searchParams.get('search'),
     };
@@ -42,6 +43,10 @@ export async function POST(request: NextRequest) {
 
     if (!body.desaKelurahanId) {
       return NextResponse.json({ error: 'Desa/Kelurahan harus dipilih' }, { status: 400 });
+    }
+
+    if (body.status && !['aktif', 'non-aktif'].includes(String(body.status).toLowerCase())) {
+      return NextResponse.json({ error: 'Status harus "aktif" atau "non-aktif"' }, { status: 400 });
     }
 
     const result = await athleteService.create(body);

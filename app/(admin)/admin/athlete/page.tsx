@@ -25,13 +25,23 @@ const Athlete: React.FC = () => {
 
   const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
 
+  interface AthleteFilters {
+    kecamatanId: string;
+    desaKelurahanId: string;
+    sportId: string;
+    gender: string;
+    search: string;
+    status?: string;
+  }
+
   // Filter state
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<AthleteFilters>({
     kecamatanId: '',
     desaKelurahanId: '',
     sportId: '',
     gender: '',
     search: '',
+    status: '',
   });
 
   // Filter dropdown data
@@ -108,6 +118,7 @@ const Athlete: React.FC = () => {
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.sportId) params.append('sportId', filters.sportId);
       if (filters.gender) params.append('gender', filters.gender);
+      if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
 
       const response = await fetch(`/api/masterdata/athlete?${params.toString()}`);
@@ -174,6 +185,7 @@ const Athlete: React.FC = () => {
       sportId: '',
       gender: '',
       search: '',
+      status: '',
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -311,6 +323,22 @@ const Athlete: React.FC = () => {
               </select>
             </div>
 
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status Atlet
+              </label>
+              <select
+                value={filters.status || ''}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua --</option>
+                <option value="aktif">Aktif</option>
+                <option value="non-aktif">Non-Aktif</option>
+              </select>
+            </div>
+
             {/* Search Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -360,6 +388,7 @@ const Athlete: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">JK</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Organisasi</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Prestasi</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -374,6 +403,11 @@ const Athlete: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.sport?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.gender || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.organization || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${athlete.status === 'non-aktif' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {athlete.status ? (athlete.status === 'non-aktif' ? 'Non-Aktif' : 'Aktif') : '-'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {athlete.achievements?.length > 0 ? (
                         <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
@@ -487,6 +521,10 @@ const Athlete: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600">Jenis Kelamin</p>
                 <p className="font-semibold text-gray-900">{selectedAthlete.gender || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Status Atlet</p>
+                <p className="font-semibold text-gray-900">{selectedAthlete.status ? (selectedAthlete.status === 'non-aktif' ? 'Non-Aktif' : 'Aktif') : '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Desa/Kelurahan</p>

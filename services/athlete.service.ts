@@ -51,6 +51,11 @@ export class AthleteService {
       where.gender = filters.gender;
     }
 
+    // Filter by status
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
     // Filter by year (birth year)
     if (filters.birthYear) {
       const year = parseInt(filters.birthYear);
@@ -78,6 +83,7 @@ export class AthleteService {
       fullAddress: data.fullAddress?.trim() || null,
       organization: data.organization?.trim() || null,
       category: data.category?.trim() || null,
+      status: data.status || 'aktif',
       sportId: data.sportId ? parseInt(data.sportId) : null,
       photoUrl: data.photoUrl || null,
       achievements: data.achievements || [],
@@ -95,6 +101,7 @@ export class AthleteService {
       fullAddress: data.fullAddress?.trim() || null,
       organization: data.organization?.trim() || null,
       category: data.category?.trim() || null,
+      status: data.status || 'aktif',
       sportId: data.sportId ? parseInt(data.sportId) : null,
       photoUrl: data.photoUrl || null,
       achievements: data.achievements || [],

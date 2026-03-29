@@ -31,7 +31,7 @@ model User {
 
   // Relations
   role          Role?          @relation(fields: [roleId], references: [id])
-  kecamatan     Kecamatan?   @relation(fields: [kecamatanId], references: [id])
+  kecamatan     Kecamatan?     @relation(fields: [kecamatanId], references: [id])
   refreshTokens RefreshToken[]
   loginHistory  LoginHistory[]
 
@@ -119,9 +119,9 @@ model Kecamatan {
   deletedAt DateTime?
 
   // Relations
-  desaKelurahanList   DesaKelurahan[]
-  Registration        Registration[]
-  users               User[]
+  desaKelurahanList DesaKelurahan[]
+  Registration      Registration[]
+  users             User[]
 
   @@map("m_kecamatan")
 }
@@ -139,11 +139,15 @@ model DesaKelurahan {
   deletedAt   DateTime?
 
   // Relations
-  kecamatan       Kecamatan        @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
-  facilityRecords FacilityRecord[]
-  equipment       Equipment[]
-  sportsGroups    SportsGroup[]
-  athletes        Athlete[]
+  kecamatan             Kecamatan               @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
+  facilityRecords       FacilityRecord[]
+  equipment             Equipment[]
+  sportsGroups          SportsGroup[]
+  athletes              Athlete[]
+  EquipmentStaging      EquipmentStaging[]
+  FacilityRecordStaging FacilityRecordStaging[]
+  AthleteStaging        AthleteStaging[]
+  SportsGroupStaging    SportsGroupStaging[]
 
   @@index([kecamatanId])
   @@map("m_desa_kelurahan")
@@ -158,7 +162,8 @@ model CabangOlahraga {
   deletedAt DateTime?
 
   // Relations
-  athletes Athlete[]
+  athletes       Athlete[]
+  AthleteStaging AthleteStaging[]
 
   @@map("m_cabang_olahraga")
 }
@@ -173,7 +178,8 @@ model Sarana {
   deletedAt DateTime?
 
   // Relations
-  equipment Equipment[]
+  equipment        Equipment[]
+  EquipmentStaging EquipmentStaging[]
 
   @@map("m_sarana")
 }
@@ -187,7 +193,8 @@ model Prasarana {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  facilityRecords FacilityRecord[]
+  facilityRecords       FacilityRecord[]
+  FacilityRecordStaging FacilityRecordStaging[]
 
   @@map("m_prasarana")
 }
@@ -435,6 +442,7 @@ model Athlete {
   fullAddress  String?
   organization String? @db.VarChar(150)
   category     String? @db.VarChar(100)
+  status       String  @default("aktif") @db.VarChar(20) // aktif, non-aktif
 
   sportId  Int?
   photoUrl String? @db.VarChar(255)
@@ -475,41 +483,279 @@ model AthleteAchievement {
 }
 
 model Registration {
-  id              Int       @id @default(autoincrement())
-  name            String
-  email           String    @unique
-  password        String
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
 
   // informasi tambahan
-  nip             String
-  namaLengkap     String
-  noTelepon       String
+  nip         String
+  namaLengkap String
+  noTelepon   String
 
   // jenis pendaftar
-  jenisAkun       Int       // 1 = Kecamatan, 2 = Lembaga
+  jenisAkun Int // 1 = Kecamatan, 2 = Lembaga
 
   // jika kecamatan
-  kecamatanId     Int
+  kecamatanId Int
 
   // jika lembaga
-  lembagaId       Int?
+  lembagaId Int?
 
   // status workflow
-  status          Int       // 1 = PENDING, 2 = APPROVE, 3 = REJECT
+  status Int // 1 = PENDING, 2 = APPROVE, 3 = REJECT
 
   // verifikasi
-  verifiedBy      Int
-  verifiedAt      DateTime?
+  verifiedBy Int
+  verifiedAt DateTime?
 
   // alasan reject
-  rejectReason    String?
+  rejectReason String?
 
-  docUrl          String
+  docUrl String
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  kecamatan       Kecamatan        @relation(fields: [kecamatanId], references: [id])
+  kecamatan Kecamatan @relation(fields: [kecamatanId], references: [id])
 
   @@map("registrations")
+}
+
+enum StagingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StagingAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model EquipmentStaging {
+  id Int @id @default(autoincrement())
+
+  desaKelurahanId Int
+  saranaId        Int
+
+  quantity Int     @default(0)
+  unit     String? @db.VarChar(50)
+
+  isUsable          Boolean @default(true)
+  isGovernmentGrant Boolean @default(false)
+
+  year Int?
+
+  // staging
+  actionType  StagingAction
+  referenceId Int? // id dari Equipment
+
+  status StagingStatus @default(PENDING)
+
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+  sarana        Sarana        @relation(fields: [saranaId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@map("equipment_staging")
+}
+
+model FacilityRecordStaging {
+  id Int @id @default(autoincrement())
+
+  desaKelurahanId Int
+  prasaranaId     Int
+  year            Int
+
+  condition       String?
+  ownershipStatus String?
+  address         String?
+  notes           String?
+  isActive        Boolean @default(true)
+
+  // staging
+  actionType  StagingAction
+  referenceId Int?
+
+  status StagingStatus @default(PENDING)
+
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+  prasarana     Prasarana     @relation(fields: [prasaranaId], references: [id])
+
+  photos FacilityRecordPhotoStaging[]
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@map("facility_record_staging")
+}
+
+model FacilityRecordPhotoStaging {
+  id Int @id @default(autoincrement())
+
+  facilityRecordStagingId Int
+
+  fileUrl  String
+  fileName String?
+  fileSize Int?
+  mimeType String?
+
+  photoType   String?
+  description String?
+
+  takenAt    DateTime?
+  uploadedBy String?
+
+  isPrimary Boolean @default(false)
+
+  latitude  Float?
+  longitude Float?
+
+  createdAt DateTime @default(now())
+
+  facilityRecordStaging FacilityRecordStaging @relation(fields: [facilityRecordStagingId], references: [id], onDelete: Cascade)
+
+  @@index([facilityRecordStagingId])
+  @@map("facility_record_photo_staging")
+}
+
+model AthleteStaging {
+  id Int @id @default(autoincrement())
+
+  nationalId String @db.VarChar(20)
+  fullName   String @db.VarChar(150)
+
+  birthPlace String?   @db.VarChar(100)
+  birthDate  DateTime?
+  gender     String?   @db.VarChar(10)
+
+  desaKelurahanId Int
+
+  fullAddress   String?
+  organization  String? @db.VarChar(150)
+  category      String? @db.VarChar(100)
+  statusAthlete String  @default("aktif")
+
+  sportId  Int?
+  photoUrl String?
+
+  // staging
+  actionType  StagingAction
+  referenceId Int?
+
+  status StagingStatus @default(PENDING)
+
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  achievements AthleteAchievementStaging[]
+
+  desaKelurahan DesaKelurahan   @relation(fields: [desaKelurahanId], references: [id])
+  sport         CabangOlahraga? @relation(fields: [sportId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([sportId])
+  @@map("athlete_staging")
+}
+
+model AthleteAchievementStaging {
+  id Int @id @default(autoincrement())
+
+  athleteStagingId Int
+
+  achievementName String
+  category        String?
+
+  medal String?
+  year  Int?
+
+  createdAt DateTime @default(now())
+
+  athlete AthleteStaging @relation(fields: [athleteStagingId], references: [id], onDelete: Cascade)
+
+  @@index([athleteStagingId])
+  @@map("athlete_achievement_staging")
+}
+
+model SportsGroupStaging {
+  id Int @id @default(autoincrement())
+
+  desaKelurahanId Int
+
+  groupName  String
+  leaderName String?
+
+  memberCount Int @default(0)
+
+  isVerified Boolean @default(false)
+
+  decreeNumber       String?
+  secretariatAddress String?
+
+  year Int?
+
+  // staging
+  actionType  StagingAction
+  referenceId Int?
+
+  status StagingStatus @default(PENDING)
+
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@map("sports_group_staging")
+}
+
+model StagingLog {
+  id Int @id @default(autoincrement())
+
+  entityType String
+  stagingId  Int
+
+  action String // SUBMIT, APPROVE, REJECT
+  actor  String
+
+  note String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, stagingId])
+  @@map("staging_logs")
 }
