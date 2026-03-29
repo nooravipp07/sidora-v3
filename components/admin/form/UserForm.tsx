@@ -160,8 +160,8 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, isEdit = false }) => {
     { label: 'Superadmin', value: 1 },
     { label: 'Operator / Verifikator', value: 2 },
     { label: 'Kecamatan', value: 3 },
-    { label: 'Lembaga', value: 4 },
-    { label: 'Guest User', value: 5 }
+    { label: 'KONI', value: 4 },
+    { label: 'NPCI', value: 5 }
   ];
 
   const lembagaOptions = [
@@ -327,30 +327,6 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, isEdit = false }) => {
             </select>
           </div>
         </div>
-
-        {/* Conditional Fields */}
-        {selectedRole === 4 && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Lembaga <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formData.jenisAkun}
-              onChange={(e) => setFormData({ ...formData, jenisAkun: e.target.value })}
-              disabled={loading}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              required
-            >
-              <option value="">-- Pilih Lembaga --</option>
-              {lembagaOptions.map((lembaga) => (
-                <option key={lembaga.value} value={lembaga.value}>
-                  {lembaga.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {selectedRole === 3 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -18,10 +18,20 @@ export default function EditUserPage() {
         setLoading(true);
         const response = await fetch(`/api/users/${id}`);
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('User tidak ditemukan');
+          }
           throw new Error('Gagal mengambil data user');
         }
+
         const data = await response.json();
-        setUserData(data.data);
+        const user = data?.data ?? data;
+
+        if (!user) {
+          throw new Error('User tidak ditemukan');
+        }
+
+        setUserData(user);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Gagal mengambil data user');
       } finally {
