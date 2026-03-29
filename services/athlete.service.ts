@@ -1,4 +1,5 @@
 import { AthleteRepository } from '@/repositories/athlete.repository';
+import { prisma } from '@/lib/prisma';
 
 const athleteRepository = new AthleteRepository();
 
@@ -14,9 +15,30 @@ export class AthleteService {
       ];
     }
 
-    // Filter by desaKelurahanId
+    // Filter by desaKelurahanId atau kecamatanId (desa prioritas)
     if (filters.desaKelurahanId) {
       where.desaKelurahanId = parseInt(filters.desaKelurahanId);
+    } else if (filters.kecamatanId) {
+      const kecId = parseInt(filters.kecamatanId);
+      const desaList = await prisma.desaKelurahan.findMany({
+        where: { kecamatanId: kecId },
+        select: { id: true }
+      });
+      const desaIds = desaList.map(d => d.id);
+      if (desaIds.length > 0) {
+        where.desaKelurahanId = { in: desaIds };
+      } else {
+        return {
+          data: [],
+          meta: {
+            total: 0,
+            page: pagination.page,
+            limit: pagination.limit,
+            totalPages: 0,
+            hasMore: false,
+          },
+        };
+      }
     }
 
     // Filter by sportId

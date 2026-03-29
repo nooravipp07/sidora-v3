@@ -7,8 +7,12 @@ export const FacilityRecordService = {
     async getAll(filter: FacilityRecordFilter = {}, pagination: PaginationParams) {
         const where: any = {};
 
-        // Handle kecamatan filter by finding related desa/kelurahan
-        if (filter.kecamatanId !== undefined) {
+        // Handle kecamatan and desa/kelurahan filters
+        if (filter.desaKelurahanId !== undefined) {
+            // Prioritaskan filter desa/kelurahan jika diberikan (lebih spesifik)
+            where.desaKelurahanId = filter.desaKelurahanId;
+        } else if (filter.kecamatanId !== undefined) {
+            // Jika hanya kecamatan, terbatas ke desa/kelurahan di kecamatan itu
             const desaList = await prisma.desaKelurahan.findMany({
                 where: { kecamatanId: filter.kecamatanId },
                 select: { id: true }
@@ -29,8 +33,6 @@ export const FacilityRecordService = {
                     }
                 };
             }
-        } else if (filter.desaKelurahanId !== undefined) {
-            where.desaKelurahanId = filter.desaKelurahanId;
         }
 
         if (filter.prasaranaId !== undefined) {
@@ -178,10 +180,12 @@ export const FacilityRecordService = {
      * Export facility records to Excel format
      * Filters by year and kecamatan
      */
-    async exportToExcel(filter: { year?: number; kecamatanId?: number }) {
+    async exportToExcel(filter: { year?: number; kecamatanId?: number; desaKelurahanId?: number }) {
         const where: any = {};
 
-        if (filter.kecamatanId !== undefined) {
+        if (filter.desaKelurahanId !== undefined) {
+            where.desaKelurahanId = filter.desaKelurahanId;
+        } else if (filter.kecamatanId !== undefined) {
             const desaList = await prisma.desaKelurahan.findMany({
                 where: { kecamatanId: filter.kecamatanId },
                 select: { id: true }

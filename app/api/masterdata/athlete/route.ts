@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
 
     const filters = {
+      kecamatanId: searchParams.get('kecamatanId'),
       desaKelurahanId: searchParams.get('desaKelurahanId'),
       sportId: searchParams.get('sportId'),
       gender: searchParams.get('gender'),

@@ -97,6 +97,14 @@ const Athlete: React.FC = () => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '10');
+
+      // Filter kecamatan / desa berdasarkan role
+      if (user?.roleId === 3 && user.kecamatanId) {
+        params.append('kecamatanId', String(user.kecamatanId));
+      } else if (filters.kecamatanId) {
+        params.append('kecamatanId', filters.kecamatanId);
+      }
+
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.sportId) params.append('sportId', filters.sportId);
       if (filters.gender) params.append('gender', filters.gender);

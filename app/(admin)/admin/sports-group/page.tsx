@@ -94,6 +94,14 @@ const SportsGroup: React.FC = () => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '10');
+
+      // FILTER BERDASARKAN ROLE
+      if (user?.roleId === 3 && user.kecamatanId) {
+        params.append('kecamatanId', String(user.kecamatanId));
+      } else if (filters.kecamatanId) {
+        params.append('kecamatanId', filters.kecamatanId);
+      }
+
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
       if (filters.isVerified) params.append('isVerified', filters.isVerified);

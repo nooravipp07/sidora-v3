@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10', 10);
 
     const filter = {
+      kecamatanId: searchParams.get('kecamatanId') || undefined,
       desaKelurahanId: searchParams.get('desaKelurahanId') || undefined,
       year: searchParams.get('year') || undefined,
       isVerified: searchParams.get('isVerified') || undefined,

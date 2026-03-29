@@ -228,6 +228,9 @@ const Prasarana: React.FC = () => {
       const params = new URLSearchParams();
       params.append('year', filters.year);
       params.append('kecamatanId', filters.kecamatanId);
+      if (filters.desaKelurahanId) {
+        params.append('desaKelurahanId', filters.desaKelurahanId);
+      }
 
       const response = await fetch(`/api/facility-records/export?${params.toString()}`);
 

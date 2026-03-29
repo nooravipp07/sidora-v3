@@ -1,9 +1,11 @@
 import { PaginationParams } from "@/repositories/abstract.repository";
 import { SportsGroupRepo } from "@/repositories/sports-group.repository";
+import { prisma } from "@/lib/prisma";
 
 export const SportsGroupService = {
     async getAll(
         filter: {
+            kecamatanId?: string;
             desaKelurahanId?: string;
             year?: string;
             isVerified?: string;
@@ -16,6 +18,27 @@ export const SportsGroupService = {
 
         if (filter.desaKelurahanId) {
             where.desaKelurahanId = parseInt(filter.desaKelurahanId);
+        } else if (filter.kecamatanId) {
+            const kecamatanId = parseInt(filter.kecamatanId);
+            const desaList = await prisma.desaKelurahan.findMany({
+                where: { kecamatanId },
+                select: { id: true },
+            });
+            const desaIds = desaList.map(d => d.id);
+            if (desaIds.length > 0) {
+                where.desaKelurahanId = { in: desaIds };
+            } else {
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page: pagination.page,
+                        limit: pagination.limit,
+                        totalPages: 0,
+                        hasMore: false,
+                    },
+                };
+            }
         }
 
         if (filter.year) {

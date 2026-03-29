@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined;
         const kecamatanId = searchParams.get('kecamatanId') ? parseInt(searchParams.get('kecamatanId')!) : undefined;
+        const desaKelurahanId = searchParams.get('desaKelurahanId') ? parseInt(searchParams.get('desaKelurahanId')!) : undefined;
 
         if (!year || !kecamatanId) {
             return NextResponse.json(
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
         // Get Excel data from service
         const excelData = await FacilityRecordService.exportToExcel({
             year,
-            kecamatanId
+            kecamatanId,
+            desaKelurahanId
         });
 
         if (excelData.length === 0) {

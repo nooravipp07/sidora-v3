@@ -6,13 +6,14 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const kecamatanId = searchParams.get('kecamatanId') || undefined;
     const desaKelurahanId = searchParams.get('desaKelurahanId') || undefined;
     const saranaId = searchParams.get('saranaId') || undefined;
     const year = searchParams.get('year') || undefined;
     const isUsable = searchParams.get('isUsable') || undefined;
 
     const result = await EquipmentService.getAll(
-      { desaKelurahanId, saranaId, year, isUsable },
+      { kecamatanId, desaKelurahanId, saranaId, year, isUsable },
       { page, limit }
     );
 

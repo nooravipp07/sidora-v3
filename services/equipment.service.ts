@@ -1,9 +1,11 @@
 import { PaginationParams } from "@/repositories/abstract.repository";
 import { EquipmentRepo } from "@/repositories/equipment.repository";
+import { prisma } from "@/lib/prisma";
 
 export const EquipmentService = {
     async getAll(
         filter: {
+            kecamatanId?: string;
             desaKelurahanId?: string;
             saranaId?: string;
             year?: string;
@@ -17,6 +19,28 @@ export const EquipmentService = {
 
         if (filter.desaKelurahanId) {
             where.desaKelurahanId = parseInt(filter.desaKelurahanId);
+        } else if (filter.kecamatanId) {
+            const kecId = parseInt(filter.kecamatanId);
+            const desaList = await prisma.desaKelurahan.findMany({
+                where: { kecamatanId: kecId },
+                select: { id: true }
+            });
+            const desaIds = desaList.map((d: any) => d.id);
+            if (desaIds.length > 0) {
+                where.desaKelurahanId = { in: desaIds };
+            } else {
+                // no desa found in kecamatan: return empty page
+                return {
+                    data: [],
+                    meta: {
+                        total: 0,
+                        page: pagination.page,
+                        limit: pagination.limit,
+                        totalPages: 0,
+                        hasMore: false,
+                    },
+                };
+            }
         }
 
         if (filter.saranaId) {
