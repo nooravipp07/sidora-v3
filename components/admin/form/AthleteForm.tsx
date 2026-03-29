@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader, Plus, Trash2, Upload, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { getImageUrl } from '@/lib/image-utils';
+import { useAuth } from '@/lib/auth/useAuth';
 
 interface AthleteFormProps {
   initialData?: any;
@@ -30,6 +31,7 @@ interface DesaKelurahan {
 
 const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [desaKelurahanList, setDesaKelurahanList] = useState<DesaKelurahan[]>([]);
@@ -65,12 +67,19 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
 
   // Fetch dropdown options
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchOptions = async () => {
       try {
         setLoadingOptions(true);
 
+        const kecamatanId = user?.roleId === 3 && user.kecamatanId ? user.kecamatanId : undefined;
+        const desaUrl = kecamatanId
+          ? `/api/masterdata/desa-kelurahan?page=1&limit=1000&kecamatanId=${kecamatanId}`
+          : '/api/masterdata/desa-kelurahan?page=1&limit=1000';
+
         const [desaRes, sportRes] = await Promise.all([
-          fetch('/api/masterdata/desa-kelurahan?page=1&limit=1000'),
+          fetch(desaUrl),
           fetch('/api/masterdata/cabang-olahraga?page=1&limit=1000'),
         ]);
 
@@ -91,7 +100,7 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
     };
 
     fetchOptions();
-  }, []);
+  }, [authLoading, user]);
 
   const handleAddAchievement = () => {
     if (!newAchievement.achievementName.trim()) {

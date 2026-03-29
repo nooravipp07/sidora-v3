@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader, Trash2, Plus } from 'lucide-react';
 import ImageUpload from '@/components/admin/form/ImageUpload';
+import { useAuth } from '@/lib/auth/useAuth';
 import { FacilityRecord } from '@/types/masterdata';
 import { getImageUrl } from '@/lib/image-utils';
 
@@ -42,6 +43,7 @@ interface PendingPhoto {
 
 const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -67,6 +69,8 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
 
   // Fetch prasarana and desa/kelurahan lists
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchOptions = async () => {
       try {
         setLoadingOptions(true);
@@ -78,8 +82,13 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
           setPrasaranaList(prasaranaData.data || []);
         }
 
-        // Fetch desa/kelurahan
-        const desaRes = await fetch('/api/masterdata/desa-kelurahan?page=1&limit=1000');
+        // Fetch desa/kelurahan by kecamatan role 3 or all
+        const kecamatanId = user?.roleId === 3 && user.kecamatanId ? user.kecamatanId : undefined;
+        const desaUrl = kecamatanId
+          ? `/api/masterdata/desa-kelurahan?page=1&limit=1000&kecamatanId=${kecamatanId}`
+          : '/api/masterdata/desa-kelurahan?page=1&limit=1000';
+
+        const desaRes = await fetch(desaUrl);
         if (desaRes.ok) {
           const desaData = await desaRes.json();
           setDesaKelurahanList(desaData.data || []);
@@ -92,7 +101,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
     };
 
     fetchOptions();
-  }, []);
+  }, [authLoading, user]);
 
   // Fetch photos when editing
   useEffect(() => {

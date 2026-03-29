@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Loader } from 'lucide-react';
+import { useAuth } from '@/lib/auth/useAuth';
 
 interface EquipmentFormProps {
   initialData?: any;
@@ -25,6 +26,7 @@ interface DesaKelurahan {
 
 const EquipmentForm: React.FC<EquipmentFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saranaList, setSaranaList] = useState<Sarana[]>([]);
@@ -43,6 +45,8 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ initialData, isEdit = fal
 
   // Fetch sarana and desa/kelurahan lists
   useEffect(() => {
+    if (authLoading) return;
+
     const fetchOptions = async () => {
       try {
         setLoadingOptions(true);
@@ -54,8 +58,14 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ initialData, isEdit = fal
           setSaranaList(saranaData.data || []);
         }
 
-        // Fetch desa/kelurahan
-        const desaRes = await fetch('/api/masterdata/desa-kelurahan?page=1&limit=1000');
+        // Fetch desa/kelurahan by kecamatan for role 3 user, otherwise all
+        const kecamatanId = user?.roleId === 3 && user.kecamatanId ? user.kecamatanId : undefined;
+        const desaUrl = kecamatanId
+          ? `/api/masterdata/desa-kelurahan?page=1&limit=1000&kecamatanId=${kecamatanId}`
+          : '/api/masterdata/desa-kelurahan?page=1&limit=1000';
+
+        const desaRes = await fetch(desaUrl);
+
         if (desaRes.ok) {
           const desaData = await desaRes.json();
           setDesaKelurahanList(desaData.data || []);
@@ -68,7 +78,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ initialData, isEdit = fal
     };
 
     fetchOptions();
-  }, []);
+  }, [authLoading, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

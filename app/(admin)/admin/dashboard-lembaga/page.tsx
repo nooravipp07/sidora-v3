@@ -31,10 +31,10 @@ export default function DashboardLembagaPage() {
           <KecamatanMap />
         </div>
 
-        {/* Lembaga Category Stats */}
+        {/* Lembaga Category Stats
         <div className="lg:col-span-1">
           <LembagaCategoryStats />
-        </div>
+        </div> */}
       </div>
 
       {/* Bar Chart */}
