@@ -1,7 +1,7 @@
 import { DashboardRepo } from '@/repositories/dashboard.repository';
 
 export const DashboardService = {
-  async getKecamatanSummary() {
-    return DashboardRepo.getKecamatanSummary();
+  async getKecamatanSummary(filters?: { kecamatanId?: number; year?: number }) {
+    return DashboardRepo.getKecamatanSummary(filters);
   },
 };

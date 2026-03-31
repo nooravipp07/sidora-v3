@@ -30,9 +30,14 @@ interface DashboardKecamatanSummaryResult {
 }
 
 class DashboardRepository {
-  async getKecamatanSummary(): Promise<DashboardKecamatanSummaryResult> {
+  async getKecamatanSummary(filters?: { kecamatanId?: number; year?: number }): Promise<DashboardKecamatanSummaryResult> {
+    const { kecamatanId, year } = filters || {};
+
     const kecamatans = await prisma.kecamatan.findMany({
-      where: { deletedAt: null },
+      where: {
+        deletedAt: null,
+        ...(kecamatanId ? { id: kecamatanId } : {}),
+      },
       orderBy: { nama: 'asc' },
       select: {
         id: true,
@@ -84,6 +89,7 @@ class DashboardRepository {
       by: ['desaKelurahanId'],
       where: {
         desaKelurahanId: { in: desaIds },
+        ...(year ? { year } : {}),
       },
       _count: {
         id: true,
@@ -110,6 +116,7 @@ class DashboardRepository {
         id: true,
         desaKelurahanId: true,
         achievements: {
+          where: year ? { year } : {},
           select: {
             id: true,
           },
@@ -170,8 +177,17 @@ class DashboardRepository {
       if (!kecamatanId) return;
       const kec = kecamatanMap.get(kecamatanId);
       if (!kec) return;
-      kec.totalAthletes += 1;
-      kec.totalAchievement += athlete.achievements.length;
+
+      const achievementsCount = athlete.achievements.length;
+      if (year) {
+        if (achievementsCount > 0) {
+          kec.totalAthletes += 1;
+        }
+      } else {
+        kec.totalAthletes += 1;
+      }
+
+      kec.totalAchievement += achievementsCount;
     });
 
     const kecamatanSummary = Array.from(kecamatanMap.values());

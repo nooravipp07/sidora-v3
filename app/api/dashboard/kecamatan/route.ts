@@ -56,6 +56,21 @@ export async function GET(request: NextRequest) {
       include: {
         desaKelurahan: true,
         prasarana: true,
+        photos: true,
+      },
+    });
+
+    // Get sarana (equipment) for selected desa/kelurahan
+    const equipments = await prisma.equipment.findMany({
+      where: {
+        desaKelurahanId: {
+          in: desaIds,
+        },
+        deletedAt: null,
+      },
+      include: {
+        desaKelurahan: true,
+        sarana: true,
       },
     });
 
@@ -114,8 +129,10 @@ export async function GET(request: NextRequest) {
     // Calculate overall summary statistics
     const totalDesaKelurahan = desaKelurahan.length;
     const totalInfrastructure = facilityRecords.length;
+    const totalSarana = equipments.length;
     const totalSportsGroups = sportsGroups.length;
     const totalAthletes = athletes.length;
+    const totalAchievement = desaSummary.reduce((acc, item) => acc + item.totalAchievement, 0);
 
     // Group athletes by category
     const athletesByCategory = {
@@ -130,8 +147,10 @@ export async function GET(request: NextRequest) {
       summary: {
         totalDesaKelurahan,
         totalInfrastructure,
+        totalSarana,
         totalSportsGroups,
         totalAthletes,
+        totalAchievement,
         athletesByCategory,
       },
       data: {
@@ -139,6 +158,7 @@ export async function GET(request: NextRequest) {
         facilityRecords,
         sportsGroups,
         athletes,
+        equipments,
       },
       filters: {
         year: currentYear,

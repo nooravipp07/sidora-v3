@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Eye, Download } from 'lucide-react';
+import { generateDetailPDF } from '@/lib/pdf-export';
 
 interface DesaSummary {
   id: number;
@@ -21,6 +22,7 @@ interface DistrictTableProps {
   onPageChange?: (page: number) => void;
   itemsPerPage?: number;
   onViewDetail?: (district: DesaSummary) => void;
+  selectedYear?: number;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -31,7 +33,9 @@ export default function DistrictTable({
   onPageChange,
   itemsPerPage = ITEMS_PER_PAGE,
   onViewDetail,
+  selectedYear = new Date().getFullYear(),
 }: DistrictTableProps) {
+  const [isExporting, setIsExporting] = useState(false);
   const totalPages = Math.ceil(districts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
 
@@ -39,14 +43,35 @@ export default function DistrictTable({
     return districts.slice(startIndex, startIndex + itemsPerPage);
   }, [districts, startIndex, itemsPerPage]);
 
-  const handleExportRow = (district: DesaSummary) => {
-    const data = `Desa/Kelurahan: ${district.nama}\nPrasarana: ${district.totalFacility}\nKelompok Olahraga: ${district.totalSportsGroups}\nTotal Atlet: ${district.totalAthlete}\nTotal Prestasi: ${district.totalAchievement}`;
-    const blob = new Blob([data], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${district.nama}-data.txt`;
-    link.click();
+  const handleExportRow = async (district: DesaSummary) => {
+    setIsExporting(true);
+    try {
+      // Fetch detail data
+      const params = new URLSearchParams();
+      params.set('kecamatanId', district.id.toString());
+      params.set('year', selectedYear.toString());
+
+      const response = await fetch(`/api/dashboard/kecamatan?${params.toString()}`);
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload?.error || 'Gagal memuat detail untuk PDF');
+      }
+
+      // Generate PDF
+      await generateDetailPDF({
+        title: `Laporan Detail Kecamatan ${district.nama}`,
+        kecamatan: payload.kecamatan,
+        summary: payload.summary,
+        data: payload.data,
+        year: selectedYear,
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Gagal membuat PDF. Silakan coba lagi.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (districts.length === 0) {
@@ -96,8 +121,9 @@ export default function DistrictTable({
                     </button>
                     <button
                       onClick={() => handleExportRow(district)}
-                      className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 font-medium text-xs"
-                      title="Export"
+                      disabled={isExporting}
+                      className="p-2 hover:bg-green-100 rounded-lg transition-colors text-green-600 font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Export ke PDF"
                     >
                       <Download className="w-4 h-4" />
                     </button>
@@ -145,10 +171,11 @@ export default function DistrictTable({
               </button>
               <button
                 onClick={() => handleExportRow(district)}
-                className="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors flex items-center justify-center gap-1"
+                disabled={isExporting}
+                className="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-200 transition-colors flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Download className="w-3 h-3" />
-                Export
+                {isExporting ? 'Export...' : 'Export'}
               </button>
             </div>
           </div>

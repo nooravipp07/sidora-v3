@@ -44,6 +44,47 @@ interface DashboardSummary {
   totalAchievement: number;
 }
 
+interface KecamatanDetail {
+  kecamatan: {
+    id: number;
+    nama: string;
+    latitude?: string | null;
+    longitude?: string | null;
+  };
+  summary: {
+    totalDesaKelurahan: number;
+    totalInfrastructure: number;
+    totalSarana: number;
+    totalSportsGroups: number;
+    totalAthletes: number;
+    totalAchievement: number;
+    athletesByCategory: {
+      atlet: number;
+      pelatih: number;
+      wasitJuri: number;
+    };
+  };
+  data: {
+    desaKelurahan: any[];
+    facilityRecords: any[];
+    sportsGroups: any[];
+    athletes: any[];
+    equipments: any[];
+  };
+}
+
+interface DesaSummary {
+  id: number;
+  nama: string;
+  tipe: string;
+  totalFacility: number;
+  totalSportsGroups: number;
+  totalAthlete: number;
+  totalAchievement: number;
+  latitude?: string;
+  longitude?: string;
+}
+
 const Dashboard: FC = () => {
   // State untuk chart data
   const [sports, setSports] = useState<{ id: number; nama: string }[]>([]);
@@ -100,10 +141,33 @@ const Dashboard: FC = () => {
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
+  // Kecamatan filter
+  const [kecamatanOptions, setKecamatanOptions] = useState<{ id: number; nama: string }[]>([]);
+  const [selectedKecamatanId, setSelectedKecamatanId] = useState<number | null>(null);
+
   const [kecamatanData, setKecamatanData] = useState<KecamatanSummary[]>([]);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<KecamatanDetail | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Pagination states for modal tables
+  const [kelompokPage, setKelompokPage] = useState<number>(1);
+  const [prasaranaPge, setPrasaranaPage] = useState<number>(1);
+  const [saranaPage, setSaranaPage] = useState<number>(1);
+  const [atletePage, setatletePage] = useState<number>(1);
+  const MODAL_ITEMS_PER_PAGE = 5;
+
+  // Reset page to 1 whenever data changes (misalnya filter tahun diganti)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYear, kecamatanData]);
 
   // Handler export
   const handleExport = () => {
@@ -136,12 +200,52 @@ const Dashboard: FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleViewDetail = async (district: DesaSummary) => {
+    setIsDetailLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('kecamatanId', district.id.toString());
+      params.set('year', selectedYear.toString());
+
+      const response = await fetch(`/api/dashboard/kecamatan?${params.toString()}`);
+      const payload = await response.json();
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload?.error || 'Gagal memuat detail kecamatan');
+      }
+
+      setSelectedDetail(payload);
+      setDetailModalOpen(true);
+    } catch (error) {
+      console.error('Failed to fetch kecamatan detail:', error);
+      setError(error instanceof Error ? error.message : 'Terjadi kesalahan saat memuat detail');
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
+  // Reset pagination states when modal opens/closes
+  useEffect(() => {
+    if (detailModalOpen) {
+      setKelompokPage(1);
+      setPrasaranaPage(1);
+      setSaranaPage(1);
+      setatletePage(1);
+    }
+  }, [detailModalOpen]);
+
   const fetchDashboardData = async () => {
     try {
       setError(null);
       setIsLoading(true);
 
-      const response = await fetch('/api/dashboard/kecamatan-summary');
+      const params = new URLSearchParams();
+      params.set('year', selectedYear.toString());
+      if (selectedKecamatanId) {
+        params.set('kecamatanId', selectedKecamatanId.toString());
+      }
+
+      const response = await fetch(`/api/dashboard/kecamatan-summary?${params.toString()}`);
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ message: 'Unknown response error' }));
@@ -166,8 +270,23 @@ const Dashboard: FC = () => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    const fetchKecamatanOptions = async () => {
+      try {
+        const res = await fetch('/api/masterdata/kecamatan?page=1&limit=1000');
+        const payload = await res.json();
+        const allKecamatan = payload?.data || [];
+        setKecamatanOptions(allKecamatan);
+      } catch (err) {
+        console.error('Failed to load kecamatan options:', err);
+      }
+    };
+
+    fetchKecamatanOptions();
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [selectedYear, selectedKecamatanId]);
 
   const supply = dashboardSummary?.totalEquipment ?? 0;
   const demand = dashboardSummary?.totalAthletes ?? 0;
@@ -254,25 +373,34 @@ const Dashboard: FC = () => {
         <div className="flex flex-row items-center justify-between mt-1">
           <p className="text-gray-600">Ringkasan data real per kecamatan</p>
           <div className="flex flex-row gap-2 items-center">
-            {/* Filter Tahun */}
+            <div>
+              <label htmlFor="filterYear" className="text-sm font-semibold text-slate-700 mr-2">Tahun:</label>
+              <select
+                id="filterYear"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+          </div>
+
+          <div>
+            <label htmlFor="filterKecamatan" className="text-sm font-semibold text-slate-700 mr-2">Kecamatan:</label>
             <select
+              id="filterKecamatan"
+              value={selectedKecamatanId ?? ''}
+              onChange={(e) => setSelectedKecamatanId(e.target.value ? Number(e.target.value) : null)}
               className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={selectedYear}
-              onChange={e => setSelectedYear(Number(e.target.value))}
             >
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>{year}</option>
+              <option value="">Semua</option>
+              {kecamatanOptions.map((kec) => (
+                <option key={kec.id} value={kec.id}>{kec.nama}</option>
               ))}
             </select>
-            {/* Tombol Export */}
-            <button
-              className="ml-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-1"
-              onClick={handleExport}
-              type="button"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
-              Export
-            </button>
+          </div>
           </div>
         </div>
       </section>
@@ -502,6 +630,36 @@ const Dashboard: FC = () => {
 
       <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
         <h2 className="text-lg font-bold mb-4">Data Summary per Kecamatan</h2>
+        <div className="flex flex-wrap gap-3 mb-4 items-center">
+          <div>
+            <label htmlFor="filterYear" className="text-sm font-semibold text-slate-700 mr-2">Tahun:</label>
+            <select
+              id="filterYear"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {yearOptions.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="filterKecamatan" className="text-sm font-semibold text-slate-700 mr-2">Kecamatan:</label>
+            <select
+              id="filterKecamatan"
+              value={selectedKecamatanId ?? ''}
+              onChange={(e) => setSelectedKecamatanId(e.target.value ? Number(e.target.value) : null)}
+              className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Semua</option>
+              {kecamatanOptions.map((kec) => (
+                <option key={kec.id} value={kec.id}>{kec.nama}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <DistrictTable
           districts={kecamatanData.map((item) => ({
             id: item.id,
@@ -514,10 +672,299 @@ const Dashboard: FC = () => {
             latitude: item.latitude ?? undefined,
             longitude: item.longitude ?? undefined,
           }))}
-          currentPage={1}
-          onPageChange={() => {}}
+          currentPage={currentPage}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={(page) => setCurrentPage(page)}
+          onViewDetail={handleViewDetail}
+          selectedYear={selectedYear}
         />
       </section>
+
+      {detailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto border">
+            <div className="flex items-start justify-between p-4 border-b">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Detail Kecamatan: {selectedDetail?.kecamatan.nama}</h3>
+                <p className="text-sm text-slate-600">Latitude: {selectedDetail?.kecamatan.latitude ?? '-'} | Longitude: {selectedDetail?.kecamatan.longitude ?? '-'}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDetailModalOpen(false);
+                  setSelectedDetail(null);
+                }}
+                className="text-slate-500 hover:text-slate-900 text-sm font-semibold"
+              >
+                Tutup
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {isDetailLoading ? (
+                <div className="py-8 text-center text-slate-500">Memuat detail...</div>
+              ) : (
+                selectedDetail && (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="p-3 bg-slate-50 rounded-lg border">
+                        <p className="text-xs uppercase text-slate-500">Prasarana</p>
+                        <p className="text-2xl font-bold text-orange-600">{selectedDetail.summary.totalInfrastructure}</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border">
+                        <p className="text-xs uppercase text-slate-500">Sarana</p>
+                        <p className="text-2xl font-bold text-blue-600">{selectedDetail.summary.totalSarana}</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border">
+                        <p className="text-xs uppercase text-slate-500">Kelompok Olahraga</p>
+                        <p className="text-2xl font-bold text-green-600">{selectedDetail.summary.totalSportsGroups}</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-lg border">
+                        <p className="text-xs uppercase text-slate-500">Total Prestasi Atlet</p>
+                        <p className="text-2xl font-bold text-cyan-600">{selectedDetail.summary.totalAchievement}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <h4 className="text-lg font-semibold mb-2">List Kelompok Olahraga</h4>
+                      {selectedDetail.data.sportsGroups.length === 0 ? (
+                        <p className="text-sm text-slate-500">Tidak ada data kelompok olahraga.</p>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto border rounded-lg mb-2">
+                            <table className="min-w-full text-left">
+                              <thead className="bg-slate-100 text-slate-700 text-xs uppercase">
+                                <tr>
+                                  <th className="px-3 py-2">No</th>
+                                  <th className="px-3 py-2">Nama Kelompok</th>
+                                  <th className="px-3 py-2">Desa / Kelurahan</th>
+                                  <th className="px-3 py-2">Tahun</th>
+                                  <th className="px-3 py-2">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedDetail.data.sportsGroups
+                                  .slice((kelompokPage - 1) * MODAL_ITEMS_PER_PAGE, kelompokPage * MODAL_ITEMS_PER_PAGE)
+                                  .map((group, index) => (
+                                    <tr key={group.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{(kelompokPage - 1) * MODAL_ITEMS_PER_PAGE + index + 1}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{group.groupName ?? group.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{group.desaKelurahan?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{group.year ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{group.isVerified ? 'Terverifikasi' : 'Belum'}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {Math.ceil(selectedDetail.data.sportsGroups.length / MODAL_ITEMS_PER_PAGE) > 1 && (
+                            <div className="flex items-center justify-between mb-4 text-sm text-slate-600">
+                              <span>Halaman {kelompokPage} dari {Math.ceil(selectedDetail.data.sportsGroups.length / MODAL_ITEMS_PER_PAGE)}</span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setKelompokPage(prev => Math.max(1, prev - 1))}
+                                  disabled={kelompokPage === 1}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  ← Sebelumnya
+                                </button>
+                                <button
+                                  onClick={() => setKelompokPage(prev => Math.min(Math.ceil(selectedDetail.data.sportsGroups.length / MODAL_ITEMS_PER_PAGE), prev + 1))}
+                                  disabled={kelompokPage === Math.ceil(selectedDetail.data.sportsGroups.length / MODAL_ITEMS_PER_PAGE)}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  Berikutnya →
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <h4 className="text-lg font-semibold mb-2">List Prasarana</h4>
+                      {selectedDetail.data.facilityRecords.length === 0 ? (
+                        <p className="text-sm text-slate-500">Tidak ada data prasarana.</p>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto border rounded-lg mb-2">
+                            <table className="min-w-full text-left">
+                              <thead className="bg-slate-100 text-slate-700 text-xs uppercase">
+                                <tr>
+                                  <th className="px-3 py-2">No</th>
+                                  <th className="px-3 py-2">Prasarana</th>
+                                  <th className="px-3 py-2">Desa / Kelurahan</th>
+                                  <th className="px-3 py-2">Foto</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedDetail.data.facilityRecords
+                                  .slice((prasaranaPge - 1) * MODAL_ITEMS_PER_PAGE, prasaranaPge * MODAL_ITEMS_PER_PAGE)
+                                  .map((facility, index) => (
+                                    <tr key={facility.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{(prasaranaPge - 1) * MODAL_ITEMS_PER_PAGE + index + 1}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{facility.prasarana?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{facility.desaKelurahan?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">
+                                        {facility.photos?.length > 0 ? (
+                                          <div className="flex gap-2 overflow-x-auto">
+                                            {facility.photos.slice(0, 3).map((photo: any) => (
+                                              <img key={photo.id} src={photo.fileUrl} alt={photo.description ?? 'Foto prasarana'} className="w-20 h-14 object-cover rounded" />
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          '-'
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {Math.ceil(selectedDetail.data.facilityRecords.length / MODAL_ITEMS_PER_PAGE) > 1 && (
+                            <div className="flex items-center justify-between mb-4 text-sm text-slate-600">
+                              <span>Halaman {prasaranaPge} dari {Math.ceil(selectedDetail.data.facilityRecords.length / MODAL_ITEMS_PER_PAGE)}</span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setPrasaranaPage(prev => Math.max(1, prev - 1))}
+                                  disabled={prasaranaPge === 1}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  ← Sebelumnya
+                                </button>
+                                <button
+                                  onClick={() => setPrasaranaPage(prev => Math.min(Math.ceil(selectedDetail.data.facilityRecords.length / MODAL_ITEMS_PER_PAGE), prev + 1))}
+                                  disabled={prasaranaPge === Math.ceil(selectedDetail.data.facilityRecords.length / MODAL_ITEMS_PER_PAGE)}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  Berikutnya →
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <h4 className="text-lg font-semibold mb-2">List Sarana</h4>
+                      {selectedDetail.data.equipments.length === 0 ? (
+                        <p className="text-sm text-slate-500">Tidak ada data sarana.</p>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto border rounded-lg mb-2">
+                            <table className="min-w-full text-left">
+                              <thead className="bg-slate-100 text-slate-700 text-xs uppercase">
+                                <tr>
+                                  <th className="px-3 py-2">No</th>
+                                  <th className="px-3 py-2">Sarana</th>
+                                  <th className="px-3 py-2">Desa / Kelurahan</th>
+                                  <th className="px-3 py-2">Kuantitas</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedDetail.data.equipments
+                                  .slice((saranaPage - 1) * MODAL_ITEMS_PER_PAGE, saranaPage * MODAL_ITEMS_PER_PAGE)
+                                  .map((eq, index) => (
+                                    <tr key={eq.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{(saranaPage - 1) * MODAL_ITEMS_PER_PAGE + index + 1}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{eq.sarana?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{eq.desaKelurahan?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{eq.quantity ?? '0'}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {Math.ceil(selectedDetail.data.equipments.length / MODAL_ITEMS_PER_PAGE) > 1 && (
+                            <div className="flex items-center justify-between mb-4 text-sm text-slate-600">
+                              <span>Halaman {saranaPage} dari {Math.ceil(selectedDetail.data.equipments.length / MODAL_ITEMS_PER_PAGE)}</span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setSaranaPage(prev => Math.max(1, prev - 1))}
+                                  disabled={saranaPage === 1}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  ← Sebelumnya
+                                </button>
+                                <button
+                                  onClick={() => setSaranaPage(prev => Math.min(Math.ceil(selectedDetail.data.equipments.length / MODAL_ITEMS_PER_PAGE), prev + 1))}
+                                  disabled={saranaPage === Math.ceil(selectedDetail.data.equipments.length / MODAL_ITEMS_PER_PAGE)}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  Berikutnya →
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <h4 className="text-lg font-semibold mb-2">List Atlet</h4>
+                      {selectedDetail.data.athletes.length === 0 ? (
+                        <p className="text-sm text-slate-500">Tidak ada data atlet.</p>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto border rounded-lg mb-2">
+                            <table className="min-w-full text-left">
+                              <thead className="bg-slate-100 text-slate-700 text-xs uppercase">
+                                <tr>
+                                  <th className="px-3 py-2">No</th>
+                                  <th className="px-3 py-2">Foto</th>
+                                  <th className="px-3 py-2">Nama</th>
+                                  <th className="px-3 py-2">Kategori</th>
+                                  <th className="px-3 py-2">Cabang Olahraga</th>
+                                  <th className="px-3 py-2">Jumlah Prestasi Tahun {selectedYear}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedDetail.data.athletes
+                                  .slice((atletePage - 1) * MODAL_ITEMS_PER_PAGE, atletePage * MODAL_ITEMS_PER_PAGE)
+                                  .map((athlete: any, index) => (
+                                    <tr key={athlete.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{(atletePage - 1) * MODAL_ITEMS_PER_PAGE + index + 1}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">
+                                        {athlete.photoUrl ? (
+                                          <img src={athlete.photoUrl} alt={athlete.fullName} className="w-12 h-12 object-cover rounded-full" />
+                                        ) : (
+                                          <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center text-xs text-slate-500">No Photo</div>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{athlete.fullName ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{athlete.category ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{athlete.sport?.nama ?? '-'}</td>
+                                      <td className="px-3 py-2 text-sm text-slate-700">{athlete.achievements?.length ?? 0}</td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {Math.ceil(selectedDetail.data.athletes.length / MODAL_ITEMS_PER_PAGE) > 1 && (
+                            <div className="flex items-center justify-between mb-4 text-sm text-slate-600">
+                              <span>Halaman {atletePage} dari {Math.ceil(selectedDetail.data.athletes.length / MODAL_ITEMS_PER_PAGE)}</span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setatletePage(prev => Math.max(1, prev - 1))}
+                                  disabled={atletePage === 1}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  ← Sebelumnya
+                                </button>
+                                <button
+                                  onClick={() => setatletePage(prev => Math.min(Math.ceil(selectedDetail.data.athletes.length / MODAL_ITEMS_PER_PAGE), prev + 1))}
+                                  disabled={atletePage === Math.ceil(selectedDetail.data.athletes.length / MODAL_ITEMS_PER_PAGE)}
+                                  className="px-2 py-1 border rounded disabled:opacity-50"
+                                >
+                                  Berikutnya →
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                )
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };
