@@ -145,14 +145,43 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
       });
 
       if (!response.ok) {
-        throw new Error('Gagal mengupload foto');
+        let errorMessage = 'Gagal mengupload foto';
+        
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.details || errorMessage;
+          } else {
+            const text = await response.text();
+            console.error('[AthleteForm] Non-JSON error response:', text.substring(0, 200));
+            errorMessage = `Upload gagal (${response.status}). Server tidak merespons dengan benar.`;
+          }
+        } catch (parseErr) {
+          console.error('[AthleteForm] Error parsing error response:', parseErr);
+          errorMessage = `Upload gagal (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[AthleteForm] Error parsing success response:', parseErr);
+        throw new Error('Server mengembalikan respons yang tidak valid');
+      }
+
+      if (!data.url) {
+        throw new Error('Server tidak mengembalikan URL foto');
+      }
+
       setFormData({ ...formData, photoUrl: data.url });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal mengupload foto');
-      console.error('Error uploading photo:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Gagal mengupload foto (kesalahan tidak diketahui)';
+      setError(errorMsg);
+      console.error('[AthleteForm] Error uploading photo:', err);
     } finally {
       setUploadingPhoto(false);
     }

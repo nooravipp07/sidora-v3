@@ -39,24 +39,56 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, disabled = f
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload to /api/upload endpoint
+      // Upload to /api/upload endpoint with better error handling
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      // First check if response status is OK
       if (!response.ok) {
-        throw new Error('Failed to upload image');
+        let errorMessage = 'Upload gagal';
+        
+        // Try to parse JSON error response
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.details || errorMessage;
+          } else {
+            // If not JSON, get text and show generic error with status
+            const text = await response.text();
+            console.error('[ImageUpload] Non-JSON error response:', text.substring(0, 200));
+            errorMessage = `Upload gagal (${response.status}). Server tidak merespons dengan benar.`;
+          }
+        } catch (parseErr) {
+          console.error('[ImageUpload] Error parsing error response:', parseErr);
+          errorMessage = `Upload gagal (${response.status}). Tidak dapat membaca respons server.`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      // Parse successful JSON response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('[ImageUpload] Error parsing success response:', parseErr);
+        throw new Error('Server mengembalikan respons yang tidak valid');
+      }
+      
+      if (!data.url) {
+        throw new Error('Server tidak mengembalikan URL gambar');
+      }
       
       // Use relative URL - getImageUrl utility handles dev/production fallback logic
       // Never add domain URL here, let image-utils handle it
       onChange(data.url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload gagal');
-      console.error('Upload error:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Upload gagal (kesalahan tidak diketahui)';
+      setError(errorMsg);
+      console.error('[ImageUpload] Upload error:', err);
     } finally {
       setLoading(false);
       if (fileInputRef.current) {

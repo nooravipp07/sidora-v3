@@ -3,47 +3,60 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+// Set dynamic to force-dynamic in production to prevent caching issues
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Allow up to 60 seconds for upload
+
+// Utility function to get writable upload directory
+async function getUploadDir(): Promise<string | null> {
+  try {
+    // In production, check multiple paths in order of preference
+    const paths = [
+      process.env.UPLOADS_DIR, // Environment variable (highest priority)
+      process.env.UPLOAD_PATH,
+      join(process.cwd(), 'public', 'uploads', 'berita'), // Project public folder
+      process.env.HOME ? join(process.env.HOME, 'uploads', 'berita') : null, // Home directory
+      '/var/www/uploads/berita', // Common VPS path
+      '/app/public/uploads/berita', // Docker path
+    ].filter(Boolean) as string[];
+
+    // Find first writable path
+    for (const dirPath of paths) {
+      try {
+        if (!existsSync(dirPath)) {
+          await mkdir(dirPath, { recursive: true });
+        }
+        // Test write permission
+        const testFile = join(dirPath, '.write-test');
+        await writeFile(testFile, 'test');
+        // Clean up test file
+        const fs = await import('fs/promises');
+        await fs.unlink(testFile);
+        
+        console.log(`[UPLOAD] Using upload directory: ${dirPath}`);
+        return dirPath;
+      } catch (e) {
+        console.warn(`[UPLOAD] Cannot use path ${dirPath}:`, e instanceof Error ? e.message : 'Unknown error');
+        continue;
+      }
+    }
+
+    console.error('[UPLOAD] No writable upload directory found. Paths tried:', paths);
+    return null;
+  } catch (error) {
+    console.error('[UPLOAD] Error finding upload directory:', error);
+    return null;
+  }
+}
+
 // Utility function to save file locally
 async function saveFileLocally(file: File, filename: string): Promise<{ url: string; local: true } | null> {
   try {
-    let uploadsDir: string;
+    const uploadsDir = await getUploadDir();
     
-    if (process.env.NODE_ENV === 'production') {
-      // In production, prefer /app/public (deployed to server root)
-      // Fallback to /public in same directory
-      const paths = [
-        process.env.UPLOADS_DIR,
-        '/app/public/uploads/berita',
-        join(process.cwd(), 'public', 'uploads', 'berita'),
-        '/tmp/uploads/berita', // Last resort (ephemeral)
-      ].filter(Boolean) as string[];
-
-      let foundPath = '';
-      for (const path of paths) {
-        try {
-          if (!existsSync(path)) {
-            await mkdir(path, { recursive: true });
-          }
-          foundPath = path;
-          console.log(`Using upload path: ${path}`);
-          break;
-        } catch (e) {
-          console.error(`Failed to use path ${path}:`, e);
-          continue;
-        }
-      }
-
-      if (!foundPath) {
-        console.error('No writable upload directory found');
-        return null;
-      }
-      uploadsDir = foundPath;
-    } else {
-      // Development - always use project's /public folder
-      uploadsDir = join(process.cwd(), 'public', 'uploads', 'berita');
-      if (!existsSync(uploadsDir)) {
-        await mkdir(uploadsDir, { recursive: true });
-      }
+    if (!uploadsDir) {
+      console.error('[UPLOAD] No valid upload directory available');
+      return null;
     }
 
     const filepath = join(uploadsDir, filename);
@@ -53,12 +66,12 @@ async function saveFileLocally(file: File, filename: string): Promise<{ url: str
     // Build URL - always use relative path for static served files
     const url = `/uploads/berita/${filename}`;
 
-    console.log(`File saved to ${filepath}`);
-    console.log(`File URL: ${url}`);
+    console.log(`[UPLOAD] File saved to ${filepath}`);
+    console.log(`[UPLOAD] File URL: ${url}`);
 
     return { url, local: true };
   } catch (error) {
-    console.error('Local file save error:', error);
+    console.error('[UPLOAD] Local file save error:', error instanceof Error ? error.message : 'Unknown error');
     return null;
   }
 }
@@ -73,20 +86,48 @@ async function saveFileToDatabase(file: File, filename: string): Promise<{ url: 
     
     // Note: This is limited by database column size
     // Make sure your schema supports this (use LONGBLOB or similar)
-    console.log(`File stored as base64 (size: ${dataUrl.length} bytes)`);
+    console.log(`[UPLOAD] File stored as base64 (size: ${dataUrl.length} bytes)`);
     return { url: dataUrl, local: false };
   } catch (error) {
-    console.error('Database save error:', error);
+    console.error('[UPLOAD] Database save error:', error);
+    return null;
+  }
+}
+    return { url: dataUrl, local: false };
+  } catch (error) {
+    console.error('[UPLOAD] Database save error:', error);
     return null;
   }
 }
 
 export async function POST(request: NextRequest) {
+  let uploadedFile: File | null = null;
+  
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    console.log('[UPLOAD] Request received, method:', request.method);
+    console.log('[UPLOAD] Content-Type:', request.headers.get('content-type'));
+    
+    // Parse FormData with better error handling
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+      console.log('[UPLOAD] FormData parsed successfully');
+    } catch (parseError) {
+      console.error('[UPLOAD] FormData parse error:', parseError);
+      return NextResponse.json(
+        { 
+          error: 'Invalid request format. Expected multipart/form-data',
+          details: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+        },
+        { status: 400 }
+      );
+    }
 
-    if (!file) {
+    uploadedFile = formData.get('file') as File;
+    console.log('[UPLOAD] File from FormData:', uploadedFile?.name, uploadedFile?.size);
+
+    if (!uploadedFile) {
+      console.warn('[UPLOAD] No file provided in FormData');
       return NextResponse.json(
         { error: 'No file provided' },
         { status: 400 }
@@ -94,7 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!uploadedFile.type.startsWith('image/')) {
+      console.warn('[UPLOAD] Invalid file type:', uploadedFile.type);
       return NextResponse.json(
         { error: 'File harus berupa gambar' },
         { status: 400 }
@@ -102,7 +144,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (uploadedFile.size > 5 * 1024 * 1024) {
+      console.warn('[UPLOAD] File too large:', uploadedFile.size);
       return NextResponse.json(
         { error: 'Ukuran file tidak boleh lebih dari 5MB' },
         { status: 400 }
@@ -111,30 +154,40 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const timestamp = Date.now();
-    const ext = file.name.split('.').pop();
+    const ext = uploadedFile.name.split('.').pop() || 'jpg';
     const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`;
+    console.log('[UPLOAD] Generated filename:', filename);
 
     // Try local storage first
-    const localResult = await saveFileLocally(file, filename);
+    console.log('[UPLOAD] Attempting local storage...');
+    const localResult = await saveFileLocally(uploadedFile, filename);
     if (localResult) {
+      console.log('[UPLOAD] Local storage successful:', localResult.url);
       return NextResponse.json(localResult, { status: 201 });
     }
 
     // Fallback: save to database as base64 if local fails
-    console.warn('Local storage failed, using database fallback');
-    const dbResult = await saveFileToDatabase(file, filename);
+    console.warn('[UPLOAD] Local storage failed, attempting database fallback...');
+    const dbResult = await saveFileToDatabase(uploadedFile, filename);
     if (dbResult) {
+      console.log('[UPLOAD] Database storage successful');
       return NextResponse.json(dbResult, { status: 201 });
     }
 
+    console.error('[UPLOAD] All storage methods failed');
     return NextResponse.json(
       { error: 'Failed to save file (no storage available)' },
       { status: 500 }
     );
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('[UPLOAD] Unexpected error in POST handler:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to upload image' },
+      { 
+        error: 'Failed to upload image',
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }
