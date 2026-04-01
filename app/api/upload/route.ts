@@ -93,12 +93,6 @@ async function saveFileToDatabase(file: File, filename: string): Promise<{ url: 
     return null;
   }
 }
-    return { url: dataUrl, local: false };
-  } catch (error) {
-    console.error('[UPLOAD] Database save error:', error);
-    return null;
-  }
-}
 
 export async function POST(request: NextRequest) {
   let uploadedFile: File | null = null;
