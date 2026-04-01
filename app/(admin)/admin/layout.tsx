@@ -55,7 +55,8 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
     { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
     { id: 'user-management', label: 'User Management', icon: Users, href: '/admin/user-management' },
-    { id: 'master-data', label: 'Master Data', icon: Database, href: '/admin/master-data' }
+    { id: 'master-data', label: 'Master Data', icon: Database, href: '/admin/master-data' },
+    { id: 'settings', label: 'Settings', icon: Settings, href: '/admin/hero-section' },
   ];
 
   // Filter menu items based on user role

@@ -5,7 +5,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 
 interface HeroSlide {
-  image: string;
+  id?: number;
+  image?: string;
+  bannerImageUrl?: string;
   title: string;
   description: string;
 }
@@ -32,8 +34,59 @@ const defaultSlides: HeroSlide[] = [
   }
 ];
 
-const HeroSlider: React.FC<HeroSliderProps> = ({ slides = defaultSlides }) => {
+const HeroSlider: React.FC<HeroSliderProps> = ({ slides: initialSlides }) => {
+  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides || defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Fetch hero section configs from database
+    const fetchHeroSections = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        
+        const response = await fetch('/api/hero-section?status=1&limit=100');
+        
+        if (!response.ok) {
+          throw new Error('Gagal memuat hero section');
+        }
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+          // Transform database format to component format
+          const transformedSlides = data.data.map((item: any) => ({
+            id: item.id,
+            image: item.bannerImageUrl,
+            bannerImageUrl: item.bannerImageUrl,
+            title: item.title,
+            description: item.description,
+          }));
+          setSlides(transformedSlides);
+        } else {
+          // No active slides in database, use defaults
+          setSlides(defaultSlides);
+        }
+      } catch (err) {
+        console.error('Error fetching hero sections:', err);
+        setError((err as Error).message);
+        // Fallback to default slides
+        setSlides(defaultSlides);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only fetch if no initial slides provided
+    if (!initialSlides || initialSlides.length === 0) {
+      fetchHeroSections();
+    } else {
+      setSlides(initialSlides);
+      setLoading(false);
+    }
+  }, [initialSlides]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,12 +97,33 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides = defaultSlides }) => {
 
   return (
     <section id="home" className="relative h-screen sm:h-[600px] md:h-[700px] lg:h-[750px] flex items-center overflow-hidden">
+      {/* Loading State */}
+      {loading && (
+        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4" />
+            <p className="text-gray-700">Memuat hero section...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="absolute inset-0 bg-red-50 flex items-center justify-center z-50">
+          <div className="text-center text-red-700">
+            <p className="font-semibold mb-2">Gagal memuat hero section</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Slides */}
       {slides.map((slide, idx) => (
         <div
-          key={idx}
+          key={slide.id || idx}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === idx ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           style={{
-            backgroundImage: `url(${slide.image})`,
+            backgroundImage: `url(${slide.image || slide.bannerImageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',

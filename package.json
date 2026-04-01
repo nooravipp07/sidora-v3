@@ -21,6 +21,7 @@
     "apexcharts": "^5.10.4",
     "bcryptjs": "^2.4.3",
     "html2canvas": "^1.4.1",
+    "image-size": "^2.0.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",

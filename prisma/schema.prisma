@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,74 +7,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User Model
 model User {
-  id              Int       @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   name            String
-  email           String    @unique
+  email           String         @unique
   namaLengkap     String?
   noTelepon       String?
   emailVerifiedAt DateTime?
   password        String
-  rememberToken   String?   @db.VarChar(100)
+  rememberToken   String?        @db.VarChar(100)
   roleId          Int?
   jenisAkun       Int?
   kecamatanId     Int?
   desaKelurahanId Int?
-  status          Int?      @default(0)
+  status          Int?           @default(0)
   lastLogin       DateTime?
-  createdAt       DateTime? @default(now())
-  updatedAt       DateTime? @updatedAt
+  createdAt       DateTime?      @default(now())
+  updatedAt       DateTime?      @updatedAt
+  loginHistory    LoginHistory[]
+  refreshTokens   RefreshToken[]
+  kecamatan       Kecamatan?     @relation(fields: [kecamatanId], references: [id])
+  role            Role?          @relation(fields: [roleId], references: [id])
 
-  // Relations
-  role          Role?          @relation(fields: [roleId], references: [id])
-  kecamatan     Kecamatan?     @relation(fields: [kecamatanId], references: [id])
-  refreshTokens RefreshToken[]
-  loginHistory  LoginHistory[]
-
+  @@index([kecamatanId], map: "m_users_kecamatanId_fkey")
+  @@index([roleId], map: "m_users_roleId_fkey")
   @@map("m_users")
 }
 
-// Role Model
 model Role {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   description String?
-
-  // Relations
-  users       User[]
   permissions RolePermission[]
+  users       User[]
 
   @@map("m_roles")
 }
 
-// Permission Model
 model Permission {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   description String?
-
-  // Relations
-  roles RolePermission[]
+  roles       RolePermission[]
 
   @@map("m_permissions")
 }
 
-// Role Permission Pivot Model
 model RolePermission {
-  id           Int @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   roleId       Int
   permissionId Int
-
-  // Relations
-  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
+  @@index([permissionId], map: "m_role_permissions_permissionId_fkey")
   @@map("m_role_permissions")
 }
 
-// Refresh Token Model for token rotation
 model RefreshToken {
   id        Int       @id @default(autoincrement())
   userId    Int
@@ -85,14 +72,12 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime  @default(now())
   revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "m_refresh_tokens_userId_fkey")
   @@map("m_refresh_tokens")
 }
 
-// Login History Model for audit trail
 model LoginHistory {
   id        Int       @id @default(autoincrement())
   userId    Int
@@ -100,99 +85,84 @@ model LoginHistory {
   userAgent String?
   loginAt   DateTime  @default(now())
   logoutAt  DateTime?
-  status    String    @default("success") // success, failed, etc
+  status    String    @default("success")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "m_login_history_userId_fkey")
   @@map("m_login_history")
 }
 
-// Kecamatan (District) Model
 model Kecamatan {
-  id        Int       @id @default(autoincrement())
-  nama      String
-  latitude  String?
-  longitude String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
+  id                Int             @id @default(autoincrement())
+  nama              String
+  latitude          String?
+  longitude         String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
   desaKelurahanList DesaKelurahan[]
-  Registration      Registration[]
   users             User[]
+  Registration      Registration[]
 
   @@map("m_kecamatan")
 }
 
-// Desa/Kelurahan Model
 model DesaKelurahan {
-  id          Int       @id @default(autoincrement())
-  kecamatanId Int
-  nama        String    @db.VarChar(150)
-  tipe        String    @db.VarChar(20) // 'desa' or 'kelurahan'
-  latitude    String?   @db.VarChar(50)
-  longitude   String?   @db.VarChar(50)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-
-  // Relations
-  kecamatan             Kecamatan               @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
-  facilityRecords       FacilityRecord[]
-  equipment             Equipment[]
-  sportsGroups          SportsGroup[]
+  id                    Int                     @id @default(autoincrement())
+  kecamatanId           Int
+  nama                  String                  @db.VarChar(150)
+  tipe                  String                  @db.VarChar(20)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  deletedAt             DateTime?
+  latitude              String?                 @db.VarChar(50)
+  longitude             String?                 @db.VarChar(50)
+  AthleteStaging        AthleteStaging[]
   athletes              Athlete[]
   EquipmentStaging      EquipmentStaging[]
+  equipment             Equipment[]
+  facilityRecords       FacilityRecord[]
   FacilityRecordStaging FacilityRecordStaging[]
-  AthleteStaging        AthleteStaging[]
+  kecamatan             Kecamatan               @relation(fields: [kecamatanId], references: [id], onDelete: Cascade)
   SportsGroupStaging    SportsGroupStaging[]
+  sportsGroups          SportsGroup[]
 
   @@index([kecamatanId])
   @@map("m_desa_kelurahan")
 }
 
-// Cabang Olahraga (Sport Branch) Model
 model CabangOlahraga {
-  id        Int       @id @default(autoincrement())
-  nama      String    @db.VarChar(100)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  athletes       Athlete[]
+  id             Int              @id @default(autoincrement())
+  nama           String           @db.VarChar(100)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
   AthleteStaging AthleteStaging[]
+  athletes       Athlete[]
 
   @@map("m_cabang_olahraga")
 }
 
-// Sarana (Facility) Model
 model Sarana {
-  id        Int       @id @default(autoincrement())
-  nama      String    @db.VarChar(150)
-  jenis     String?   @db.VarChar(100)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  equipment        Equipment[]
+  id               Int                @id @default(autoincrement())
+  nama             String             @db.VarChar(150)
+  jenis            String?            @db.VarChar(100)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
   EquipmentStaging EquipmentStaging[]
+  equipment        Equipment[]
 
   @@map("m_sarana")
 }
 
-// Prasarana (Infrastructure) Model
 model Prasarana {
-  id        Int       @id @default(autoincrement())
-  nama      String    @db.VarChar(150)
-  jenis     String?   @db.VarChar(100)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
+  id                    Int                     @id @default(autoincrement())
+  nama                  String                  @db.VarChar(150)
+  jenis                 String?                 @db.VarChar(100)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  deletedAt             DateTime?
   facilityRecords       FacilityRecord[]
   FacilityRecordStaging FacilityRecordStaging[]
 
@@ -209,13 +179,14 @@ model News {
   isPublished Boolean   @default(false)
   publishedAt DateTime?
   categoryId  Int?
-  views       Int       @default(0)
-  category    Category? @relation(fields: [categoryId], references: [id])
-  tags        NewsTag[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
+  views       Int       @default(0)
+  category    Category? @relation(fields: [categoryId], references: [id])
+  tags        NewsTag[]
 
+  @@index([categoryId], map: "news_categoryId_fkey")
   @@map("news")
 }
 
@@ -223,16 +194,14 @@ model Category {
   id   Int    @id @default(autoincrement())
   name String
   slug String @unique
-
   news News[]
 
   @@map("categories")
 }
 
 model Tag {
-  id   Int    @id @default(autoincrement())
+  id   Int       @id @default(autoincrement())
   name String
-
   news NewsTag[]
 
   @@map("tags")
@@ -241,75 +210,67 @@ model Tag {
 model NewsTag {
   newsId Int
   tagId  Int
-
-  news News @relation(fields: [newsId], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  news   News @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([newsId, tagId])
+  @@index([tagId], map: "news_tags_tagId_fkey")
   @@map("news_tags")
 }
 
 model Gallery {
-  id          Int     @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   title       String
   description String?
-
-  items GalleryItem[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt   DateTime      @default(now())
+  deletedAt   DateTime?
+  updatedAt   DateTime      @updatedAt
+  items       GalleryItem[]
 
   @@map("galleries")
 }
 
 model GalleryItem {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   galleryId Int
   imageUrl  String
   caption   String?
-
-  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
 
+  @@index([galleryId], map: "gallery_items_galleryId_fkey")
   @@map("gallery_items")
 }
 
 model Agenda {
-  id          Int     @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String?
   location    String?
-  category    String? // e.g., "Kompetisi", "Pelatihan", "Event Komunitas", "Acara"
-  level       String? // e.g., "Lokal", "Daerah", "Regional", "Nasional"
-  status      String  @default("Active") // "Active" or "Inactive"
-
-  startDate DateTime
-  endDate   DateTime?
-  isAllDay  Boolean   @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  startDate   DateTime
+  endDate     DateTime?
+  isAllDay    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  category    String?
+  level       String?
+  status      String    @default("Active")
 
   @@map("agendas")
 }
 
-// Visitor Model for tracking page views and visitor statistics
 model Visitor {
-  id        Int      @id @default(autoincrement())
-  sessionId String   @db.VarChar(100) // Unique session identifier
-  ipAddress String?  @db.VarChar(50)
-  userAgent String?  @db.Text
-  page      String   @db.VarChar(255) // Page path (e.g., /berita, /galeri, /)
-  referrer  String?  @db.VarChar(255) // Referrer URL
-  visitedAt DateTime @default(now())
-
-  // For better analytics
-  country    String? @db.VarChar(100)
-  city       String? @db.VarChar(100)
-  deviceType String? @db.VarChar(50) // desktop, mobile, tablet
+  id         Int      @id @default(autoincrement())
+  sessionId  String   @db.VarChar(100)
+  ipAddress  String?  @db.VarChar(50)
+  userAgent  String?  @db.Text
+  page       String   @db.VarChar(255)
+  referrer   String?  @db.VarChar(255)
+  visitedAt  DateTime @default(now())
+  country    String?  @db.VarChar(100)
+  city       String?  @db.VarChar(100)
+  deviceType String?  @db.VarChar(50)
 
   @@index([sessionId])
   @@index([visitedAt])
@@ -318,80 +279,65 @@ model Visitor {
 }
 
 model FacilityRecord {
-  id              Int @id @default(autoincrement())
+  id              Int                   @id @default(autoincrement())
   desaKelurahanId Int
   prasaranaId     Int
   year            Int
-
   condition       String?
-  ownershipStatus String? // OWNED, RENTED, SHARED
+  ownershipStatus String?
   address         String?
-
-  notes     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
-
-  prasarana     Prasarana             @relation(fields: [prasaranaId], references: [id])
-  desaKelurahan DesaKelurahan         @relation(fields: [desaKelurahanId], references: [id])
-  photos        FacilityRecordPhoto[]
+  notes           String?
+  isActive        Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  createdBy       String?
+  updatedBy       String?
+  desaKelurahan   DesaKelurahan         @relation(fields: [desaKelurahanId], references: [id])
+  prasarana       Prasarana             @relation(fields: [prasaranaId], references: [id])
+  photos          FacilityRecordPhoto[]
 
   @@unique([prasaranaId, year])
   @@index([year])
   @@index([prasaranaId])
+  @@index([desaKelurahanId], map: "facility_record_desaKelurahanId_fkey")
   @@map("facility_record")
 }
 
 model FacilityRecordPhoto {
-  id               Int @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   facilityRecordId Int
-
-  fileUrl  String
-  fileName String?
-  fileSize Int?
-  mimeType String?
-
-  photoType   String?
-  description String?
-
-  takenAt    DateTime?
-  uploadedAt DateTime  @default(now())
-  uploadedBy String?
-
-  isPrimary Boolean @default(false)
-
-  latitude  Float?
-  longitude Float?
-
-  facilityRecord FacilityRecord @relation(fields: [facilityRecordId], references: [id])
+  fileUrl          String
+  fileName         String?
+  fileSize         Int?
+  mimeType         String?
+  photoType        String?
+  description      String?
+  takenAt          DateTime?
+  uploadedAt       DateTime       @default(now())
+  uploadedBy       String?
+  isPrimary        Boolean        @default(false)
+  latitude         Float?
+  longitude        Float?
+  facilityRecord   FacilityRecord @relation(fields: [facilityRecordId], references: [id])
 
   @@index([facilityRecordId])
   @@map("facility_record_photo")
 }
 
 model Equipment {
-  id Int @id @default(autoincrement())
-
-  desaKelurahanId Int
-  saranaId        Int
-
-  quantity Int     @default(0)
-  unit     String? @db.VarChar(50)
-
-  isUsable          Boolean @default(true)
-  isGovernmentGrant Boolean @default(false)
-
-  year Int?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
-  sarana        Sarana        @relation(fields: [saranaId], references: [id], onDelete: Cascade)
+  id                Int           @id @default(autoincrement())
+  desaKelurahanId   Int
+  saranaId          Int
+  quantity          Int           @default(0)
+  unit              String?       @db.VarChar(50)
+  isUsable          Boolean       @default(true)
+  isGovernmentGrant Boolean       @default(false)
+  year              Int?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  desaKelurahan     DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sarana            Sarana        @relation(fields: [saranaId], references: [id], onDelete: Cascade)
 
   @@index([desaKelurahanId])
   @@index([saranaId])
@@ -400,28 +346,19 @@ model Equipment {
 }
 
 model SportsGroup {
-  id Int @id @default(autoincrement())
-
-  desaKelurahanId Int
-
-  groupName  String  @db.VarChar(150)
-  leaderName String? @db.VarChar(150)
-
-  memberCount Int @default(0)
-
-  isVerified Boolean @default(false)
-
-  decreeNumber       String? @db.VarChar(100) // nomor SK
-  secretariatAddress String? @db.VarChar(255)
-
-  year Int?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  id                 Int           @id @default(autoincrement())
+  desaKelurahanId    Int
+  groupName          String        @db.VarChar(150)
+  leaderName         String?       @db.VarChar(150)
+  memberCount        Int           @default(0)
+  isVerified         Boolean       @default(false)
+  decreeNumber       String?       @db.VarChar(100)
+  secretariatAddress String?       @db.VarChar(255)
+  year               Int?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
+  desaKelurahan      DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
 
   @@index([desaKelurahanId])
   @@index([year])
@@ -429,32 +366,25 @@ model SportsGroup {
 }
 
 model Athlete {
-  id Int @id @default(autoincrement())
-
-  nationalId String    @unique @db.VarChar(20) // NIK
-  fullName   String    @db.VarChar(150)
-  birthPlace String?   @db.VarChar(100)
-  birthDate  DateTime?
-  gender     String?   @db.VarChar(10)
-
+  id              Int                  @id @default(autoincrement())
+  nationalId      String               @unique @db.VarChar(20)
+  fullName        String               @db.VarChar(150)
+  birthPlace      String?              @db.VarChar(100)
+  birthDate       DateTime?
+  gender          String?              @db.VarChar(10)
   desaKelurahanId Int
-
-  fullAddress  String?
-  organization String? @db.VarChar(150)
-  category     String? @db.VarChar(100)
-  status       String  @default("aktif") @db.VarChar(20) // aktif, non-aktif
-
-  sportId  Int?
-  photoUrl String? @db.VarChar(255)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  // Relations
-  desaKelurahan DesaKelurahan        @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
-  sport         CabangOlahraga?      @relation(fields: [sportId], references: [id])
-  achievements  AthleteAchievement[]
+  fullAddress     String?
+  organization    String?              @db.VarChar(150)
+  category        String?              @db.VarChar(100)
+  sportId         Int?
+  photoUrl        String?              @db.VarChar(255)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  deletedAt       DateTime?
+  status          String               @default("aktif") @db.VarChar(20)
+  achievements    AthleteAchievement[]
+  desaKelurahan   DesaKelurahan        @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sport           CabangOlahraga?      @relation(fields: [sportId], references: [id])
 
   @@index([desaKelurahanId])
   @@index([sportId])
@@ -462,64 +392,223 @@ model Athlete {
 }
 
 model AthleteAchievement {
-  id Int @id @default(autoincrement())
-
-  athleteId Int
-
-  achievementName String  @db.VarChar(150)
-  category        String? @db.VarChar(100)
-
-  medal String? @db.VarChar(20)
-  year  Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  athleteId       Int
+  achievementName String   @db.VarChar(150)
+  category        String?  @db.VarChar(100)
+  medal           String?  @db.VarChar(20)
+  year            Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  athlete         Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@index([athleteId])
   @@map("athlete_achievements")
 }
 
 model Registration {
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-
-  // informasi tambahan
-  nip         String
-  namaLengkap String
-  noTelepon   String
-
-  // jenis pendaftar
-  jenisAkun Int // 1 = Kecamatan, 2 = Lembaga
-
-  // jika kecamatan
-  kecamatanId Int
-
-  // jika lembaga
-  lembagaId Int?
-
-  // status workflow
-  status Int // 1 = PENDING, 2 = APPROVE, 3 = REJECT
-
-  // verifikasi
-  verifiedBy Int
-  verifiedAt DateTime?
-
-  // alasan reject
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  password     String
+  nip          String
+  namaLengkap  String
+  noTelepon    String
+  jenisAkun    Int
+  kecamatanId  Int
+  lembagaId    Int?
+  status       Int
+  verifiedBy   Int
+  verifiedAt   DateTime?
   rejectReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  docUrl       String
+  kecamatan    Kecamatan @relation(fields: [kecamatanId], references: [id])
 
-  docUrl String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  kecamatan Kecamatan @relation(fields: [kecamatanId], references: [id])
-
+  @@index([kecamatanId], map: "registrations_kecamatanId_fkey")
   @@map("registrations")
+}
+
+model EquipmentStaging {
+  id                Int           @id @default(autoincrement())
+  desaKelurahanId   Int
+  saranaId          Int
+  quantity          Int           @default(0)
+  unit              String?       @db.VarChar(50)
+  isUsable          Boolean       @default(true)
+  isGovernmentGrant Boolean       @default(false)
+  year              Int?
+  actionType        StagingAction
+  referenceId       Int?
+  status            StagingStatus @default(PENDING)
+  submittedBy       String
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  desaKelurahan     DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+  sarana            Sarana        @relation(fields: [saranaId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@index([saranaId], map: "equipment_staging_saranaId_fkey")
+  @@map("equipment_staging")
+}
+
+model FacilityRecordStaging {
+  id              Int                          @id @default(autoincrement())
+  desaKelurahanId Int
+  prasaranaId     Int
+  year            Int
+  condition       String?
+  ownershipStatus String?
+  address         String?
+  notes           String?
+  isActive        Boolean                      @default(true)
+  actionType      StagingAction
+  referenceId     Int?
+  status          StagingStatus                @default(PENDING)
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+  photos          FacilityRecordPhotoStaging[]
+  desaKelurahan   DesaKelurahan                @relation(fields: [desaKelurahanId], references: [id])
+  prasarana       Prasarana                    @relation(fields: [prasaranaId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@index([prasaranaId], map: "facility_record_staging_prasaranaId_fkey")
+  @@map("facility_record_staging")
+}
+
+model FacilityRecordPhotoStaging {
+  id                      Int                   @id @default(autoincrement())
+  facilityRecordStagingId Int
+  fileUrl                 String
+  fileName                String?
+  fileSize                Int?
+  mimeType                String?
+  photoType               String?
+  description             String?
+  takenAt                 DateTime?
+  uploadedBy              String?
+  isPrimary               Boolean               @default(false)
+  latitude                Float?
+  longitude               Float?
+  createdAt               DateTime              @default(now())
+  facilityRecordStaging   FacilityRecordStaging @relation(fields: [facilityRecordStagingId], references: [id], onDelete: Cascade)
+
+  @@index([facilityRecordStagingId])
+  @@map("facility_record_photo_staging")
+}
+
+model AthleteStaging {
+  id              Int                         @id @default(autoincrement())
+  nationalId      String                      @db.VarChar(20)
+  fullName        String                      @db.VarChar(150)
+  birthPlace      String?                     @db.VarChar(100)
+  birthDate       DateTime?
+  gender          String?                     @db.VarChar(10)
+  desaKelurahanId Int
+  fullAddress     String?
+  organization    String?                     @db.VarChar(150)
+  category        String?                     @db.VarChar(100)
+  statusAthlete   String                      @default("aktif")
+  sportId         Int?
+  photoUrl        String?
+  actionType      StagingAction
+  referenceId     Int?
+  status          StagingStatus               @default(PENDING)
+  submittedBy     String
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  achievements    AthleteAchievementStaging[]
+  desaKelurahan   DesaKelurahan               @relation(fields: [desaKelurahanId], references: [id])
+  sport           CabangOlahraga?             @relation(fields: [sportId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([sportId])
+  @@map("athlete_staging")
+}
+
+model AthleteAchievementStaging {
+  id               Int            @id @default(autoincrement())
+  athleteStagingId Int
+  achievementName  String
+  category         String?
+  medal            String?
+  year             Int?
+  createdAt        DateTime       @default(now())
+  athlete          AthleteStaging @relation(fields: [athleteStagingId], references: [id], onDelete: Cascade)
+
+  @@index([athleteStagingId])
+  @@map("athlete_achievement_staging")
+}
+
+model SportsGroupStaging {
+  id                 Int           @id @default(autoincrement())
+  desaKelurahanId    Int
+  groupName          String
+  leaderName         String?
+  memberCount        Int           @default(0)
+  isVerified         Boolean       @default(false)
+  decreeNumber       String?
+  secretariatAddress String?
+  year               Int?
+  actionType         StagingAction
+  referenceId        Int?
+  status             StagingStatus @default(PENDING)
+  submittedBy        String
+  reviewedBy         String?
+  reviewedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  desaKelurahan      DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+
+  @@index([status])
+  @@index([desaKelurahanId])
+  @@index([year])
+  @@map("sports_group_staging")
+}
+
+model StagingLog {
+  id         Int      @id @default(autoincrement())
+  entityType String
+  stagingId  Int
+  action     String
+  actor      String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, stagingId])
+  @@map("staging_logs")
+}
+
+model HeroSectionConfig {
+  id             Int      @id @default(autoincrement())
+  title          String   @db.VarChar(255)
+  description    String   @db.Text
+  bannerImageUrl String   @db.VarChar(500)
+  displayOrder   Int      @default(0)
+  status         Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status])
+  @@index([displayOrder])
+  @@map("hero_section_configs")
 }
 
 enum StagingStatus {
@@ -532,230 +621,4 @@ enum StagingAction {
   CREATE
   UPDATE
   DELETE
-}
-
-model EquipmentStaging {
-  id Int @id @default(autoincrement())
-
-  desaKelurahanId Int
-  saranaId        Int
-
-  quantity Int     @default(0)
-  unit     String? @db.VarChar(50)
-
-  isUsable          Boolean @default(true)
-  isGovernmentGrant Boolean @default(false)
-
-  year Int?
-
-  // staging
-  actionType  StagingAction
-  referenceId Int? // id dari Equipment
-
-  status StagingStatus @default(PENDING)
-
-  submittedBy     String
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // relations
-  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
-  sarana        Sarana        @relation(fields: [saranaId], references: [id])
-
-  @@index([status])
-  @@index([desaKelurahanId])
-  @@index([year])
-  @@map("equipment_staging")
-}
-
-model FacilityRecordStaging {
-  id Int @id @default(autoincrement())
-
-  desaKelurahanId Int
-  prasaranaId     Int
-  year            Int
-
-  condition       String?
-  ownershipStatus String?
-  address         String?
-  notes           String?
-  isActive        Boolean @default(true)
-
-  // staging
-  actionType  StagingAction
-  referenceId Int?
-
-  status StagingStatus @default(PENDING)
-
-  submittedBy     String
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // relations
-  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
-  prasarana     Prasarana     @relation(fields: [prasaranaId], references: [id])
-
-  photos FacilityRecordPhotoStaging[]
-
-  @@index([status])
-  @@index([desaKelurahanId])
-  @@index([year])
-  @@map("facility_record_staging")
-}
-
-model FacilityRecordPhotoStaging {
-  id Int @id @default(autoincrement())
-
-  facilityRecordStagingId Int
-
-  fileUrl  String
-  fileName String?
-  fileSize Int?
-  mimeType String?
-
-  photoType   String?
-  description String?
-
-  takenAt    DateTime?
-  uploadedBy String?
-
-  isPrimary Boolean @default(false)
-
-  latitude  Float?
-  longitude Float?
-
-  createdAt DateTime @default(now())
-
-  facilityRecordStaging FacilityRecordStaging @relation(fields: [facilityRecordStagingId], references: [id], onDelete: Cascade)
-
-  @@index([facilityRecordStagingId])
-  @@map("facility_record_photo_staging")
-}
-
-model AthleteStaging {
-  id Int @id @default(autoincrement())
-
-  nationalId String @db.VarChar(20)
-  fullName   String @db.VarChar(150)
-
-  birthPlace String?   @db.VarChar(100)
-  birthDate  DateTime?
-  gender     String?   @db.VarChar(10)
-
-  desaKelurahanId Int
-
-  fullAddress   String?
-  organization  String? @db.VarChar(150)
-  category      String? @db.VarChar(100)
-  statusAthlete String  @default("aktif")
-
-  sportId  Int?
-  photoUrl String?
-
-  // staging
-  actionType  StagingAction
-  referenceId Int?
-
-  status StagingStatus @default(PENDING)
-
-  submittedBy     String
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  achievements AthleteAchievementStaging[]
-
-  desaKelurahan DesaKelurahan   @relation(fields: [desaKelurahanId], references: [id])
-  sport         CabangOlahraga? @relation(fields: [sportId], references: [id])
-
-  @@index([status])
-  @@index([desaKelurahanId])
-  @@index([sportId])
-  @@map("athlete_staging")
-}
-
-model AthleteAchievementStaging {
-  id Int @id @default(autoincrement())
-
-  athleteStagingId Int
-
-  achievementName String
-  category        String?
-
-  medal String?
-  year  Int?
-
-  createdAt DateTime @default(now())
-
-  athlete AthleteStaging @relation(fields: [athleteStagingId], references: [id], onDelete: Cascade)
-
-  @@index([athleteStagingId])
-  @@map("athlete_achievement_staging")
-}
-
-model SportsGroupStaging {
-  id Int @id @default(autoincrement())
-
-  desaKelurahanId Int
-
-  groupName  String
-  leaderName String?
-
-  memberCount Int @default(0)
-
-  isVerified Boolean @default(false)
-
-  decreeNumber       String?
-  secretariatAddress String?
-
-  year Int?
-
-  // staging
-  actionType  StagingAction
-  referenceId Int?
-
-  status StagingStatus @default(PENDING)
-
-  submittedBy     String
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  rejectionReason String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  desaKelurahan DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
-
-  @@index([status])
-  @@index([desaKelurahanId])
-  @@index([year])
-  @@map("sports_group_staging")
-}
-
-model StagingLog {
-  id Int @id @default(autoincrement())
-
-  entityType String
-  stagingId  Int
-
-  action String // SUBMIT, APPROVE, REJECT
-  actor  String
-
-  note String?
-
-  createdAt DateTime @default(now())
-
-  @@index([entityType, stagingId])
-  @@map("staging_logs")
 }
