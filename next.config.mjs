@@ -27,8 +27,9 @@ const nextConfig = {
         hostname: '127.0.0.1',
       },
     ],
-    // Disable optimization in development for local files
-    unoptimized: process.env.NODE_ENV === 'development' ? true : false,
+    // IMPORTANT: Enable unoptimized for BOTH dev and production local file uploads
+    // This allows /uploads/* relative paths to work properly
+    unoptimized: true,
   },
 };
 

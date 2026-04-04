@@ -429,6 +429,7 @@ const HeroSectionManagement = () => {
                       alt="Preview"
                       fill
                       className="object-cover"
+                      unoptimized={true}
                     />
                   </div>
                 )}
@@ -576,6 +577,7 @@ const HeroSectionManagement = () => {
                                 alt={config.title}
                                 fill
                                 className="object-cover"
+                                unoptimized={true}
                               />
                             </div>
                           </td>

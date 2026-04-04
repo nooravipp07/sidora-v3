@@ -40,6 +40,23 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides: initialSlides }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Helper to normalize image URL (same as GalleryCard)
+  const normalizeImageUrl = (url?: string): string => {
+    if (!url) return defaultSlides[0].image || '';
+    
+    // If it's already a remote URL, use as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If it's a local path without leading slash, add it
+    if (!url.startsWith('/')) {
+      return `/${url}`;
+    }
+    
+    return url;
+  };
+
   useEffect(() => {
     // Fetch hero section configs from database
     const fetchHeroSections = async () => {
@@ -49,28 +66,39 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides: initialSlides }) => {
         
         const response = await fetch('/api/hero-section?status=1&limit=100');
         
+        console.log('[HeroSlider] Fetch response status:', response.status);
+        
         if (!response.ok) {
           throw new Error('Gagal memuat hero section');
         }
         
         const data = await response.json();
+        console.log('[HeroSlider] Data received:', data);
         
         if (data.data && data.data.length > 0) {
           // Transform database format to component format
-          const transformedSlides = data.data.map((item: any) => ({
-            id: item.id,
-            image: item.bannerImageUrl,
-            bannerImageUrl: item.bannerImageUrl,
-            title: item.title,
-            description: item.description,
-          }));
+          const transformedSlides = data.data.map((item: any) => {
+            const normalizedUrl = normalizeImageUrl(item.bannerImageUrl);
+            console.log('[HeroSlider] Original URL:', item.bannerImageUrl, '→ Normalized:', normalizedUrl);
+            
+            return {
+              id: item.id,
+              image: normalizedUrl,
+              bannerImageUrl: normalizedUrl,
+              title: item.title,
+              description: item.description,
+            };
+          });
+          
+          console.log('[HeroSlider] Transformed slides:', transformedSlides);
           setSlides(transformedSlides);
         } else {
+          console.log('[HeroSlider] No active slides in database, using defaults');
           // No active slides in database, use defaults
           setSlides(defaultSlides);
         }
       } catch (err) {
-        console.error('Error fetching hero sections:', err);
+        console.error('[HeroSlider] Error fetching hero sections:', err);
         setError((err as Error).message);
         // Fallback to default slides
         setSlides(defaultSlides);
@@ -118,12 +146,16 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides: initialSlides }) => {
       )}
 
       {/* Slides */}
-      {slides.map((slide, idx) => (
+      {slides.map((slide, idx) => {
+        const imageUrl = slide.image || slide.bannerImageUrl || defaultSlides[0].image;
+        console.log(`[HeroSlider] Rendering slide ${idx}, image:`, imageUrl);
+        
+        return (
         <div
           key={slide.id || idx}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${currentSlide === idx ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           style={{
-            backgroundImage: `url(${slide.image || slide.bannerImageUrl})`,
+            backgroundImage: `url(${imageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -143,7 +175,8 @@ const HeroSlider: React.FC<HeroSliderProps> = ({ slides: initialSlides }) => {
             />
           </div>
         </div>
-      ))}
+      );
+      })}
 
       {/* Left Navigation Arrow */}
       <button
