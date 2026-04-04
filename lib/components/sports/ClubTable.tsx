@@ -11,6 +11,10 @@ interface SportsGroup {
   isVerified: boolean;
   desaKelurahanId: number;
   year?: number | null;
+  sport?: {
+    id: number;
+    nama: string;
+  } | null;
   desaKelurahan: {
     id: number;
     nama: string;
