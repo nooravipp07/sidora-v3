@@ -193,25 +193,42 @@ class FacilityRecordRepository extends AbstractRepository<FacilityRecord> {
                     desaKelurahanId: { in: desaIds }
                 };
 
-                // Get total facilities
-                const total = await prisma.facilityRecord.count({ where: whereClause });
-
-                // Get baik count
-                const baik = await prisma.facilityRecord.count({
-                    where: { ...whereClause, condition: '1' }
+                // Get facility records with prasarana details
+                const facilities = await prisma.facilityRecord.findMany({
+                    where: whereClause,
+                    include: {
+                        prasarana: {
+                            select: { jenis: true }
+                        }
+                    }
                 });
 
-                // Get rusak berat count
-                const rusaBerat = await prisma.facilityRecord.count({
-                    where: { ...whereClause, condition: '4' }
+                // Count manually
+                let baik = 0;
+                let rusaBerat = 0;
+                let lapangan = 0;
+                let gedung = 0;
+                let kolam = 0;
+
+                facilities.forEach(facility => {
+                    if (facility.condition === '1') baik++;
+                    if (facility.condition === '4') rusaBerat++;
+
+                    const jenis = facility.prasarana?.jenis?.toLowerCase() || '';
+                    if (jenis.includes('lapangan')) lapangan++;
+                    else if (jenis.includes('gedung')) gedung++;
+                    else if (jenis.includes('kolam') || jenis.includes('renang')) kolam++;
                 });
 
                 return {
                     id: kecamatan.id,
                     nama: kecamatan.nama,
-                    totalFasility: total,
+                    totalFasility: facilities.length,
                     baik,
-                    rusaBerat
+                    rusaBerat,
+                    lapangan,
+                    gedung,
+                    kolam
                 };
             })
         );

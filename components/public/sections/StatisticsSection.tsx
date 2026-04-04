@@ -16,6 +16,7 @@ interface StatCard {
 
 interface SaranaItem {
   kecamatan: string;
+  totalFacilitas: number;
   lapangan: number;
   gedung: number;
   kolam: number;
@@ -79,10 +80,10 @@ const defaultStats: StatCard[] = [
 ];
 
 const defaultSaranaData: SaranaItem[] = [
-  { kecamatan: 'Kec. Utara', lapangan: 12, gedung: 8, kolam: 3, kondisiBaik: 18, kondisiRusak: 5 },
-  { kecamatan: 'Kec. Selatan', lapangan: 15, gedung: 6, kolam: 2, kondisiBaik: 20, kondisiRusak: 3 },
-  { kecamatan: 'Kec. Timur', lapangan: 10, gedung: 4, kolam: 1, kondisiBaik: 12, kondisiRusak: 3 },
-  { kecamatan: 'Kec. Barat', lapangan: 8, gedung: 5, kolam: 2, kondisiBaik: 13, kondisiRusak: 2 }
+  { kecamatan: 'Kec. Utara', totalFacilitas: 26, lapangan: 12, gedung: 8, kolam: 3, kondisiBaik: 18, kondisiRusak: 5 },
+  { kecamatan: 'Kec. Selatan', totalFacilitas: 23, lapangan: 15, gedung: 6, kolam: 2, kondisiBaik: 20, kondisiRusak: 3 },
+  { kecamatan: 'Kec. Timur', totalFacilitas: 15, lapangan: 10, gedung: 4, kolam: 1, kondisiBaik: 12, kondisiRusak: 3 },
+  { kecamatan: 'Kec. Barat', totalFacilitas: 15, lapangan: 8, gedung: 5, kolam: 2, kondisiBaik: 13, kondisiRusak: 2 }
 ];
 
 const defaultPrestasiData: PrestasiItem[] = [
@@ -258,7 +259,7 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                 <div className="grid grid-cols-3 gap-3 md:gap-4 text-center">
                   {(() => {
                     const currentData = sarana;
-                    const totalFacilities = currentData.reduce((sum, item) => sum + item.kondisiBaik + item.kondisiRusak, 0);
+                    const totalFacilities = currentData.reduce((sum, item) => sum + item.totalFacilitas, 0);
                     const totalBaik = currentData.reduce((sum, item) => sum + item.kondisiBaik, 0);
                     const totalRusak = currentData.reduce((sum, item) => sum + item.kondisiRusak, 0);
                     return (
@@ -272,7 +273,7 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                           <p className="text-lg md:text-2xl font-bold text-green-600">{totalBaik}</p>
                         </div>
                         <div>
-                          <p className="text-xs md:text-sm text-gray-600 mb-1">Perlu Perbaikan</p>
+                          <p className="text-xs md:text-sm text-gray-600 mb-1">Rusak Berat</p>
                           <p className="text-lg md:text-2xl font-bold text-orange-600">{totalRusak}</p>
                         </div>
                       </>
@@ -287,10 +288,10 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Kecamatan</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Lapangan</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Gedung</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Kondisi</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Kecamatan</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Total Fasilitas</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Kondisi Baik</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Rusak Berat</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -301,39 +302,23 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                     const endIndexSarana = startIndexSarana + itemsPerPage;
                     const paginatedSarana = filteredSarana.slice(startIndexSarana, endIndexSarana);
                     return paginatedSarana.map((item, index) => {
-                      const totalFacilities = item.lapangan + item.gedung;
-                      const conditionPercentage = Math.round((item.kondisiBaik / totalFacilities) * 100);
                       return (
                         <tr key={index} className="border-b hover:bg-blue-50 transition-colors">
                           <td className="py-3 px-4 font-medium text-gray-900">{item.kecamatan}</td>
                           <td className="text-center py-3 px-4">
                             <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                              {item.lapangan}
+                              {item.totalFacilitas}
                             </span>
                           </td>
                           <td className="text-center py-3 px-4">
                             <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
-                              {item.gedung}
+                              {item.kondisiBaik}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-full bg-gray-200 rounded-full h-2 max-w-xs">
-                                <div
-                                  className={`h-2 rounded-full transition-all ${
-                                    conditionPercentage >= 80
-                                      ? 'bg-green-500'
-                                      : conditionPercentage >= 60
-                                      ? 'bg-yellow-500'
-                                      : 'bg-red-500'
-                                  }`}
-                                  style={{ width: `${conditionPercentage}%` }}
-                                />
-                              </div>
-                              <span className="text-xs font-semibold text-gray-700 min-w-fit">
-                                {conditionPercentage}%
-                              </span>
-                            </div>
+                          <td className="text-center py-3 px-4">
+                            <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              {item.kondisiRusak}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -352,45 +337,24 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                 const endIndexSarana = startIndexSarana + itemsPerPage;
                 const paginatedSarana = filteredSarana.slice(startIndexSarana, endIndexSarana);
                 return paginatedSarana.map((item, index) => {
-                  const totalFacilities = item.lapangan + item.gedung;
-                  const conditionPercentage = Math.round((item.kondisiBaik / totalFacilities) * 100);
                   return (
                     <div key={index} className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-gray-900 text-sm">{item.kecamatan}</h4>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          conditionPercentage >= 80
-                            ? 'bg-green-100 text-green-700'
-                            : conditionPercentage >= 60
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {conditionPercentage}%
+                        <span className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
+                          Total: {item.totalFacilitas}
                         </span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-gray-600 mb-1">Lapangan</p>
-                          <p className="text-lg font-bold text-blue-600">{item.lapangan}</p>
+                        <div className="bg-white rounded p-2 text-center">
+                          <p className="text-xs text-gray-600 mb-1">Kondisi Baik</p>
+                          <p className="text-lg font-bold text-green-600">{item.kondisiBaik}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-600 mb-1">Gedung</p>
-                          <p className="text-lg font-bold text-green-600">{item.gedung}</p>
+                        <div className="bg-white rounded p-2 text-center">
+                          <p className="text-xs text-gray-600 mb-1">Rusak Berat</p>
+                          <p className="text-lg font-bold text-red-600">{item.kondisiRusak}</p>
                         </div>
-                      </div>
-
-                      <div className="w-full bg-gray-300 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            conditionPercentage >= 80
-                              ? 'bg-green-500'
-                              : conditionPercentage >= 60
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
-                          }`}
-                          style={{ width: `${conditionPercentage}%` }}
-                        />
                       </div>
                     </div>
                   );
@@ -548,8 +512,9 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Nama Atlet</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Cabor</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Cabang Olahraga</th>
                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Medali</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Tahun</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -584,6 +549,11 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                           ) : (
                             <span className="text-gray-400 text-xs">—</span>
                           )}
+                        </td>
+                        <td className="text-center py-3 px-4">
+                          <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded text-xs font-semibold">
+                            {item.tahun}
+                          </span>
                         </td>
                       </tr>
                     ));
@@ -627,6 +597,12 @@ const StatisticsSection: React.FC<StatisticsSectionProps> = ({
                       ) : (
                         <div className="flex-shrink-0 px-2 py-1 rounded text-xs text-gray-400">—</div>
                       )}
+                    </div>
+                    <div className="flex items-center gap-2 pt-1 border-t border-gray-300">
+                      <span className="text-xs text-gray-600">Tahun:</span>
+                      <span className="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-semibold">
+                        {item.tahun}
+                      </span>
                     </div>
                   </div>
                 ));
