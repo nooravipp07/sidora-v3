@@ -15,8 +15,6 @@ import {
   filterFacilities
 } from '@/lib/infrastructure/data';
 import {
-  getAthleteStats,
-  getClubStats,
   achievementData,
   clubData
 } from '@/lib/sports/data';
@@ -219,7 +217,10 @@ export default function InfrastructureKeolahraganPage() {
           </div>
 
           {/* Club Statistics */}
-          <ClubSummaryCards stats={getClubStats()} />
+          <ClubSummaryCards 
+            kecamatanId={selectedKecamatanId ? parseInt(selectedKecamatanId) : null}
+            year={selectedYear ? parseInt(selectedYear) : undefined}
+          />
 
           {/* Club Table */}
           <ClubTable clubs={clubData} />

@@ -3,4 +3,5 @@
 export { default as AthleteStatsCards } from '@/lib/components/sports/AthleteStatsCards';
 export { default as AchievementStatistics } from '@/lib/components/sports/AchievementStatistics';
 export { default as ClubSummaryCards } from '@/lib/components/sports/ClubSummaryCards';
+export { default as SportsGroupSummaryCards } from '@/lib/components/sports/SportsGroupSummaryCards';
 export { default as ClubTable } from '@/lib/components/sports/ClubTable';

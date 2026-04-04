@@ -49,3 +49,9 @@ export interface ClubStats {
   clubsWithActiveAthletes: number;
   clubsWithMedals: number;
 }
+
+export interface SportsGroupStats {
+  total: number;
+  verified: number;
+  unverified: number;
+}

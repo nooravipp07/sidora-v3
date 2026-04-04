@@ -1,18 +1,19 @@
 'use client';
 
-import { Users, CheckCircle, XCircle } from 'lucide-react';
+import { Users, CheckCircle2, XCircle } from 'lucide-react';
+import { SportsGroupStats } from '@/types/sports';
 import { useState, useEffect } from 'react';
 
-interface ClubSummaryCardsProps {
+interface SportsGroupSummaryCardsProps {
   kecamatanId?: number | null;
   year?: number;
 }
 
-export default function ClubSummaryCards({ 
+export default function SportsGroupSummaryCards({ 
   kecamatanId,
   year = new Date().getFullYear()
-}: ClubSummaryCardsProps) {
-  const [stats, setStats] = useState({
+}: SportsGroupSummaryCardsProps) {
+  const [stats, setStats] = useState<SportsGroupStats>({
     total: 0,
     verified: 0,
     unverified: 0,
@@ -37,6 +38,11 @@ export default function ClubSummaryCards({
         }
       } catch (error) {
         console.error('Failed to fetch sports groups stats:', error);
+        setStats({
+          total: 0,
+          verified: 0,
+          unverified: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -56,7 +62,7 @@ export default function ClubSummaryCards({
     {
       label: 'Kelompok Terverifikasi',
       value: stats.verified,
-      icon: CheckCircle,
+      icon: CheckCircle2,
       color: 'bg-green-50 text-green-600',
       iconColor: 'text-green-500'
     },

@@ -111,4 +111,39 @@ export class AthleteService {
   async delete(id: number) {
     return await athleteRepository.softDelete(id);
   }
+
+  /**
+   * Get athlete summary grouped by category
+   * @param organization Filter by organization (KONI, NPCI, etc.)
+   * @returns Summary with counts by category
+   */
+  async getSummary(organization?: string | null) {
+    const where: any = {
+      deletedAt: null,
+    };
+
+    // Filter by organization if provided
+    if (organization) {
+      where.organization = organization;
+    }
+
+    // Fetch all athletes matching the filter
+    const athletes = await prisma.athlete.findMany({
+      where,
+      select: {
+        id: true,
+        category: true,
+      },
+    });
+
+    // Count by category
+    const summary = {
+      totalAtlet: athletes.filter(a => a.category === 'ATLET').length,
+      totalPelatih: athletes.filter(a => a.category === 'PELATIH').length,
+      totalWasit: athletes.filter(a => a.category === 'WASIT').length,
+      total: athletes.length,
+    };
+
+    return summary;
+  }
 }

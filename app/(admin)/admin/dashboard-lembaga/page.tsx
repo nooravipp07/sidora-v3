@@ -1,18 +1,13 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import KecamatanMap from '@/components/admin/dashboard-lembaga/KecamatanMap';
 import LembagaSummaryCards from '@/components/admin/dashboard-lembaga/LembagaSummaryCards';
 import LembagaCategoryStats from '@/components/admin/dashboard-lembaga/LembagaCategoryStats';
 import MedalBarChart from '@/components/admin/dashboard-lembaga/MedalBarChart';
 import AthletesTable from '@/components/admin/dashboard-lembaga/AthletesTable';
-import { getInstitutionSummary } from '@/lib/institution/data';
 
 export default function DashboardLembagaPage() {
-  const institutionSummary = useMemo(() => {
-    return getInstitutionSummary();
-  }, []);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -22,7 +17,7 @@ export default function DashboardLembagaPage() {
       </div>
 
       {/* Summary Cards */}
-      <LembagaSummaryCards summary={institutionSummary} />
+      <LembagaSummaryCards />
 
       {/* Top Section: Map and Category Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -30,11 +25,6 @@ export default function DashboardLembagaPage() {
         <div className="lg:col-span-2">
           <KecamatanMap />
         </div>
-
-        {/* Lembaga Category Stats
-        <div className="lg:col-span-1">
-          <LembagaCategoryStats />
-        </div> */}
       </div>
 
       {/* Bar Chart */}
