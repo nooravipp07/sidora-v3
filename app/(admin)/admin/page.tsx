@@ -94,6 +94,18 @@ interface DesaSummary {
   longitude?: string;
 }
 
+interface ConditionData {
+  condition: string;
+  label: string;
+  count: number;
+}
+
+interface OwnershipData {
+  ownership: string;
+  label: string;
+  count: number;
+}
+
 const Dashboard: FC = () => {
   // State untuk chart data
   const [sports, setSports] = useState<{ id: number; nama: string }[]>([]);
@@ -168,6 +180,18 @@ const Dashboard: FC = () => {
   const [sportsGroups, setSportsGroups] = useState<SportsGroup[]>([]);
   const [regionMapping, setRegionMapping] = useState<Map<number, string>>(MOCK_REGION_MAPPING);
   const [sportGroupsLoading, setSportGroupsLoading] = useState(false);
+
+  // Facility Condition Distribution State
+  const [conditionData, setConditionData] = useState<ConditionData[]>([]);
+  const [conditionLoading, setConditionLoading] = useState(false);
+
+  // Facility Ownership Distribution State
+  const [ownershipData, setOwnershipData] = useState<OwnershipData[]>([]);
+  const [ownershipLoading, setOwnershipLoading] = useState(false);
+
+  // Equipment Trends State
+  const [equipmentTrendData, setEquipmentTrendData] = useState<{ years: number[]; series: any[] }>({ years: [], series: [] });
+  const [equipmentTrendLoading, setEquipmentTrendLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const ITEMS_PER_PAGE = 10;
@@ -368,6 +392,96 @@ const Dashboard: FC = () => {
     fetchSportsGroups();
   }, [selectedKecamatanId]);
 
+  // Fetch Facility Condition Distribution
+  useEffect(() => {
+    const fetchConditionData = async () => {
+      setConditionLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('year', selectedYear.toString());
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/facility-records/distribution-by-condition?${params.toString()}`);
+        const data = await response.json();
+
+        if (data?.success && Array.isArray(data.data)) {
+          setConditionData(data.data);
+        } else {
+          setConditionData([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch condition data:', err);
+        setConditionData([]);
+      } finally {
+        setConditionLoading(false);
+      }
+    };
+
+    fetchConditionData();
+  }, [selectedYear, selectedKecamatanId]);
+
+  // Fetch Facility Ownership Distribution
+  useEffect(() => {
+    const fetchOwnershipData = async () => {
+      setOwnershipLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('year', selectedYear.toString());
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/facility-records/distribution-by-ownership?${params.toString()}`);
+        const data = await response.json();
+
+        if (data?.success && Array.isArray(data.data)) {
+          setOwnershipData(data.data);
+        } else {
+          setOwnershipData([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch ownership data:', err);
+        setOwnershipData([]);
+      } finally {
+        setOwnershipLoading(false);
+      }
+    };
+
+    fetchOwnershipData();
+  }, [selectedYear, selectedKecamatanId]);
+
+  // Fetch Equipment Trends
+  useEffect(() => {
+    const fetchEquipmentTrends = async () => {
+      setEquipmentTrendLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('year', selectedYear.toString());
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/equipment/trends?${params.toString()}`);
+        const data = await response.json();
+
+        if (data?.success && data?.data) {
+          setEquipmentTrendData(data.data);
+        } else {
+          setEquipmentTrendData({ years: [], series: [] });
+        }
+      } catch (err) {
+        console.error('Failed to fetch equipment trends:', err);
+        setEquipmentTrendData({ years: [], series: [] });
+      } finally {
+        setEquipmentTrendLoading(false);
+      }
+    };
+
+    fetchEquipmentTrends();
+  }, [selectedYear, selectedKecamatanId]);
+
   const supply = dashboardSummary?.totalEquipment ?? 0;
   const demand = dashboardSummary?.totalAthletes ?? 0;
   const maxVal = Math.max(supply, demand, 1);
@@ -451,10 +565,10 @@ const Dashboard: FC = () => {
       <section className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold">Dashboard Admin</h1>
         <div className="flex flex-row items-center justify-between mt-1">
-          <p className="text-gray-600">Ringkasan data real per kecamatan</p>
-          <div className="flex flex-row gap-2 items-center">
-            <div>
-              <label htmlFor="filterYear" className="text-sm font-semibold text-slate-700 mr-2">Tahun:</label>
+          <p className="text-gray-600">Ringkasan data per kecamatan</p>
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex flex-row items-center gap-2">
+              <label htmlFor="filterYear" className="text-sm font-semibold text-slate-700 whitespace-nowrap">Tahun:</label>
               <select
                 id="filterYear"
                 value={selectedYear}
@@ -465,22 +579,22 @@ const Dashboard: FC = () => {
                   <option key={year} value={year}>{year}</option>
                 ))}
               </select>
-          </div>
+            </div>
 
-          <div>
-            <label htmlFor="filterKecamatan" className="text-sm font-semibold text-slate-700 mr-2">Kecamatan:</label>
-            <select
-              id="filterKecamatan"
-              value={selectedKecamatanId ?? ''}
-              onChange={(e) => setSelectedKecamatanId(e.target.value ? Number(e.target.value) : null)}
-              className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Semua</option>
-              {kecamatanOptions.map((kec) => (
-                <option key={kec.id} value={kec.id}>{kec.nama}</option>
-              ))}
-            </select>
-          </div>
+            <div className="flex flex-row items-center gap-2">
+              <label htmlFor="filterKecamatan" className="text-sm font-semibold text-slate-700 whitespace-nowrap">Kecamatan:</label>
+              <select
+                id="filterKecamatan"
+                value={selectedKecamatanId ?? ''}
+                onChange={(e) => setSelectedKecamatanId(e.target.value ? Number(e.target.value) : null)}
+                className="border border-slate-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Semua</option>
+                {kecamatanOptions.map((kec) => (
+                  <option key={kec.id} value={kec.id}>{kec.nama}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </section>
@@ -498,58 +612,8 @@ const Dashboard: FC = () => {
         ))}
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <article className="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-3">Supply vs Demand</h2>
-          <div className="grid grid-cols-2 gap-6 items-center">
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-2 relative">
-                <svg viewBox="0 0 80 80" className="w-full h-full">
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="12" />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="32"
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="12"
-                    strokeDasharray={`${(200.53 * supplyPercent) / 100} 200.53`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 40 40)"
-                  />
-                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-700">
-                    {supplyPercent}%
-                  </text>
-                </svg>
-              </div>
-              <p className="text-sm font-semibold">Sarana ({supply})</p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 mx-auto mb-2 relative">
-                <svg viewBox="0 0 80 80" className="w-full h-full">
-                  <circle cx="40" cy="40" r="32" fill="none" stroke="#e5e7eb" strokeWidth="12" />
-                  <circle
-                    cx="40"
-                    cy="40"
-                    r="32"
-                    fill="none"
-                    stroke="#f97316"
-                    strokeWidth="12"
-                    strokeDasharray={`${(200.53 * demandPercent) / 100} 200.53`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 40 40)"
-                  />
-                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-700">
-                    {demandPercent}%
-                  </text>
-                </svg>
-              </div>
-              <p className="text-sm font-semibold">Atlet ({demand})</p>
-            </div>
-          </div>
-        </article>
-
-        <article className="lg:col-span-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <section className="grid grid-cols-1 gap-4">
+        <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold">Distribusi Wilayah (Kecamatan)</h2>
             <MapPin className="w-5 h-5 text-slate-500" />
@@ -570,71 +634,329 @@ const Dashboard: FC = () => {
             />
           </div>
         </article>
+        <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-3">Tren Equipment (Hibah vs Non Hibah)</h2>
+          {equipmentTrendLoading ? (
+            <div className="flex items-center justify-center h-80">
+              <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          ) : equipmentTrendData.years && equipmentTrendData.years.length > 0 ? (
+            <div className="h-80 w-full">
+              <ReactApexChart
+                type="line"
+                width="100%"
+                height={320}
+                series={equipmentTrendData.series}
+                options={{
+                  chart: {
+                    type: 'line',
+                    toolbar: { show: true },
+                    sparkline: { enabled: false },
+                  },
+                  stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: ['#10b981', '#f59e0b'],
+                  },
+                  markers: {
+                    size: 5,
+                    colors: ['#10b981', '#f59e0b'],
+                    strokeColors: '#fff',
+                    strokeWidth: 2,
+                  },
+                  xaxis: {
+                    categories: equipmentTrendData.years,
+                    title: {
+                      text: 'Tahun',
+                    },
+                    axisBorder: {
+                      show: true,
+                    },
+                    axisTicks: {
+                      show: true,
+                    },
+                  },
+                  yaxis: {
+                    title: {
+                      text: 'Total Quantity',
+                    },
+                    min: 0,
+                  },
+                  grid: {
+                    show: true,
+                    borderColor: '#e5e7eb',
+                    strokeDashArray: 3,
+                  },
+                  tooltip: {
+                    enabled: true,
+                    theme: 'light',
+                    x: {
+                      format: 'yyyy',
+                    },
+                    y: {
+                      formatter: (val: number) => `${val} unit`,
+                    },
+                  },
+                  dataLabels: {
+                    enabled: true,
+                    formatter: (val: number) => `${val}`,
+                  },
+                  legend: {
+                    position: 'top',
+                    horizontalAlign: 'right',
+                    fontSize: '13px',
+                  },
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-80 text-slate-500">
+              <p>Tidak ada data tren equipment</p>
+            </div>
+          )}
+        </article>
       </section>
 
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <article className="xl:col-span-1 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-4">Sarana Summary</h2>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600">Total Records</span>
-                <span className="font-bold text-blue-600">{dashboardSummary?.totalEquipment ?? 0}</span>
-              </div>
-              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }} />
-              </div>
+          <h2 className="text-lg font-bold mb-4">Distribusi Kepemilikan Fasilitas</h2>
+          {ownershipLoading ? (
+            <div className="flex items-center justify-center h-80">
+              <Loader className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-600">Total Quantity</span>
-                <span className="font-bold text-cyan-600">{dashboardSummary?.totalEquipmentQuantity ?? 0}</span>
+          ) : ownershipData.length > 0 ? (
+            <>
+              <div className="flex justify-center mb-4">
+                <ReactApexChart
+                  type="donut"
+                  width="100%"
+                  height={300}
+                  series={ownershipData.map(d => d.count)}
+                  options={{
+                    chart: {
+                      type: 'donut',
+                    },
+                    labels: ownershipData.map(d => d.label),
+                    colors: ['#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'],
+                    plotOptions: {
+                      pie: {
+                        donut: {
+                          size: '65%',
+                          labels: {
+                            show: true,
+                            name: {
+                              show: true,
+                              fontSize: '14px',
+                              fontWeight: 600,
+                            },
+                            value: {
+                              show: true,
+                              fontSize: '20px',
+                              fontWeight: 600,
+                              formatter: function (w: string | number) {
+                                return w.toString();
+                              },
+                            },
+                            total: {
+                              show: true,
+                              label: 'Total Fasilitas',
+                              fontSize: '14px',
+                              formatter: function (w: any) {
+                                return (w.globals.seriesTotals.reduce((a: number, b: number) => a + b) || 0).toString();
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    tooltip: {
+                      enabled: true,
+                      y: {
+                        formatter: function(value) {
+                          return value + ' fasilitas';
+                        }
+                      }
+                    },
+                    legend: {
+                      position: 'bottom',
+                      fontSize: '12px',
+                      labels: {
+                        useSeriesColors: true,
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function (val: string | number) {
+                        const numVal = typeof val === 'string' ? parseFloat(val) : (val as number);
+                        return (Math.round(numVal * 100) / 100).toFixed(1) + '%';
+                      },
+                    },
+                  }}
+                />
               </div>
-              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div className="bg-cyan-500 h-2 rounded-full" style={{ width: '75%' }} />
+
+              {/* Summary Cards */}
+              <div className="space-y-2">
+                {ownershipData.map((item, idx) => {
+                  const totalFacilities = ownershipData.reduce((sum, d) => sum + d.count, 0);
+                  const percentage = totalFacilities > 0 ? ((item.count / totalFacilities) * 100).toFixed(1) : '0';
+                  const cardColors = [
+                    'bg-blue-50 border-blue-200 text-blue-800',
+                    'bg-purple-50 border-purple-200 text-purple-800',
+                    'bg-pink-50 border-pink-200 text-pink-800',
+                    'bg-cyan-50 border-cyan-200 text-cyan-800',
+                  ];
+                  return (
+                    <div key={idx} className={`p-3 rounded-lg border ${cardColors[idx] || 'bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold">{item.label}</p>
+                          <p className="text-lg font-bold mt-1">{item.count}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs opacity-75 font-medium">{percentage}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-80 text-slate-500">
+              <p>Tidak ada data kepemilikan fasilitas</p>
             </div>
-          </div>
+          )}
         </article>
 
-        <article className="xl:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-4">Prasarana - Distribusi</h2>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Total Prasarana</span>
-                <span className="font-bold">{dashboardSummary?.totalPrasarana ?? 0}</span>
-              </div>
-              <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
-                <div className="bg-orange-500 h-3 rounded-full" style={{ width: '85%' }} />
-              </div>
+        <article className="xl:col-span-1 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold mb-4">Distribusi Kondisi Fasilitas</h2>
+          {conditionLoading ? (
+            <div className="flex items-center justify-center h-80">
+              <Loader className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
-          </div>
+          ) : conditionData.length > 0 ? (
+            <>
+              <div className="flex justify-center mb-4">
+                <ReactApexChart
+                  type="donut"
+                  width="100%"
+                  height={300}
+                  series={conditionData.map(d => d.count)}
+                  options={{
+                    chart: {
+                      type: 'donut',
+                    },
+                    labels: conditionData.map(d => d.label),
+                    colors: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+                    plotOptions: {
+                      pie: {
+                        donut: {
+                          size: '65%',
+                          labels: {
+                            show: true,
+                            name: {
+                              show: true,
+                              fontSize: '14px',
+                              fontWeight: 600,
+                            },
+                            value: {
+                              show: true,
+                              fontSize: '20px',
+                              fontWeight: 600,
+                              formatter: function (w: string | number) {
+                                return w.toString();
+                              },
+                            },
+                            total: {
+                              show: true,
+                              label: 'Total Fasilitas',
+                              fontSize: '14px',
+                              formatter: function (w: any) {
+                                return (w.globals.seriesTotals.reduce((a: number, b: number) => a + b) || 0).toString();
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    tooltip: {
+                      enabled: true,
+                      y: {
+                        formatter: function(value) {
+                          return value + ' fasilitas';
+                        }
+                      }
+                    },
+                    legend: {
+                      position: 'bottom',
+                      fontSize: '12px',
+                      labels: {
+                        useSeriesColors: true,
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function (val: string | number) {
+                        const numVal = typeof val === 'string' ? parseFloat(val) : (val as number);
+                        return (Math.round(numVal * 100) / 100).toFixed(1) + '%';
+                      },
+                    },
+                  }}
+                />
+              </div>
+
+              {/* Summary Cards */}
+              <div className="space-y-2">
+                {conditionData.map((item, idx) => {
+                  const totalFacilities = conditionData.reduce((sum, d) => sum + d.count, 0);
+                  const percentage = totalFacilities > 0 ? ((item.count / totalFacilities) * 100).toFixed(1) : '0';
+                  const cardColors = [
+                    'bg-green-50 border-green-200 text-green-800',
+                    'bg-yellow-50 border-yellow-200 text-yellow-800',
+                    'bg-orange-50 border-orange-200 text-orange-800',
+                    'bg-red-50 border-red-200 text-red-800',
+                  ];
+                  return (
+                    <div key={idx} className={`p-3 rounded-lg border ${cardColors[idx] || 'bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold">{item.label}</p>
+                          <p className="text-lg font-bold mt-1">{item.count}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs opacity-75 font-medium">{percentage}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-80 text-slate-500">
+              <p>Tidak ada data kondisi fasilitas</p>
+            </div>
+          )}
         </article>
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Atlet & Kelompok Olahraga</h2>
+            <h2 className="text-lg font-bold">Jumlah Kelompok Olahraga per Cabang Olarhaga</h2>
             <Award className="w-5 h-5 text-indigo-500" />
           </div>
           <div>
-            <div className="text-sm font-semibold mb-3 text-slate-700">Perbandingan Atlet & Kelompok per Cabang Olahraga</div>
-            <div className="h-64 flex items-center justify-center">
-              {athleteDist.series.length > 0 && groupDist.series.length > 0 ? (
+            <div className="h-80 w-full">
+              {groupDist.series.length > 0 ? (
                 <ReactApexChart
                   type="bar"
                   width="100%"
                   height={280}
                   series={[
                     {
-                      name: 'Jumlah Atlet',
-                      data: athleteDist.series,
-                      color: '#6366f1',
-                    },
-                    {
-                      name: 'Jumlah Kelompok',
+                      name: 'Jumlah Kelompok Olahraga',
                       data: groupDist.series,
                       color: '#10b981',
                     },
@@ -643,17 +965,16 @@ const Dashboard: FC = () => {
                     chart: {
                       type: 'bar',
                       toolbar: { show: true },
-                      stacked: false,
                       sparkline: { enabled: false },
                     },
-                    colors: ['#6366f1', '#10b981'],
+                    colors: ['#10b981'],
                     plotOptions: {
                       bar: {
-                        horizontal: true,
+                        horizontal: false,
+                        columnWidth: '60%',
                         dataLabels: {
                           position: 'top',
                         },
-                        columnWidth: '70%',
                       },
                     },
                     dataLabels: {
@@ -662,36 +983,76 @@ const Dashboard: FC = () => {
                       style: {
                         fontSize: '12px',
                         fontWeight: 600,
+                        colors: ['#10b981'],
                       },
+                      offsetY: -10,
                     },
                     xaxis: {
-                      categories: athleteDist.labels,
+                      categories: groupDist.labels,
                       title: {
                         text: 'Cabang Olahraga',
-                        style: { fontSize: '12px' },
+                        style: { 
+                          fontSize: '13px',
+                          fontWeight: 600,
+                        },
+                      },
+                      labels: {
+                        rotate: -40,
+                        rotateAlways: true,
+                        style: {
+                          fontSize: '12px',
+                          cssClass: 'apexcharts-xaxis-label',
+                        },
+                        maxHeight: 100,
+                      },
+                      axisBorder: {
+                        show: true,
+                      },
+                      axisTicks: {
+                        show: true,
                       },
                     },
                     yaxis: {
                       title: {
-                        text: 'Jumlah',
-                        style: { fontSize: '12px' },
+                        text: 'Quantity',
+                        style: { 
+                          fontSize: '13px',
+                          fontWeight: 600,
+                        },
                       },
                       min: 0,
+                      labels: {
+                        formatter: (val: number) => Math.floor(val).toString(),
+                      },
                     },
                     grid: {
                       show: true,
                       borderColor: '#e5e7eb',
                       strokeDashArray: 3,
+                      xaxis: {
+                        lines: {
+                          show: false,
+                        },
+                      },
+                      yaxis: {
+                        lines: {
+                          show: true,
+                        },
+                      },
                       padding: {
                         left: 10,
                         right: 10,
+                        top: 10,
                       },
                     },
                     tooltip: {
                       enabled: true,
                       theme: 'light',
                       y: {
-                        formatter: (val: number) => `${val}`,
+                        formatter: (val: number) => `${Math.floor(val)} kelompok`,
+                      },
+                      x: {
+                        show: true,
                       },
                     },
                     legend: {
@@ -704,16 +1065,6 @@ const Dashboard: FC = () => {
               ) : (
                 <span className="text-slate-400">Memuat chart...</span>
               )}
-            </div>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                <p className="text-xs text-indigo-600 uppercase font-semibold">Total Atlet</p>
-                <p className="text-2xl font-bold text-indigo-700">{dashboardSummary?.totalAthletes ?? 0}</p>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs text-green-600 uppercase font-semibold">Total Kelompok</p>
-                <p className="text-2xl font-bold text-green-700">{dashboardSummary?.totalSportsGroups ?? 0}</p>
-              </div>
             </div>
           </div>
         </article>

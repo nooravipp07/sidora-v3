@@ -235,6 +235,57 @@ class FacilityRecordRepository extends AbstractRepository<FacilityRecord> {
 
         return summaryData;
     }
+
+    async getFacilitiesPerOwnership(filters?: { year?: number; kecamatanId?: number; ownership?: string }) {
+        const whereClause: any = {};
+        if (filters?.year) {
+            whereClause.year = filters.year;
+        }
+        if (filters?.kecamatanId) {
+            whereClause.desaKelurahanId = {
+                in: await prisma.desaKelurahan.findMany({
+                    where: { kecamatanId: filters.kecamatanId },
+                    select: { id: true }
+                }).then(result => result.map(d => d.id))
+            };
+        }
+        if (filters?.ownership) {
+            whereClause.ownershipStatus = filters.ownership;
+        }
+
+        const facilities = await prisma.facilityRecord.findMany({
+            where: whereClause,
+            select: { ownershipStatus: true }
+        });
+
+        // Map ownership codes to labels
+        const ownershipMap: Record<string, string> = {
+            '1': 'Milik Pribadi',
+            '2': 'Sewa',
+            '4': 'Bersama',
+            '5': 'Pemerintah'
+        };
+
+        // Group by ownership
+        const grouped: Record<string, { label: string; count: number }> = {
+            '1': { label: 'Milik Pribadi', count: 0 },
+            '2': { label: 'Sewa', count: 0 },
+            '4': { label: 'Bersama', count: 0 },
+            '5': { label: 'Pemerintah', count: 0 }
+        };
+
+        facilities.forEach(facility => {
+            if (facility.ownershipStatus && grouped[facility.ownershipStatus]) {
+                grouped[facility.ownershipStatus].count += 1;
+            }
+        });
+
+        return Object.entries(grouped).map(([key, value]) => ({
+            ownership: key,
+            label: value.label,
+            count: value.count
+        }));
+    }
 }
 
 export const FacilityRecordRepo = new FacilityRecordRepository();

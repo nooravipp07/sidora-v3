@@ -148,6 +148,91 @@ class EquipmentRepository extends AbstractRepository<Equipment> {
             throw error;
         }
     }
+
+    async getEquipmentTrends(filters?: { kecamatanId?: number; year?: number }) {
+        try {
+            // Build where clause
+            const whereClause: any = {
+                deletedAt: null,
+            };
+
+            if (filters?.year) {
+                whereClause.year = filters.year;
+            }
+
+            if (filters?.kecamatanId) {
+                whereClause.desaKelurahan = {
+                    kecamatanId: filters.kecamatanId,
+                };
+            }
+
+            // Group by year and isGovernmentGrant using raw query
+            // Build WHERE clause conditions
+            let whereConditions = 'WHERE deletedAt IS NULL';
+            if (filters?.year) {
+                whereConditions += ` AND year = ${filters.year}`;
+            }
+            if (filters?.kecamatanId) {
+                whereConditions += ` AND desaKelurahanId IN (
+                    SELECT id FROM desa_kelurahans WHERE kecamatanId = ${filters.kecamatanId}
+                )`;
+            }
+
+            const rawResult = await prisma.$queryRawUnsafe(`
+                SELECT 
+                    COALESCE(year, YEAR(CURDATE())) as year,
+                    isGovernmentGrant,
+                    SUM(quantity) as totalQuantity
+                FROM equipments
+                ${whereConditions}
+                GROUP BY year, isGovernmentGrant
+                ORDER BY year ASC
+            `);
+
+            // Transform result
+            const years: number[] = [];
+            const grantData: number[] = [];
+            const nonGrantData: number[] = [];
+
+            // Get all unique years first
+            const uniqueYears = [...new Set((rawResult as any[]).map(r => r.year))].sort((a, b) => a - b);
+
+            // Build data arrays
+            uniqueYears.forEach(year => {
+                years.push(year);
+                
+                const grantRecord = (rawResult as any[]).find(r => r.year === year && r.isGovernmentGrant === 1);
+                const nonGrantRecord = (rawResult as any[]).find(r => r.year === year && r.isGovernmentGrant === 0);
+                
+                grantData.push(grantRecord?.totalQuantity || 0);
+                nonGrantData.push(nonGrantRecord?.totalQuantity || 0);
+            });
+
+            return {
+                years,
+                series: [
+                    {
+                        name: 'Hibah Pemerintah',
+                        data: grantData,
+                    },
+                    {
+                        name: 'Non Hibah',
+                        data: nonGrantData,
+                    },
+                ],
+            };
+        } catch (error) {
+            console.error('Error in EquipmentRepository.getEquipmentTrends:', error);
+            // Return empty result on error
+            return {
+                years: [],
+                series: [
+                    { name: 'Hibah Pemerintah', data: [] },
+                    { name: 'Non Hibah', data: [] },
+                ],
+            };
+        }
+    }
 }
 
 export const EquipmentRepo = new EquipmentRepository();
