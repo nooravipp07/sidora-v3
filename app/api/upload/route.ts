@@ -10,38 +10,44 @@ export const maxDuration = 60; // Allow up to 60 seconds for upload
 // Utility function to get writable upload directory
 async function getUploadDir(): Promise<string | null> {
   try {
-    // In production, check multiple paths in order of preference
+    // In production, prioritize UPLOADS_DIR env variable
     const paths = [
-      process.env.UPLOADS_DIR, // Environment variable (highest priority)
-      process.env.UPLOAD_PATH,
-      join(process.cwd(), 'public', 'uploads', 'berita'), // Project public folder
-      process.env.HOME ? join(process.env.HOME, 'uploads', 'berita') : null, // Home directory
-      '/var/www/uploads/berita', // Common VPS path
-      '/app/public/uploads/berita', // Docker path
+      process.env.UPLOAD_PATH,  // Environment variable (highest priority for berita)
+      process.env.UPLOADS_DIR,  // Fallback general uploads dir
+      join(process.cwd(), 'public', 'uploads', 'berita'),  // Default relative path
+      '/var/www/sidora-v3/public/uploads/berita',  // Default VPS path
+      process.env.HOME ? join(process.env.HOME, 'uploads', 'berita') : null,
+      '/app/public/uploads/berita',  // Docker path
+      // NOTE: Removed /tmp - too unreliable for production
     ].filter(Boolean) as string[];
+
+    console.log('[UPLOAD] Searching upload paths:', paths);
 
     // Find first writable path
     for (const dirPath of paths) {
       try {
         if (!existsSync(dirPath)) {
+          console.log(`[UPLOAD] Creating directory: ${dirPath}`);
           await mkdir(dirPath, { recursive: true });
         }
-        // Test write permission
-        const testFile = join(dirPath, '.write-test');
-        await writeFile(testFile, 'test');
-        // Clean up test file
-        const fs = await import('fs/promises');
-        await fs.unlink(testFile);
         
-        console.log(`[UPLOAD] Using upload directory: ${dirPath}`);
+        // Test write permission
+        const testFile = join(dirPath, '.write-test-' + Date.now());
+        await writeFile(testFile, 'test');
+        await import('fs/promises').then(fs => fs.unlink(testFile));
+        
+        console.log(`[UPLOAD] ✓ Using upload directory: ${dirPath}`);
         return dirPath;
       } catch (e) {
-        console.warn(`[UPLOAD] Cannot use path ${dirPath}:`, e instanceof Error ? e.message : 'Unknown error');
+        console.warn(
+          `[UPLOAD] ✗ Cannot use path ${dirPath}:`,
+          e instanceof Error ? e.message : 'Unknown error'
+        );
         continue;
       }
     }
 
-    console.error('[UPLOAD] No writable upload directory found. Paths tried:', paths);
+    console.error('[UPLOAD] ✗ No writable upload directory found. Paths tried:', paths);
     return null;
   } catch (error) {
     console.error('[UPLOAD] Error finding upload directory:', error);
@@ -55,19 +61,29 @@ async function saveFileLocally(file: File, filename: string): Promise<{ url: str
     const uploadsDir = await getUploadDir();
     
     if (!uploadsDir) {
-      console.error('[UPLOAD] No valid upload directory available');
+      console.error('[UPLOAD] ✗ No valid upload directory available');
       return null;
     }
 
     const filepath = join(uploadsDir, filename);
-    const buffer = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(buffer));
+    console.log('[UPLOAD] Saving file to:', filepath);
+    
+    try {
+      const buffer = await file.arrayBuffer();
+      await writeFile(filepath, Buffer.from(buffer));
+      console.log(`[UPLOAD] ✓ File saved successfully`);
+    } catch (writeError) {
+      console.error('[UPLOAD] ✗ Failed to write file:', {
+        filepath,
+        error: writeError instanceof Error ? writeError.message : String(writeError),
+      });
+      return null;
+    }
 
     // Build URL - always use relative path for static served files
     const url = `/uploads/berita/${filename}`;
 
-    console.log(`[UPLOAD] File saved to ${filepath}`);
-    console.log(`[UPLOAD] File URL: ${url}`);
+    console.log(`[UPLOAD] ✓ File URL: ${url}`);
 
     return { url, local: true };
   } catch (error) {

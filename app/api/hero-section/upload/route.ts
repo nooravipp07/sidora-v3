@@ -68,49 +68,90 @@ export async function POST(request: NextRequest) {
     let uploadsDir: string;
 
     if (process.env.NODE_ENV === 'production') {
+      // Prioritize explicit UPLOADS_DIR env variable
       const paths = [
-        process.env.UPLOADS_DIR,
-        '/app/public/uploads/hero',
-        join(process.cwd(), 'public', 'uploads', 'hero'),
-        '/tmp/uploads/hero',
+        process.env.UPLOADS_DIR,  // Must be set in .env.production
+        process.env.UPLOAD_PATH,  // Fallback
+        '/var/www/sidora-v3/public/uploads/hero',  // Default VPS path
+        join(process.cwd(), 'public', 'uploads', 'hero'),  // Relative to app root
+        '/app/public/uploads/hero',  // Docker alternative
+        // NOTE: Removed /tmp - too unreliable for production
       ].filter(Boolean) as string[];
 
+      console.log('[HERO-UPLOAD] Production mode - searching paths:', paths);
+      
       let foundPath = '';
       for (const path of paths) {
         try {
           if (!existsSync(path)) {
+            console.log(`[HERO-UPLOAD] Creating directory: ${path}`);
             await mkdir(path, { recursive: true });
           }
+          
+          // Verify we can write
+          const testFile = join(path, '.write-test-' + Date.now());
+          await writeFile(testFile, 'test');
+          await import('fs/promises').then(fs => fs.unlink(testFile));
+          
           foundPath = path;
-          console.log(`[HERO-UPLOAD] Using upload path: ${path}`);
+          console.log(`[HERO-UPLOAD] ✓ Using upload path: ${path}`);
           break;
         } catch (e) {
-          console.error(`[HERO-UPLOAD] Failed to use path ${path}:`, e);
+          console.error(
+            `[HERO-UPLOAD] ✗ Cannot use path ${path}:`,
+            e instanceof Error ? e.message : String(e)
+          );
           continue;
         }
       }
 
       if (!foundPath) {
-        console.error('[HERO-UPLOAD] No writable upload directory found');
+        console.error('[HERO-UPLOAD] ✗ No writable upload directory found', {
+          'Tried paths': paths,
+          'NODE_ENV': process.env.NODE_ENV,
+          'UPLOADS_DIR set': !!process.env.UPLOADS_DIR,
+          'cwd': process.cwd(),
+        });
         return NextResponse.json(
-          { error: 'Gagal menyimpan file di server' },
+          { 
+            error: 'Gagal menyimpan file di server',
+            debug: 'No writable upload directory. Check UPLOADS_DIR env var and directory permissions.',
+            triedPaths: paths,
+          },
           { status: 500 }
         );
       }
 
       uploadsDir = foundPath;
     } else {
+      // Development mode
       uploadsDir = join(process.cwd(), 'public', 'uploads', 'hero');
       if (!existsSync(uploadsDir)) {
         await mkdir(uploadsDir, { recursive: true });
       }
+      console.log('[HERO-UPLOAD] Development mode - using:', uploadsDir);
     }
 
     const filepath = join(uploadsDir, filename);
     console.log('[HERO-UPLOAD] Saving to:', filepath);
     
-    const buffer = await file.arrayBuffer();
-    await writeFile(filepath, Buffer.from(buffer));
+    try {
+      const buffer = await file.arrayBuffer();
+      await writeFile(filepath, Buffer.from(buffer));
+      console.log('[HERO-UPLOAD] ✓ File written successfully');
+    } catch (writeError) {
+      console.error('[HERO-UPLOAD] ✗ Failed to write file:', {
+        filepath,
+        error: writeError instanceof Error ? writeError.message : String(writeError),
+      });
+      return NextResponse.json(
+        { 
+          error: 'Gagal menyimpan file: ' + (writeError instanceof Error ? writeError.message : 'Unknown error'),
+          filepath,
+        },
+        { status: 500 }
+      );
+    }
 
     const url = `/uploads/hero/${filename}`;
     console.log('[HERO-UPLOAD] File saved successfully, URL:', url);
