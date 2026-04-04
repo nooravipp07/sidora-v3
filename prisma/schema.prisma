@@ -132,13 +132,15 @@ model DesaKelurahan {
 }
 
 model CabangOlahraga {
-  id             Int              @id @default(autoincrement())
-  nama           String           @db.VarChar(100)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  deletedAt      DateTime?
-  AthleteStaging AthleteStaging[]
-  athletes       Athlete[]
+  id                    Int                    @id @default(autoincrement())
+  nama                  String                 @db.VarChar(100)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  AthleteStaging        AthleteStaging[]
+  athletes              Athlete[]
+  sportsGroups          SportsGroup[]
+  sportsGroupsStaging   SportsGroupStaging[]   @relation("SportsGroupStagingCabor")
 
   @@map("m_cabang_olahraga")
 }
@@ -346,21 +348,24 @@ model Equipment {
 }
 
 model SportsGroup {
-  id                 Int           @id @default(autoincrement())
+  id                 Int            @id @default(autoincrement())
   desaKelurahanId    Int
-  groupName          String        @db.VarChar(150)
-  leaderName         String?       @db.VarChar(150)
-  memberCount        Int           @default(0)
-  isVerified         Boolean       @default(false)
-  decreeNumber       String?       @db.VarChar(100)
-  secretariatAddress String?       @db.VarChar(255)
+  groupName          String         @db.VarChar(150)
+  leaderName         String?        @db.VarChar(150)
+  memberCount        Int            @default(0)
+  isVerified         Boolean        @default(false)
+  decreeNumber       String?        @db.VarChar(100)
+  secretariatAddress String?        @db.VarChar(255)
   year               Int?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  sportId            Int?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   deletedAt          DateTime?
-  desaKelurahan      DesaKelurahan @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  desaKelurahan      DesaKelurahan  @relation(fields: [desaKelurahanId], references: [id], onDelete: Cascade)
+  sport              CabangOlahraga? @relation(fields: [sportId], references: [id])
 
   @@index([desaKelurahanId])
+  @@index([sportId])
   @@index([year])
   @@map("sports_groups")
 }
@@ -566,6 +571,7 @@ model SportsGroupStaging {
   decreeNumber       String?
   secretariatAddress String?
   year               Int?
+  sportId            Int?
   actionType         StagingAction
   referenceId        Int?
   status             StagingStatus @default(PENDING)
@@ -576,10 +582,12 @@ model SportsGroupStaging {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   desaKelurahan      DesaKelurahan @relation(fields: [desaKelurahanId], references: [id])
+  sport              CabangOlahraga? @relation("SportsGroupStagingCabor", fields: [sportId], references: [id])
 
   @@index([status])
   @@index([desaKelurahanId])
   @@index([year])
+  @@index([sportId])
   @@map("sports_group_staging")
 }
 

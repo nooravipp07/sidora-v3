@@ -35,8 +35,6 @@ export default function InfrastructureTable({ districts, onViewDetail }: Infrast
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Gedung</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Baik</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Perlu Perbaikan</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Kesehatan</th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -72,26 +70,6 @@ export default function InfrastructureTable({ districts, onViewDetail }: Infrast
                   <span className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold">
                     {district.needsRepair}
                   </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="w-full max-w-xs">
-                    <ProgressBar
-                      value={district.conditionPercentage}
-                      max={100}
-                      showLabel={true}
-                      color="green"
-                      height="md"
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    onClick={() => onViewDetail?.(district.district)}
-                    className="inline-flex items-center gap-1 text-green-600 hover:text-green-700 font-semibold transition-colors"
-                  >
-                    Detail
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
                 </td>
               </tr>
             ))}

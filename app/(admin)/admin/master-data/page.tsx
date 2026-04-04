@@ -79,7 +79,7 @@ const MasterData: FC = () => {
       searchFields: ['nama', 'jenis'],
       fields: [
         { name: 'nama', label: 'Nama Prasarana', type: 'text' as const, required: true },
-        { name: 'jenis', label: 'Jenis', type: 'text' as const, required: false },
+        { name: 'jenis', label: 'Jenis', type: 'select' as const, required: false, options: ['Lapangan', 'Gedung'] },
       ],
       tableColumns: ['nama', 'jenis'],
     },

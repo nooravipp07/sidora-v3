@@ -408,10 +408,10 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               >
                 <option value="">-- Pilih Kondisi --</option>
-                <option value="Baik">Baik</option>
-                <option value="Cukup">Cukup</option>
-                <option value="Rusak Ringan">Rusak Ringan</option>
-                <option value="Rusak Berat">Rusak Berat</option>
+                <option value="1">Baik</option>
+                <option value="2">Cukup</option>
+                <option value="3">Rusak Ringan</option>
+                <option value="4">Rusak Berat</option>
               </select>
             </div>
 
@@ -426,9 +426,10 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
                 disabled={loading}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               >
-                <option value="OWNED">Milik Sendiri</option>
-                <option value="RENTED">Sewa</option>
-                <option value="SHARED">Bersama</option>
+                <option value="1">Milik Sendiri</option>
+                <option value="2">Sewa</option>
+                <option value="3">Bersama</option>
+                <option value="4">Pemerintah</option>
               </select>
             </div>
 

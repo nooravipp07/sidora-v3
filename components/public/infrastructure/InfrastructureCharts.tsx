@@ -1,136 +1,271 @@
 'use client';
 
-import React from 'react';
-import { DistrictInfrastructure, InfrastructureStats } from '@/types/infrastructure';
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ApexOptions } from 'apexcharts';
 
-interface InfrastructureChartsProps {
-  districts: DistrictInfrastructure[];
-  stats: InfrastructureStats;
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+
+interface KecamatanData {
+  nama: string;
+  count: number;
 }
 
-export default function InfrastructureCharts({ districts, stats }: InfrastructureChartsProps) {
-  // Calculate chart dimensions (responsive)
-  const maxFacilities = Math.max(...districts.map(d => d.totalFacilities), 1);
-  const chartHeight = 300;
-  const chartWidth = typeof window !== 'undefined' && window.innerWidth < 768 ? 400 : 600;
-  const barWidth = (chartWidth - 60) / districts.length;
+interface ConditionData {
+  condition: string;
+  label: string;
+  count: number;
+}
+
+export default function InfrastructureCharts({ year, kecamatanId, condition }: { year?: string; kecamatanId?: string; condition?: string }) {
+  const [kecamatanData, setKecamatanData] = useState<KecamatanData[]>([]);
+  const [conditionData, setConditionData] = useState<ConditionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (year) params.append('year', year);
+        if (kecamatanId) params.append('kecamatanId', kecamatanId);
+        if (condition) params.append('condition', condition);
+
+        const queryStr = params.toString() ? `?${params.toString()}` : '';
+        const [kecamatanRes, conditionRes] = await Promise.all([
+          fetch(`/api/facility-records/distribution-by-kecamatan${queryStr}`),
+          fetch(`/api/facility-records/distribution-by-condition${queryStr}`)
+        ]);
+
+        if (!kecamatanRes.ok || !conditionRes.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const kecamatanJson = await kecamatanRes.json();
+        const conditionJson = await conditionRes.json();
+
+        if (kecamatanJson.success) {
+          setKecamatanData(kecamatanJson.data);
+        }
+        if (conditionJson.success) {
+          setConditionData(conditionJson.data);
+        }
+      } catch (err) {
+        console.error('Error fetching chart data:', err);
+        setError('Gagal memuat data chart');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [year, kecamatanId, condition]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-white rounded-lg shadow-md p-6 h-96 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-12">
+        <p className="text-red-700">{error}</p>
+      </div>
+    );
+  }
+
+  // Prepare data for kecamatan bar chart
+  const kecamatanChartOptions: ApexOptions = {
+    chart: {
+      type: 'bar',
+      toolbar: {
+        show: true,
+      },
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: '55%',
+        borderRadius: 4,
+        dataLabels: {
+          position: 'top',
+        },
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      offsetY: -20,
+      style: {
+        fontSize: '12px',
+        fontWeight: 600,
+      },
+    },
+    stroke: {
+      show: false,
+    },
+    tooltip: {
+      enabled: true,
+      theme: 'light',
+      y: {
+        formatter: function(value) {
+          return value + ' fasilitas';
+        }
+      }
+    },
+    xaxis: {
+      categories: kecamatanData.map((d) => d.nama),
+      labels: {
+        style: {
+          fontSize: '11px',
+        },
+        hideOverlappingLabels: true,
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          fontSize: '12px',
+        },
+      },
+    },
+    fill: {
+      opacity: 1,
+      colors: ['#3b82f6'],
+    },
+    grid: {
+      padding: {
+        top: 0,
+        right: 0,
+        bottom: -10,
+        left: -10
+      }
+    }
+  };
+
+  const kecamatanChartSeries = [
+    {
+      name: 'Total Fasilitas',
+      data: kecamatanData.map(d => d.count),
+    }
+  ];
+
+  // Prepare data for condition pie chart
+  const conditionChartOptions: ApexOptions = {
+    chart: {
+      type: 'donut',
+    },
+    labels: conditionData.map(d => d.label),
+    colors: ['#10b981', '#f59e0b', '#f97316', '#ef4444'],
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: '14px',
+              fontWeight: 600,
+            },
+            value: {
+              show: true,
+              fontSize: '20px',
+              fontWeight: 600,
+              formatter: function (w: string | number) {
+                return w.toString();
+              },
+            },
+            total: {
+              show: true,
+              label: 'Total Fasilitas',
+              fontSize: '14px',
+              formatter: function (w: any) {
+                return (w.globals.seriesTotals.reduce((a: number, b: number) => a + b) || 0).toString();
+              },
+            },
+          },
+        },
+      },
+    },
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: function(value) {
+          return value + ' fasilitas';
+        }
+      }
+    },
+    legend: {
+      position: 'bottom',
+      fontSize: '13px',
+      labels: {
+        useSeriesColors: true,
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: function (val: string | number) {
+        const numVal = typeof val === 'string' ? parseFloat(val) : (val as number);
+        return (Math.round(numVal * 100) / 100).toFixed(1) + '%';
+      },
+    },
+  };
+
+  const conditionChartSeries = conditionData.map(d => d.count);
+
+  const totalFacilities = conditionData.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-12">
-      {/* Bar Chart - Facilities per District */}
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-md p-4 sm:p-6 border border-gray-200">
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4 sm:mb-6">Fasilitas per Kecamatan</h3>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+      {/* Bar Chart - Facilities per Kecamatan */}
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-6">Distribusi Fasilitas Per Kecamatan</h3>
         <div className="overflow-x-auto">
-          <svg width={chartWidth} height={chartHeight} className="mx-auto">
-            {/* Grid lines */}
-            {[0, 25, 50, 75, 100].map((percent) => {
-              const y = chartHeight - (chartHeight * percent / 100) - 50;
-              const value = Math.round((maxFacilities * percent) / 100);
-              return (
-                <g key={`grid-${percent}`}>
-                  <line x1="40" y1={y} x2={chartWidth} y2={y} stroke="#e5e7eb" strokeDasharray="5,5" />
-                  <text x="35" y={y} textAnchor="end" dy="0.3em" className="text-xs fill-gray-500">
-                    {value}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Bars */}
-            {districts.map((district, idx) => {
-              const barHeight = (district.totalFacilities / maxFacilities) * (chartHeight - 60);
-              const x = 40 + idx * barWidth + barWidth / 2;
-              const y = chartHeight - barHeight - 30;
-
-              return (
-                <g key={`bar-${idx}`}>
-                  <rect
-                    x={x - barWidth / 2 + 10}
-                    y={y}
-                    width={barWidth - 20}
-                    height={barHeight}
-                    fill="#10b981"
-                    rx="4"
-                  />
-                  <text
-                    x={x}
-                    y={y - 5}
-                    textAnchor="middle"
-                    className="text-xs font-bold fill-gray-900"
-                  >
-                    {district.totalFacilities}
-                  </text>
-                  <text
-                    x={x}
-                    y={chartHeight - 10}
-                    textAnchor="middle"
-                    className="text-xs fill-gray-600"
-                    style={{ maxWidth: barWidth }}
-                  >
-                    {district.district.split(' ')[1]}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* Y-axis */}
-            <line x1="40" y1="30" x2="40" y2={chartHeight - 20} stroke="#374151" strokeWidth="2" />
-            {/* X-axis */}
-            <line x1="40" y1={chartHeight - 20} x2={chartWidth} y2={chartHeight - 20} stroke="#374151" strokeWidth="2" />
-          </svg>
+          <div style={{ minWidth: kecamatanData.length > 10 ? `${kecamatanData.length * 100}px` : '100%' }}>
+            <Chart
+              options={kecamatanChartOptions}
+              series={kecamatanChartSeries}
+              type="bar"
+              height={350}
+            />
+          </div>
         </div>
+        <p className="text-sm text-gray-600 mt-4">
+          Total Fasilitas: <span className="font-semibold">{kecamatanData.reduce((sum, d) => sum + d.count, 0)}</span>
+        </p>
       </div>
 
-      {/* Condition Distribution - Donut Chart */}
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-md p-4 sm:p-6 border border-gray-200">
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4 sm:mb-6">Distribusi Kondisi</h3>
-        <div className="flex items-center justify-center">
-          <div className="relative w-40 h-40 sm:w-48 sm:h-48">
-            <svg viewBox="0 0 200 200" className="transform -rotate-90">
-              {/* Background circle */}
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#e5e7eb" strokeWidth="30" />
-              
-              {/* Good circle */}
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="30"
-                strokeDasharray={`${(stats.goodCondition / stats.totalFacilities) * 502.65} 502.65`}
-              />
-              
-              {/* Repair circle */}
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="30"
-                strokeDasharray={`${(stats.needsRepair / stats.totalFacilities) * 502.65} 502.65`}
-                strokeDashoffset={-((stats.goodCondition / stats.totalFacilities) * 502.65)}
-              />
-            </svg>
-
-            {/* Center text */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.overallHealth}%</p>
-              <p className="text-xs text-gray-600">Kesehatan</p>
-            </div>
-          </div>
+      {/* Donut Chart - Condition Distribution */}
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-6">Distribusi Kondisi Fasilitas</h3>
+        <div className="flex justify-center">
+          <Chart
+            options={conditionChartOptions}
+            series={conditionChartSeries}
+            type="donut"
+            height={350}
+          />
         </div>
 
-        {/* Legend */}
-        <div className="mt-4 sm:mt-8 space-y-2 sm:space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-xs sm:text-sm text-gray-700">Baik: <span className="font-semibold">{stats.goodCondition}</span> ({Math.round((stats.goodCondition / stats.totalFacilities) * 100)}%)</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full flex-shrink-0"></div>
-            <span className="text-xs sm:text-sm text-gray-700">Perlu Perbaikan: <span className="font-semibold">{stats.needsRepair}</span> ({Math.round((stats.needsRepair / stats.totalFacilities) * 100)}%)</span>
+        {/* Summary Table */}
+        <div className="mt-6 border-t pt-4">
+          <div className="grid grid-cols-2 gap-4">
+            {conditionData.map((item, idx) => {
+              const percentage = totalFacilities > 0 ? ((item.count / totalFacilities) * 100).toFixed(1) : '0';
+              const colors = ['bg-green-100 text-green-800', 'bg-yellow-100 text-yellow-800', 'bg-orange-100 text-orange-800', 'bg-red-100 text-red-800'];
+              return (
+                <div key={idx} className={`p-3 rounded-lg ${colors[idx] || 'bg-gray-100'}`}>
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-2xl font-bold mt-1">{item.count}</p>
+                  <p className="text-xs opacity-75 mt-1">{percentage}%</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

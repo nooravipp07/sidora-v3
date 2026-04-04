@@ -395,12 +395,12 @@ const Prasarana: React.FC = () => {
           onClick={() => setShowFilters(!showFilters)}
           className={`px-4 py-2 rounded-lg transition-colors flex items-center ${
             showFilters
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-600 text-white hover:bg-gray-700'
+              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
           <Filter className="w-4 h-4 mr-2" />
-          {showFilters ? 'Sembunyikan Filter' : 'Tampilkan Filter'}
+          {showFilters ? 'Tutup Filter' : 'Buka Filter'}
         </button>
         <button 
           onClick={handleExport}

@@ -36,6 +36,7 @@ class SportsGroupRepository extends AbstractRepository<SportsGroup> {
                                 kecamatan: true,
                             },
                         },
+                        sport: true,
                     },
                     skip,
                     take: pagination.limit,
@@ -74,6 +75,7 @@ class SportsGroupRepository extends AbstractRepository<SportsGroup> {
                             kecamatan: true,
                         },
                     },
+                    sport: true,
                 },
             });
         } catch (error) {

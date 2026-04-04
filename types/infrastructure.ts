@@ -23,10 +23,8 @@ export interface DistrictInfrastructure {
 }
 
 export interface InfrastructureStats {
-  totalFacilities: number;
-  goodCondition: number;
-  needsRepair: number;
-  totalLapangan: number;
-  totalGedung: number;
-  overallHealth: number;
+  totalEquipment: number;
+  totalPrasarana: number;
+  totalSportsGroups: number;
+  totalAthletes: number;
 }

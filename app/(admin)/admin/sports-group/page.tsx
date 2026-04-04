@@ -31,11 +31,13 @@ const SportsGroup: React.FC = () => {
     desaKelurahanId: '',
     year: '',
     isVerified: '',
+    sportId: '',
   });
 
   // Filter dropdown data
   const [kecamatanList, setKecamatanList] = useState<any[]>([]);
   const [desaKelurahanList, setDesaKelurahanList] = useState<any[]>([]);
+  const [cabangOlahragaList, setCabangOlahragaList] = useState<any[]>([]);
   const [yearList, setYearList] = useState<number[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
@@ -61,9 +63,10 @@ const SportsGroup: React.FC = () => {
     try {
       setLoadingFilters(true);
 
-      const [kecamRes, desaRes] = await Promise.all([
+      const [kecamRes, desaRes, caborRes] = await Promise.all([
         fetch('/api/masterdata/kecamatan?page=1&limit=1000'),
         fetch('/api/masterdata/desa-kelurahan?page=1&limit=1000'),
+        fetch('/api/masterdata/cabang-olahraga?page=1&limit=1000'),
       ]);
 
       if (kecamRes.ok) {
@@ -74,6 +77,11 @@ const SportsGroup: React.FC = () => {
       if (desaRes.ok) {
         const desaData = await desaRes.json();
         setDesaKelurahanList(desaData.data || []);
+      }
+
+      if (caborRes.ok) {
+        const caborData = await caborRes.json();
+        setCabangOlahragaList(caborData.data || []);
       }
 
       const currentYear = new Date().getFullYear();
@@ -105,6 +113,7 @@ const SportsGroup: React.FC = () => {
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
       if (filters.isVerified) params.append('isVerified', filters.isVerified);
+      if (filters.sportId) params.append('sportId', filters.sportId);
 
       const response = await fetch(`/api/masterdata/sports-group?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch sports groups');
@@ -169,6 +178,7 @@ const SportsGroup: React.FC = () => {
       desaKelurahanId: '',
       year: '',
       isVerified: '',
+      sportId: '',
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -221,7 +231,7 @@ const SportsGroup: React.FC = () => {
       {showFilters && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter Data</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Kecamatan Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -305,6 +315,25 @@ const SportsGroup: React.FC = () => {
                 <option value="false">Belum Terverifikasi</option>
               </select>
             </div>
+
+            {/* Cabang Olahraga Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cabang Olahraga
+              </label>
+              <select
+                value={filters.sportId}
+                onChange={(e) => handleFilterChange('sportId', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua Cabang Olahraga --</option>
+                {cabangOlahragaList.map((cabor) => (
+                  <option key={cabor.id} value={cabor.id}>
+                    {cabor.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Reset Button */}
@@ -336,6 +365,7 @@ const SportsGroup: React.FC = () => {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama Kelompok</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang Olahraga</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ketua</th>
@@ -350,6 +380,7 @@ const SportsGroup: React.FC = () => {
                   <tr key={sg.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-600">{(pagination.page - 1) * 10 + index + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">{sg.groupName}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{sg.sport?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.desaKelurahan?.kecamatan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.leaderName || '-'}</td>
@@ -446,6 +477,10 @@ const SportsGroup: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-600">Kecamatan</p>
                 <p className="font-semibold text-gray-900">{selectedSg.desaKelurahan?.kecamatan?.nama}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Cabang Olahraga</p>
+                <p className="font-semibold text-gray-900">{selectedSg.sport?.nama || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Nama Ketua</p>

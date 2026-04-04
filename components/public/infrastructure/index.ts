@@ -4,3 +4,4 @@ export { default as SummaryCards } from './SummaryCards';
 export { default as InfrastructureTable } from './InfrastructureTable';
 export { default as InfrastructureFilters } from './InfrastructureFilters';
 export { default as InfrastructureCharts } from './InfrastructureCharts';
+export { default as KecamatanSummaryTable } from './KecamatanSummaryTable';

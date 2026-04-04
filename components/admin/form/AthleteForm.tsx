@@ -269,8 +269,12 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
         : '/api/masterdata/athlete';
       const method = isEdit ? 'PUT' : 'POST';
 
-      // Filter out id from achievements for API
-      const achievementsData = achievements.map(({ id, ...rest }) => rest);
+      // Filter achievements - remove id field as it's only used for UI identification
+      // Only include fields needed for creation/update
+      const achievementsData = achievements.map(achievement => {
+        const { id, ...rest } = achievement;
+        return rest;
+      });
 
       const response = await fetch(url, {
         method,

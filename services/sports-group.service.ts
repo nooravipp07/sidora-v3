@@ -9,6 +9,7 @@ export const SportsGroupService = {
             desaKelurahanId?: string;
             year?: string;
             isVerified?: string;
+            sportId?: string;
         },
         pagination: PaginationParams
     ) {
@@ -47,6 +48,10 @@ export const SportsGroupService = {
 
         if (filter.isVerified !== undefined && filter.isVerified !== '') {
             where.isVerified = filter.isVerified === 'true';
+        }
+
+        if (filter.sportId) {
+            where.sportId = parseInt(filter.sportId);
         }
 
         return SportsGroupRepo.findAll(where, pagination);

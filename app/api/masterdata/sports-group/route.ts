@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
       desaKelurahanId: searchParams.get('desaKelurahanId') || undefined,
       year: searchParams.get('year') || undefined,
       isVerified: searchParams.get('isVerified') || undefined,
+      sportId: searchParams.get('sportId') || undefined,
     };
 
     const result = await SportsGroupService.getAll(filter, { page, limit });

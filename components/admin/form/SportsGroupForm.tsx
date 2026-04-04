@@ -19,12 +19,18 @@ interface DesaKelurahan {
   };
 }
 
+interface CabangOlahraga {
+  id: number;
+  nama: string;
+}
+
 const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [desaKelurahanList, setDesaKelurahanList] = useState<DesaKelurahan[]>([]);
+  const [cabangOlahragaList, setCabangOlahragaList] = useState<CabangOlahraga[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -36,6 +42,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
     decreeNumber: initialData?.decreeNumber || '',
     secretariatAddress: initialData?.secretariatAddress || '',
     year: initialData?.year || new Date().getFullYear(),
+    sportId: initialData?.sportId || '',
   });
 
   // Fetch desa/kelurahan list
@@ -51,11 +58,20 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
           ? `/api/masterdata/desa-kelurahan?page=1&limit=1000&kecamatanId=${kecamatanId}`
           : '/api/masterdata/desa-kelurahan?page=1&limit=1000';
 
-        // Fetch desa/kelurahan
-        const desaRes = await fetch(desaUrl);
+        // Fetch desa/kelurahan and cabang olahraga
+        const [desaRes, caborRes] = await Promise.all([
+          fetch(desaUrl),
+          fetch('/api/masterdata/cabang-olahraga?page=1&limit=1000'),
+        ]);
+
         if (desaRes.ok) {
           const desaData = await desaRes.json();
           setDesaKelurahanList(desaData.data || []);
+        }
+
+        if (caborRes.ok) {
+          const caborData = await caborRes.json();
+          setCabangOlahragaList(caborData.data || []);
         }
       } catch (err) {
         console.error('Error fetching options:', err);
@@ -115,6 +131,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
           decreeNumber: formData.decreeNumber.trim() || null,
           secretariatAddress: formData.secretariatAddress.trim() || null,
           year: formData.year,
+          sportId: formData.sportId ? parseInt(formData.sportId as string) : null,
         }),
       });
 
@@ -198,6 +215,26 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
             {desaKelurahanList.map((desa) => (
               <option key={desa.id} value={desa.id}>
                 {desa.kecamatan?.nama} - {desa.nama}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Cabang Olahraga */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cabang Olahraga
+          </label>
+          <select
+            value={formData.sportId}
+            onChange={(e) => setFormData({ ...formData, sportId: e.target.value })}
+            disabled={loading}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          >
+            <option value="">-- Pilih Cabang Olahraga (Opsional) --</option>
+            {cabangOlahragaList.map((cabor) => (
+              <option key={cabor.id} value={cabor.id}>
+                {cabor.nama}
               </option>
             ))}
           </select>

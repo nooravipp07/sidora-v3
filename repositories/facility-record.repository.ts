@@ -64,6 +64,160 @@ class FacilityRecordRepository extends AbstractRepository<FacilityRecord> {
             }
         });
     }
+
+    async getFacilitiesPerKecamatan(filters?: { year?: number; kecamatanId?: number; condition?: string }) {
+        const whereClause: any = {};
+        if (filters?.year) {
+            whereClause.year = filters.year;
+        }
+        if (filters?.kecamatanId) {
+            whereClause.desaKelurahanId = {
+                in: await prisma.desaKelurahan.findMany({
+                    where: { kecamatanId: filters.kecamatanId },
+                    select: { id: true }
+                }).then(result => result.map(d => d.id))
+            };
+        }
+        if (filters?.condition) {
+            whereClause.condition = filters.condition;
+        }
+
+        const facilities = await prisma.facilityRecord.findMany({
+            where: whereClause,
+            include: {
+                desaKelurahan: {
+                    include: {
+                        kecamatan: true
+                    }
+                }
+            }
+        });
+
+        // Group by kecamatan
+        const groupedByKecamatan = new Map<number, { nama: string; count: number }>();
+
+        facilities.forEach(facility => {
+            const kecamatan = facility.desaKelurahan?.kecamatan;
+            if (!kecamatan) return;
+
+            const key = kecamatan.id;
+            if (!groupedByKecamatan.has(key)) {
+                groupedByKecamatan.set(key, { nama: kecamatan.nama, count: 0 });
+            }
+            const current = groupedByKecamatan.get(key)!;
+            current.count += 1;
+        });
+
+        // Convert to array and sort
+        return Array.from(groupedByKecamatan.values())
+            .sort((a, b) => a.nama.localeCompare(b.nama));
+    }
+
+    async getFacilitiesPerCondition(filters?: { year?: number; kecamatanId?: number; condition?: string }) {
+        const whereClause: any = {};
+        if (filters?.year) {
+            whereClause.year = filters.year;
+        }
+        if (filters?.kecamatanId) {
+            whereClause.desaKelurahanId = {
+                in: await prisma.desaKelurahan.findMany({
+                    where: { kecamatanId: filters.kecamatanId },
+                    select: { id: true }
+                }).then(result => result.map(d => d.id))
+            };
+        }
+        if (filters?.condition) {
+            whereClause.condition = filters.condition;
+        }
+
+        const facilities = await prisma.facilityRecord.findMany({
+            where: whereClause,
+            select: { condition: true }
+        });
+
+        // Map condition codes to labels
+        const conditionMap: Record<string, string> = {
+            '1': 'Baik',
+            '2': 'Cukup',
+            '3': 'Rusak Ringan',
+            '4': 'Rusak Berat'
+        };
+
+        // Group by condition
+        const grouped: Record<string, { label: string; count: number }> = {
+            '1': { label: 'Baik', count: 0 },
+            '2': { label: 'Cukup', count: 0 },
+            '3': { label: 'Rusak Ringan', count: 0 },
+            '4': { label: 'Rusak Berat', count: 0 }
+        };
+
+        facilities.forEach(facility => {
+            if (facility.condition && grouped[facility.condition]) {
+                grouped[facility.condition].count += 1;
+            }
+        });
+
+        return Object.entries(grouped).map(([key, value]) => ({
+            condition: key,
+            label: value.label,
+            count: value.count
+        }));
+    }
+
+    async getKecamatanSummary(filters?: { year?: number; kecamatanId?: number; condition?: string }) {
+        const baseWhereClause: any = {};
+        if (filters?.year) {
+            baseWhereClause.year = filters.year;
+        }
+        if (filters?.condition) {
+            baseWhereClause.condition = filters.condition;
+        }
+
+        // Get all kecamatan
+        const kecamatanList = await prisma.kecamatan.findMany({
+            where: { deletedAt: null },
+            select: { id: true, nama: true },
+            orderBy: { nama: 'asc' }
+        });
+
+        // For each kecamatan, get facility counts
+        const summaryData = await Promise.all(
+            kecamatanList.map(async (kecamatan) => {
+                const desaIds = await prisma.desaKelurahan.findMany({
+                    where: { kecamatanId: kecamatan.id },
+                    select: { id: true }
+                }).then(result => result.map(d => d.id));
+
+                const whereClause = {
+                    ...baseWhereClause,
+                    desaKelurahanId: { in: desaIds }
+                };
+
+                // Get total facilities
+                const total = await prisma.facilityRecord.count({ where: whereClause });
+
+                // Get baik count
+                const baik = await prisma.facilityRecord.count({
+                    where: { ...whereClause, condition: '1' }
+                });
+
+                // Get rusak berat count
+                const rusaBerat = await prisma.facilityRecord.count({
+                    where: { ...whereClause, condition: '4' }
+                });
+
+                return {
+                    id: kecamatan.id,
+                    nama: kecamatan.nama,
+                    totalFasility: total,
+                    baik,
+                    rusaBerat
+                };
+            })
+        );
+
+        return summaryData;
+    }
 }
 
 export const FacilityRecordRepo = new FacilityRecordRepository();

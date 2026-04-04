@@ -20,6 +20,15 @@ import {
 } from 'lucide-react';
 import DashboardMap from '@/components/admin/dashboard/DashboardMap';
 import DistrictTable from '@/components/admin/dashboard/DistrictTable';
+import {
+  RegionalGroupChart,
+  VerificationStatusChart,
+  GrowthTrendChart,
+  MemberDistributionChart,
+  MOCK_SPORTS_GROUPS,
+  MOCK_REGION_MAPPING,
+  SportsGroup,
+} from '@/components/admin/dashboard/SportsGroupAnalytics';
 
 interface KecamatanSummary {
   id: number;
@@ -149,10 +158,16 @@ const Dashboard: FC = () => {
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [achievementTrendData, setAchievementTrendData] = useState<{ years: number[]; counts: number[] }>({ years: [], counts: [] });
 
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<KecamatanDetail | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+
+  // Sports Group Analytics States
+  const [sportsGroups, setSportsGroups] = useState<SportsGroup[]>([]);
+  const [regionMapping, setRegionMapping] = useState<Map<number, string>>(MOCK_REGION_MAPPING);
+  const [sportGroupsLoading, setSportGroupsLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const ITEMS_PER_PAGE = 10;
@@ -287,6 +302,71 @@ const Dashboard: FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [selectedYear, selectedKecamatanId]);
+
+  // Fetch achievement trends
+  useEffect(() => {
+    const fetchAchievementTrends = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const res = await fetch(`/api/dashboard/achievement-trends?${params.toString()}`);
+        const data = await res.json();
+        
+        if (data?.success && data?.data) {
+          setAchievementTrendData(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch achievement trends:', err);
+      }
+    };
+
+    fetchAchievementTrends();
+  }, [selectedKecamatanId]);
+
+  // Fetch Sports Groups for Analytics
+  useEffect(() => {
+    const fetchSportsGroups = async () => {
+      setSportGroupsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/masterdata/sports-group?page=1&limit=1000${params.toString() ? '&' + params.toString() : ''}`);
+        const data = await response.json();
+
+        if (data?.data && Array.isArray(data.data)) {
+          const transformed = data.data.map((group: any) => ({
+            id: group.id,
+            desaKelurahanId: group.desaKelurahanId,
+            groupName: group.groupName || group.nama,
+            leaderName: group.leaderName,
+            memberCount: group.memberCount || 0,
+            isVerified: group.isVerified || false,
+            decreeNumber: group.decreeNumber,
+            secretariatAddress: group.secretariatAddress,
+            createdAt: group.createdAt ? new Date(group.createdAt) : undefined,
+          }));
+          setSportsGroups(transformed);
+        } else {
+          // Use mock data as fallback
+          setSportsGroups(MOCK_SPORTS_GROUPS);
+        }
+      } catch (err) {
+        console.error('Failed to fetch sports groups:', err);
+        // Use mock data as fallback
+        setSportsGroups(MOCK_SPORTS_GROUPS);
+      } finally {
+        setSportGroupsLoading(false);
+      }
+    };
+
+    fetchSportsGroups();
+  }, [selectedKecamatanId]);
 
   const supply = dashboardSummary?.totalEquipment ?? 0;
   const demand = dashboardSummary?.totalAthletes ?? 0;
@@ -536,52 +616,103 @@ const Dashboard: FC = () => {
       <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">ATLET & KELOMPOK OLAHRAGA</h2>
+            <h2 className="text-lg font-bold">Atlet & Kelompok Olahraga</h2>
             <Award className="w-5 h-5 text-indigo-500" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm font-semibold mb-3 text-slate-700">Atlet (Total: {dashboardSummary?.totalAthletes ?? 0})</div>
-              <div className="h-48 flex items-center justify-center">
-                {athleteDist.series.length > 0 ? (
-                  <ReactApexChart
-                    type="pie"
-                    width={220}
-                    height={200}
-                    series={athleteDist.series}
-                    options={{
-                      labels: athleteDist.labels,
-                      legend: { position: 'bottom' },
-                      title: { text: 'Distribusi Atlet per Cabang Olahraga', align: 'center', style: { fontSize: '14px' } },
-                      dataLabels: { enabled: true },
-                      tooltip: { y: { formatter: (val: number) => `${val} atlet` } },
-                    }}
-                  />
-                ) : (
-                  <span className="text-slate-400">Memuat chart...</span>
-                )}
-              </div>
+          <div>
+            <div className="text-sm font-semibold mb-3 text-slate-700">Perbandingan Atlet & Kelompok per Cabang Olahraga</div>
+            <div className="h-64 flex items-center justify-center">
+              {athleteDist.series.length > 0 && groupDist.series.length > 0 ? (
+                <ReactApexChart
+                  type="bar"
+                  width="100%"
+                  height={280}
+                  series={[
+                    {
+                      name: 'Jumlah Atlet',
+                      data: athleteDist.series,
+                      color: '#6366f1',
+                    },
+                    {
+                      name: 'Jumlah Kelompok',
+                      data: groupDist.series,
+                      color: '#10b981',
+                    },
+                  ]}
+                  options={{
+                    chart: {
+                      type: 'bar',
+                      toolbar: { show: true },
+                      stacked: false,
+                      sparkline: { enabled: false },
+                    },
+                    colors: ['#6366f1', '#10b981'],
+                    plotOptions: {
+                      bar: {
+                        horizontal: true,
+                        dataLabels: {
+                          position: 'top',
+                        },
+                        columnWidth: '70%',
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: (val: number) => `${val}`,
+                      style: {
+                        fontSize: '12px',
+                        fontWeight: 600,
+                      },
+                    },
+                    xaxis: {
+                      categories: athleteDist.labels,
+                      title: {
+                        text: 'Cabang Olahraga',
+                        style: { fontSize: '12px' },
+                      },
+                    },
+                    yaxis: {
+                      title: {
+                        text: 'Jumlah',
+                        style: { fontSize: '12px' },
+                      },
+                      min: 0,
+                    },
+                    grid: {
+                      show: true,
+                      borderColor: '#e5e7eb',
+                      strokeDashArray: 3,
+                      padding: {
+                        left: 10,
+                        right: 10,
+                      },
+                    },
+                    tooltip: {
+                      enabled: true,
+                      theme: 'light',
+                      y: {
+                        formatter: (val: number) => `${val}`,
+                      },
+                    },
+                    legend: {
+                      position: 'top',
+                      horizontalAlign: 'right',
+                      fontSize: '13px',
+                    },
+                  }}
+                />
+              ) : (
+                <span className="text-slate-400">Memuat chart...</span>
+              )}
             </div>
-            <div>
-              <div className="text-sm font-semibold mb-3 text-slate-700">Kelompok (Total: {dashboardSummary?.totalSportsGroups ?? 0})</div>
-              <div className="h-48 flex items-center justify-center">
-                {groupDist.series.length > 0 ? (
-                  <ReactApexChart
-                    type="pie"
-                    width={220}
-                    height={200}
-                    series={groupDist.series}
-                    options={{
-                      labels: groupDist.labels,
-                      legend: { position: 'bottom' },
-                      title: { text: 'Distribusi Kelompok per Cabang Olahraga', align: 'center', style: { fontSize: '14px' } },
-                      dataLabels: { enabled: true },
-                      tooltip: { y: { formatter: (val: number) => `${val} kelompok` } },
-                    }}
-                  />
-                ) : (
-                  <span className="text-slate-400">Memuat chart...</span>
-                )}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <p className="text-xs text-indigo-600 uppercase font-semibold">Total Atlet</p>
+                <p className="text-2xl font-bold text-indigo-700">{dashboardSummary?.totalAthletes ?? 0}</p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-xs text-green-600 uppercase font-semibold">Total Kelompok</p>
+                <p className="text-2xl font-bold text-green-700">{dashboardSummary?.totalSportsGroups ?? 0}</p>
               </div>
             </div>
           </div>
@@ -589,44 +720,88 @@ const Dashboard: FC = () => {
 
         <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">PRESTASI ATLET (Tren)</h2>
+            <h2 className="text-lg font-bold">Trend Prestasi Atlet (Tahun ke Tahun)</h2>
             <LineChart className="w-5 h-5 text-cyan-600" />
           </div>
-          <div className="h-56 relative">
-            {kecamatanData.length > 0 ? (
-              <svg viewBox="0 0 330 170" className="w-full h-full">
-                <polyline
-                  fill="none"
-                  stroke="#0ea5e9"
-                  strokeWidth="3"
-                  points={kecamatanData
-                    .map((item, index) => {
-                      const x = 20 + (index / Math.max(kecamatanData.length - 1, 1)) * 290;
-                      const value = item.totalAchievement;
-                      const maxAchievement = Math.max(...kecamatanData.map((i) => i.totalAchievement), 1);
-                      const y = 150 - (value / maxAchievement) * 130;
-                      return `${x},${y}`;
-                    })
-                    .join(' ')}
-                />
-                {kecamatanData.map((item, index) => {
-                  const x = 20 + (index / Math.max(kecamatanData.length - 1, 1)) * 290;
-                  const maxAchievement = Math.max(...kecamatanData.map((i) => i.totalAchievement), 1);
-                  const y = 150 - (item.totalAchievement / maxAchievement) * 130;
-                  return <circle key={item.id} cx={x} cy={y} r="4" fill="#0ea5e9" />;
-                })}
-              </svg>
+          <div className="h-56 flex items-center justify-center">
+            {achievementTrendData.years.length > 0 ? (
+              <ReactApexChart
+                type="line"
+                width={600}
+                height={280}
+                series={[
+                  {
+                    name: 'Jumlah Prestasi',
+                    data: achievementTrendData.counts,
+                  },
+                ]}
+                options={{
+                  chart: {
+                    type: 'line',
+                    toolbar: { show: true },
+                    sparkline: { enabled: false },
+                  },
+                  stroke: {
+                    curve: 'smooth',
+                    width: 3,
+                    colors: ['#0ea5e9'],
+                  },
+                  markers: {
+                    size: 5,
+                    colors: ['#0ea5e9'],
+                    strokeColors: '#fff',
+                    strokeWidth: 2,
+                  },
+                  xaxis: {
+                    categories: achievementTrendData.years,
+                    title: {
+                      text: 'Tahun',
+                    },
+                    axisBorder: {
+                      show: true,
+                    },
+                    axisTicks: {
+                      show: true,
+                    },
+                  },
+                  yaxis: {
+                    title: {
+                      text: 'Jumlah Prestasi',
+                    },
+                    min: 0,
+                  },
+                  grid: {
+                    show: true,
+                    borderColor: '#e5e7eb',
+                    strokeDashArray: 3,
+                  },
+                  tooltip: {
+                    enabled: true,
+                    theme: 'light',
+                    x: {
+                      format: 'yyyy',
+                    },
+                    y: {
+                      formatter: (val: number) => `${val} prestasi`,
+                    },
+                  },
+                  dataLabels: {
+                    enabled: true,
+                    formatter: (val: number) => `${val}`,
+                  },
+                  legend: {
+                    position: 'top',
+                  },
+                }}
+              />
             ) : (
-              <div className="flex items-center justify-center h-full text-slate-500">Tidak ada data</div>
+              <div className="flex items-center justify-center h-full text-slate-500">Tidak ada data prestasi atlet</div>
             )}
-            <div className="absolute bottom-0 left-0 right-0 px-4 pb-1 text-xs text-slate-500 flex justify-between">
-              {kecamatanData.map((item) => (
-                <span key={item.id}>{item.nama.substring(0, 8)}</span>
-              ))}
-            </div>
           </div>
         </article>
       </section>
+
+
 
       <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
         <h2 className="text-lg font-bold mb-4">Data Summary per Kecamatan</h2>

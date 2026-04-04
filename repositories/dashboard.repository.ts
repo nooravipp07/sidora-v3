@@ -218,6 +218,97 @@ class DashboardRepository {
       kecamatan: kecamatanSummary,
     };
   }
+
+  async getInfrastructureSummary() {
+    const [totalEquipment, totalPrasarana, totalSportsGroups, totalAthletes] = await Promise.all([
+      prisma.equipment.count({
+        where: { deletedAt: null }
+      }),
+      prisma.facilityRecord.count(),
+      prisma.sportsGroup.count({
+        where: { deletedAt: null }
+      }),
+      prisma.athlete.count({
+        where: { deletedAt: null }
+      })
+    ]);
+
+    return {
+      totalEquipment,
+      totalPrasarana,
+      totalSportsGroups,
+      totalAthletes
+    };
+  }
+
+  async getAchievementTrendsByYear(filters?: { kecamatanId?: number }): Promise<{ years: number[]; counts: number[] }> {
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
+    
+    const { kecamatanId } = filters || {};
+
+    // Get kecamatan IDs based on filter
+    let kecamatanIds: number[] = [];
+    if (kecamatanId) {
+      kecamatanIds = [kecamatanId];
+    } else {
+      const kecamatans = await prisma.kecamatan.findMany({
+        where: { deletedAt: null },
+        select: { id: true },
+      });
+      kecamatanIds = kecamatans.map((k) => k.id);
+    }
+
+    // Get desa IDs
+    const desaList = await prisma.desaKelurahan.findMany({
+      where: {
+        kecamatanId: { in: kecamatanIds },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    const desaIds = desaList.map((desa) => desa.id);
+
+    if (desaIds.length === 0) {
+      return {
+        years,
+        counts: Array(years.length).fill(0),
+      };
+    }
+
+    // Count achievements by year
+    const achievementCounts = await prisma.athleteAchievement.groupBy({
+      by: ['year'],
+      where: {
+        year: { in: years },
+        athlete: {
+          desaKelurahanId: { in: desaIds },
+          deletedAt: null,
+        },
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    // Create a map of year to count
+    const yearCountMap = new Map<number, number>();
+    years.forEach((year) => yearCountMap.set(year, 0));
+    
+    achievementCounts.forEach((row) => {
+      if (row.year && years.includes(row.year)) {
+        yearCountMap.set(row.year, row._count.id);
+      }
+    });
+
+    const counts = years.map((year) => yearCountMap.get(year) || 0);
+
+    return {
+      years,
+      counts,
+    };
+  }
 }
 
 export const DashboardRepo = new DashboardRepository();
