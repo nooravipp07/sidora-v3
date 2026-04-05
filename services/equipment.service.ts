@@ -93,4 +93,66 @@ export const EquipmentService = {
             { page: 1, limit: 1000 }
         );
     },
+
+    async exportToExcel(filter: { kecamatanId?: number; desaKelurahanId?: number; year?: number } = {}) {
+        const where: any = {
+            deletedAt: null,
+        };
+
+        if (filter.desaKelurahanId !== undefined) {
+            where.desaKelurahanId = filter.desaKelurahanId;
+        } else if (filter.kecamatanId !== undefined) {
+            const desaList = await prisma.desaKelurahan.findMany({
+                where: { kecamatanId: filter.kecamatanId },
+                select: { id: true }
+            });
+            const desaIds = desaList.map(d => d.id);
+            if (desaIds.length > 0) {
+                where.desaKelurahanId = { in: desaIds };
+            } else {
+                return [];
+            }
+        }
+
+        if (filter.year !== undefined) {
+            where.year = filter.year;
+        }
+
+        // Get all equipment records with relations
+        const records = await prisma.equipment.findMany({
+            where,
+            include: {
+                sarana: {
+                    select: { nama: true, jenis: true }
+                },
+                desaKelurahan: {
+                    select: {
+                        nama: true,
+                        kecamatan: {
+                            select: { nama: true }
+                        }
+                    }
+                }
+            },
+            orderBy: [{ createdAt: 'desc' }]
+        });
+
+        // Transform data for Excel export
+        const excelData = records.map((record, index) => ({
+            'No': index + 1,
+            'Sarana': record.sarana?.nama || '-',
+            'Jenis Sarana': record.sarana?.jenis || '-',
+            'Jumlah': record.quantity,
+            'Satuan': record.unit || '-',
+            'Layak Pakai': record.isUsable ? 'Ya' : 'Tidak',
+            'Bantuan Pemerintah': record.isGovernmentGrant ? 'Ya' : 'Tidak',
+            'Tahun': record.year || '-',
+            'Desa/Kelurahan': record.desaKelurahan.nama,
+            'Kecamatan': record.desaKelurahan.kecamatan.nama,
+            'Tanggal Dibuat': new Date(record.createdAt).toLocaleDateString('id-ID'),
+            'Tanggal Diperbarui': new Date(record.updatedAt).toLocaleDateString('id-ID')
+        }));
+
+        return excelData;
+    },
 };

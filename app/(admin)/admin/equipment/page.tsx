@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Filter, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import Swal from 'sweetalert2';
 import { useAuth } from '@/lib/auth/useAuth';
 
 interface PaginationMeta {
@@ -22,6 +23,7 @@ const Equipment: React.FC = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
    const { user, isLoading: authLoading, error: authError, isAuthenticated } = useAuth();
 
@@ -153,6 +155,61 @@ const Equipment: React.FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    if (!filters.kecamatanId && !filters.desaKelurahanId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Filter Tidak Lengkap',
+        text: 'Silakan pilih Kecamatan atau Desa/Kelurahan untuk mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.kecamatanId) params.append('kecamatanId', filters.kecamatanId);
+      if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
+      if (filters.year) params.append('year', filters.year);
+
+      const response = await fetch(`/api/equipment/export?${params.toString()}`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Gagal mengekspor data');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Peralatan_${new Date().getTime()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data berhasil diekspor ke Excel',
+        confirmButtonColor: '#3B82F6'
+      });
+    } catch (err) {
+      console.error('Export error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Mengekspor',
+        text: err instanceof Error ? err.message : 'Terjadi kesalahan saat mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handlePrevPage = () => {
     if (pagination.page > 1) {
       const prevPage = pagination.page - 1;
@@ -229,6 +286,15 @@ const Equipment: React.FC = () => {
         >
           <Filter className="w-4 h-4" />
           {showFilters ? 'Tutup Filter' : 'Buka Filter'}
+        </button>
+
+        <button 
+          onClick={handleExport}
+          disabled={exporting || (!filters.kecamatanId && !filters.desaKelurahanId)}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          {exporting ? 'Mengekspor...' : 'Export Excel'}
         </button>
       </div>
 
