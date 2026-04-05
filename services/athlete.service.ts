@@ -113,6 +113,79 @@ export class AthleteService {
   }
 
   /**
+   * Export athlete data to Excel format
+   */
+  async exportToExcel(filter: { kecamatanId?: number; desaKelurahanId?: number } = {}) {
+    const where: any = {
+      deletedAt: null,
+    };
+
+    if (filter.desaKelurahanId !== undefined) {
+      where.desaKelurahanId = filter.desaKelurahanId;
+    } else if (filter.kecamatanId !== undefined) {
+      const desaList = await prisma.desaKelurahan.findMany({
+        where: { kecamatanId: filter.kecamatanId },
+        select: { id: true }
+      });
+      const desaIds = desaList.map(d => d.id);
+      if (desaIds.length > 0) {
+        where.desaKelurahanId = { in: desaIds };
+      } else {
+        return [];
+      }
+    }
+
+    // Get all athlete records with relations
+    const records = await prisma.athlete.findMany({
+      where,
+      include: {
+        sport: {
+          select: { nama: true }
+        },
+        desaKelurahan: {
+          select: {
+            nama: true,
+            kecamatan: {
+              select: { nama: true }
+            }
+          }
+        },
+        achievements: {
+          select: {
+            achievementName: true,
+            category: true,
+            medal: true,
+            year: true
+          }
+        }
+      },
+      orderBy: [{ fullName: 'asc' }]
+    });
+
+    // Transform data for Excel export
+    const excelData = records.map((record, index) => ({
+      'No': index + 1,
+      'NIK': record.nationalId,
+      'Nama Lengkap': record.fullName,
+      'Tempat Lahir': record.birthPlace || '-',
+      'Tanggal Lahir': record.birthDate ? new Date(record.birthDate).toLocaleDateString('id-ID') : '-',
+      'Jenis Kelamin': record.gender || '-',
+      'Organisasi': record.organization || '-',
+      'Kategori': record.category || '-',
+      'Cabang Olahraga': record.sport?.nama || '-',
+      'Alamat': record.fullAddress || '-',
+      'Desa/Kelurahan': record.desaKelurahan.nama,
+      'Kecamatan': record.desaKelurahan.kecamatan.nama,
+      'Status': record.status,
+      'Prestasi': record.achievements.length > 0 ? record.achievements[0].achievementName : '-',
+      'Tanggal Dibuat': new Date(record.createdAt).toLocaleDateString('id-ID'),
+      'Tanggal Diperbarui': new Date(record.updatedAt).toLocaleDateString('id-ID')
+    }));
+
+    return excelData;
+  }
+
+  /**
    * Get athlete summary grouped by category
    * @param organization Filter by organization (KONI, NPCI, etc.)
    * @returns Summary with counts by category

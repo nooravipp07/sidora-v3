@@ -410,13 +410,13 @@ const Prasarana: React.FC = () => {
           <Download className="w-4 h-4 mr-2" />
           {exporting ? 'Mengekspor...' : 'Export Excel'}
         </button>
-        <button
+        {/* <button
           onClick={handleImportClick}
           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
         >
           <Upload className="w-4 h-4 mr-2" />
           Import Excel
-        </button>
+        </button> */}
         <input
           ref={fileInputRef}
           type="file"
