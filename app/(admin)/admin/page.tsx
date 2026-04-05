@@ -16,8 +16,10 @@ import {
   Award,
   PieChart,
   LineChart,
-  Loader
+  Loader,
+  Download
 } from 'lucide-react';
+import Swal from 'sweetalert2';
 import DashboardMap from '@/components/admin/dashboard/DashboardMap';
 import DistrictTable from '@/components/admin/dashboard/DistrictTable';
 import {
@@ -170,6 +172,7 @@ const Dashboard: FC = () => {
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [achievementTrendData, setAchievementTrendData] = useState<{ years: number[]; counts: number[] }>({ years: [], counts: [] });
 
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -208,35 +211,59 @@ const Dashboard: FC = () => {
     setCurrentPage(1);
   }, [selectedYear, kecamatanData]);
 
-  // Handler export
-  const handleExport = () => {
-    // Export data summary per kecamatan ke CSV
-    const headers = [
-      'ID', 'Nama', 'Total Prasarana', 'Total Sarana', 'Total Kelompok Olahraga', 'Total Atlet', 'Total Prestasi', 'Latitude', 'Longitude'
-    ];
-    const rows = kecamatanData.map(item => [
-      item.id,
-      item.nama,
-      item.totalPrasarana,
-      item.totalEquipment,
-      item.totalSportsGroups,
-      item.totalAthletes,
-      item.totalAchievement,
-      item.latitude ?? '',
-      item.longitude ?? ''
-    ]);
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
-      .join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `kecamatan-summary-${selectedYear}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // Handler export dashboard data to Excel
+  const handleExport = async () => {
+    if (!selectedKecamatanId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Filter Tidak Lengkap',
+        text: 'Silakan pilih Kecamatan untuk mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('year', selectedYear.toString());
+      params.append('kecamatanId', selectedKecamatanId.toString());
+
+      const response = await fetch(`/api/dashboard/export?${params.toString()}`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Gagal mengekspor data');
+      }
+
+      // Create blob from response
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Dashboard_${selectedYear}_${new Date().getTime()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Data berhasil diekspor ke Excel',
+        confirmButtonColor: '#3B82F6'
+      });
+    } catch (err) {
+      console.error('Export error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal Mengekspor',
+        text: err instanceof Error ? err.message : 'Terjadi kesalahan saat mengekspor data',
+        confirmButtonColor: '#3B82F6'
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleViewDetail = async (district: DesaSummary) => {
@@ -595,6 +622,15 @@ const Dashboard: FC = () => {
                 ))}
               </select>
             </div>
+
+            <button 
+              onClick={handleExport}
+              disabled={exporting || !selectedKecamatanId}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? 'Mengekspor...' : 'Export Excel'}
+            </button>
           </div>
         </div>
       </section>
