@@ -298,7 +298,6 @@ model FacilityRecord {
   prasarana       Prasarana             @relation(fields: [prasaranaId], references: [id])
   photos          FacilityRecordPhoto[]
 
-  @@unique([prasaranaId, year])
   @@index([year])
   @@index([prasaranaId])
   @@index([desaKelurahanId], map: "facility_record_desaKelurahanId_fkey")
