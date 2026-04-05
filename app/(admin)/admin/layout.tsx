@@ -51,6 +51,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     { id: 'sarana', label: 'Sarana', icon: Building2, href: '/admin/equipment' },
     { id: 'prasarana', label: 'Prasarana', icon: Hammer, href: '/admin/prasarana' },
     { id: 'kelompok-olahraga', label: 'Kelompok Olahraga', icon: Users, href: '/admin/sports-group' },
+    { id: 'data-keolahragaan', label: 'Facility Record', icon: Users, href: '/admin/data-keolahragaan/facility-record' },
     { id: 'athlete', label: 'Prestasi Atlet', icon: UserCheck, href: '/admin/athlete' },
     { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
     { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
@@ -74,6 +75,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     if (roleId === 3) {
       return allMenuItems.filter(item => [
         'dashboard-kecamatan',
+        'data-keolahragaan',
         'sarana',
         'prasarana',
         'kelompok-olahraga',

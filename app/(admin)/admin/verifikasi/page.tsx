@@ -40,6 +40,7 @@ interface SportsData {
   address?: string;
   notes?: string;
   isActive?: boolean;
+  photos?: Array<{ id: number; fileUrl: string; fileName?: string }>;
   // Equipment fields
   saranaName?: string;
   quantity?: number;
@@ -56,6 +57,13 @@ interface SportsData {
   organization?: string;
   athleteCategory?: string;
   photoUrl?: string;
+  achievements?: Array<{
+    id: number;
+    achievementName: string;
+    category?: string;
+    medal?: string;
+    year?: number;
+  }>;
   // SportsGroup fields
   groupName?: string;
   leaderName?: string;
@@ -123,8 +131,13 @@ const Verifikasi: React.FC = () => {
   }, [filters]);
 
   useEffect(() => {
-    // Load dummy sports data based on selected tab
-    loadDummySportsData(sportsDataTab);
+    // Fetch sports data based on selected tab
+    if (sportsDataTab === 'facility' || sportsDataTab === 'athlete') {
+      fetchSportsData(1, sportsDataTab);
+    } else {
+      // Load dummy data for other types (not implemented yet)
+      loadDummySportsData(sportsDataTab);
+    }
   }, [sportsDataTab]);
 
   const fetchRegistrations = async (page: number = 1) => {
@@ -148,6 +161,36 @@ const Verifikasi: React.FC = () => {
       console.error('Error fetching registrations:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch sports data (for facility records from staging)
+  const fetchSportsData = async (page: number = 1, type: 'facility' | 'equipment' | 'athlete' | 'sport_group') => {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', '10');
+
+      let url = '';
+      if (type === 'facility') {
+        url = `/api/verifikasi/facility-record?${params.toString()}`;
+      } else if (type === 'athlete') {
+        url = `/api/verifikasi/athlete?${params.toString()}`;
+      } else {
+        // Other types not implemented yet
+        loadDummySportsData(type);
+        return;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Gagal mengambil data');
+      const data = await response.json();
+      setSportsData(data.data || []);
+      setSportsPagination(data.meta);
+    } catch (err) {
+      console.error('Error fetching sports data:', err);
+      // Fallback to dummy data on error
+      loadDummySportsData(type);
     }
   };
 
@@ -538,8 +581,39 @@ const Verifikasi: React.FC = () => {
 
     setSportsIsProcessing(true);
     try {
-      // Simulate API call
-      setSportsData(sportsData.map(d => d.id === id ? { ...d, status: 2 } : d));
+      // For facility records, make real API call
+      if (sportsDataTab === 'facility') {
+        const response = await fetch(`/api/verifikasi/facility-record/${id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'approve',
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menyetujui data');
+      } else if (sportsDataTab === 'athlete') {
+        const response = await fetch(`/api/verifikasi/athlete/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'APPROVED',
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menyetujui data atlet');
+      } else {
+        // Simulate for other types
+        setSportsData(sportsData.map(d => d.id === id ? { ...d, status: 2 } : d));
+      }
+
+      // Refresh data after approval
+      fetchSportsData(sportsPagination.page, sportsDataTab);
+      
       setIsSportsViewModalOpen(false);
       setSelectedSportsData(null);
       Swal.fire({
@@ -581,8 +655,28 @@ const Verifikasi: React.FC = () => {
 
     setSportsIsProcessing(true);
     try {
-      // Simulate API call
-      setSportsData(sportsData.map(d => d.id === sportsRejectingId ? { ...d, status: 3 } : d));
+      // For facility records, make real API call
+      if (sportsDataTab === 'facility') {
+        const response = await fetch(`/api/verifikasi/facility-record/${sportsRejectingId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'reject',
+            rejectionReason: sportsRejectReason,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menolak data');
+        
+        // Refresh data after rejection
+        fetchSportsData(sportsPagination.page, sportsDataTab);
+      } else {
+        // Simulate for other types
+        setSportsData(sportsData.map(d => d.id === sportsRejectingId ? { ...d, status: 3 } : d));
+      }
+      
       setIsSportsViewModalOpen(false);
       setSelectedSportsData(null);
       setIsSportsRejectModalOpen(false);
@@ -1065,6 +1159,34 @@ const Verifikasi: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+
+                {/* Pagination for Sports Data */}
+                {sportsData.length > 0 && (
+                  <div className="flex flex-col items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 gap-4 sm:flex-row">
+                    <div className="text-sm text-gray-600">
+                      Menampilkan {(sportsPagination.page - 1) * 10 + 1} - {Math.min(sportsPagination.page * 10, sportsPagination.total)} dari {sportsPagination.total} data
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => sportsDataTab === 'facility' && fetchSportsData(sportsPagination.page - 1, sportsDataTab)}
+                        disabled={sportsPagination.page === 1}
+                        className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Halaman {sportsPagination.page} dari {sportsPagination.totalPages}
+                      </span>
+                      <button
+                        onClick={() => sportsDataTab === 'facility' && fetchSportsData(sportsPagination.page + 1, sportsDataTab)}
+                        disabled={!sportsPagination.hasMore}
+                        className="p-2 text-gray-600 hover:bg-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -1124,6 +1246,33 @@ const Verifikasi: React.FC = () => {
                     {selectedSportsData.isActive ? 'Aktif' : 'Tidak Aktif'}
                   </p>
                 </div>
+
+                {selectedSportsData.photos && selectedSportsData.photos.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-3">Lampiran Foto</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {selectedSportsData.photos.map((photo) => (
+                        <div key={photo.id} className="relative group">
+                          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                            <img
+                              src={photo.fileUrl}
+                              alt={photo.fileName || 'Photo'}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <a
+                            href={photo.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                          >
+                            <Eye className="w-6 h-6 text-white" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1225,6 +1374,36 @@ const Verifikasi: React.FC = () => {
                   <p className="text-sm text-gray-600">Alamat Lengkap</p>
                   <p className="font-semibold text-gray-900">{selectedSportsData.fullAddress || '-'}</p>
                 </div>
+
+                {selectedSportsData.achievements && selectedSportsData.achievements.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <p className="text-sm text-gray-600 mb-3">Prestasi Atlet</p>
+                    <div className="space-y-3">
+                      {selectedSportsData.achievements.map((achievement, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-xs text-gray-500">Nama Prestasi</p>
+                              <p className="font-medium text-gray-900">{achievement.achievementName}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Kategori</p>
+                              <p className="font-medium text-gray-900">{achievement.category || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Medali</p>
+                              <p className="font-medium text-gray-900">{achievement.medal || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Tahun</p>
+                              <p className="font-medium text-gray-900">{achievement.year || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
