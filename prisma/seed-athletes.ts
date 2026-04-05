@@ -43,6 +43,8 @@ async function seedAthletes() {
     }
 
     // Clear existing athletes (be careful in production!)
+    // Also clear achievements
+    await prisma.athleteAchievement.deleteMany({});
     await prisma.athlete.deleteMany({});
 
     // Seed KONI athletes
@@ -198,14 +200,74 @@ async function seedAthletes() {
     ];
 
     // Create athletes
-    await prisma.athlete.createMany({
+    const athletes = await prisma.athlete.createMany({
       data: [...koniAthletes, ...npciAthletes],
     });
+
+    // Fetch created athletes to get their IDs for achievements
+    const createdAthletes = await prisma.athlete.findMany({
+      where: {
+        nationalId: {
+          in: [...koniAthletes, ...npciAthletes].map(a => a.nationalId)
+        }
+      }
+    });
+
+    // Create achievements/medals for athletes
+    const achievements = [];
+    
+    // KONI athletes achievements
+    for (const athlete of createdAthletes.filter(a => a.organization === 'KONI')) {
+      if (athlete.category === 'ATLET') {
+        achievements.push({
+          athleteId: athlete.id,
+          achievementName: 'Juara Regional 2024',
+          category: athlete.category,
+          medal: 'EMAS',
+          year: 2024,
+        });
+        achievements.push({
+          athleteId: athlete.id,
+          achievementName: 'Juara Provinsi 2024',
+          category: athlete.category,
+          medal: 'PERAK',
+          year: 2024,
+        });
+      }
+    }
+
+    // NPCI athletes achievements
+    for (const athlete of createdAthletes.filter(a => a.organization === 'NPCI')) {
+      if (athlete.category === 'ATLET') {
+        achievements.push({
+          athleteId: athlete.id,
+          achievementName: 'Juara Nasional 2024',
+          category: athlete.category,
+          medal: 'EMAS',
+          year: 2024,
+        });
+        achievements.push({
+          athleteId: athlete.id,
+          achievementName: 'Juara Regional 2024',
+          category: athlete.category,
+          medal: 'PERUNGGU',
+          year: 2024,
+        });
+      }
+    }
+
+    // Create achievements
+    if (achievements.length > 0) {
+      await prisma.athleteAchievement.createMany({
+        data: achievements,
+      });
+    }
 
     console.log('✅ Athletes seeding finished');
     console.log(`Total KONI athletes: ${koniAthletes.length}`);
     console.log(`Total NPCI athletes: ${npciAthletes.length}`);
-    console.log(`Total: ${koniAthletes.length + npciAthletes.length}`);
+    console.log(`Total athletes: ${koniAthletes.length + npciAthletes.length}`);
+    console.log(`Total achievements: ${achievements.length}`);
   } catch (error) {
     console.error('Error seeding athletes:', error);
     throw error;

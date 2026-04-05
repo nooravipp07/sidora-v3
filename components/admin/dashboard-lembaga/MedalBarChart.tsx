@@ -1,50 +1,91 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { medals, institutions, getAvailableYears } from '@/lib/institution/data';
-import { MedalType, InstitutionType } from '@/types/institution';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/useAuthh';
+
+interface MedalSummary {
+  emasCount: number;
+  perakCount: number;
+  perungguCount: number;
+  totalMedals: number;
+}
 
 export default function MedalBarChart() {
-  const [selectedYear, setSelectedYear] = useState(2026);
-  const [selectedInstitutionType, setSelectedInstitutionType] = useState<string>('all');
-  const availableYears = getAvailableYears();
+  const { user } = useAuth();
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [medalSummary, setMedalSummary] = useState<MedalSummary>({
+    emasCount: 0,
+    perakCount: 0,
+    perungguCount: 0,
+    totalMedals: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const institutionTypes: { value: InstitutionType; label: string }[] = [
-    { value: 'KONI', label: 'KONI' },
-    { value: 'NPCI', label: 'NPCI' },
-    { value: 'KORMI', label: 'KORMI' },
-    { value: 'BAPOPSI', label: 'BAPOPSI' },
-  ];
+  // Generate available years (current year and 3 previous years)
+  const availableYears = Array.from({ length: 4 }, (_, i) => new Date().getFullYear() - i);
 
-  const filteredMedals = useMemo(() => {
-    return medals.filter((m) => {
-      if (m.year !== selectedYear) return false;
-      if (selectedInstitutionType !== 'all') {
-        // Filter berdasarkan tipe institusi atlet yang meraih medali
-        const athlete = institutions.find((inst) =>
-          inst.name.toLowerCase().includes(m.athleteName.toLowerCase())
-        );
-        if (!athlete || athlete.type !== selectedInstitutionType) {
-          return false;
+  // Fetch medal data from API
+  useEffect(() => {
+    const fetchMedalSummary = async () => {
+      try {
+        setLoading(true);
+
+        // Determine organization filter based on roleId
+        let organization: string | null = null;
+        if (user?.roleId === 4) {
+          organization = 'KONI';
+        } else if (user?.roleId === 5) {
+          organization = 'NPCI';
         }
-      }
-      return true;
-    });
-  }, [selectedYear, selectedInstitutionType]);
 
-  const medalCounts = useMemo(() => {
-    const counts = {
-      'Emas': 0,
-      'Perak': 0,
-      'Perunggu': 0,
+        // Build query params
+        const params = new URLSearchParams();
+        if (organization) {
+          params.append('organization', organization);
+        }
+        params.append('year', selectedYear.toString());
+
+        // Fetch data from API
+        const response = await fetch(`/api/medal/summary?${params.toString()}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch medal summary: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success && data.data) {
+          setMedalSummary(data.data);
+          setError(null);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        console.error('Error fetching medal summary:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        setMedalSummary({
+          emasCount: 0,
+          perakCount: 0,
+          perungguCount: 0,
+          totalMedals: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
-    filteredMedals.forEach((m) => {
-      counts[m.type]++;
-    });
-
-    return counts;
-  }, [filteredMedals]);
+    if (user) {
+      fetchMedalSummary();
+    } else {
+      setLoading(false);
+    }
+  }, [user, user?.roleId, selectedYear]);
 
   const medalColors = {
     'Emas': {
@@ -61,7 +102,21 @@ export default function MedalBarChart() {
     },
   };
 
-  const medalTypes: MedalType[] = ['Emas', 'Perak', 'Perunggu'];
+  const medalTypes = [
+    { key: 'Emas', value: medalSummary.emasCount },
+    { key: 'Perak', value: medalSummary.perakCount },
+    { key: 'Perunggu', value: medalSummary.perungguCount },
+  ];
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="text-center text-red-600">
+          <p>Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -69,7 +124,7 @@ export default function MedalBarChart() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-lg font-bold text-gray-900">Perolehan Medali</h3>
-          <p className="text-sm text-gray-600 mt-1">Total medali berdasarkan jenis dan lembaga</p>
+          <p className="text-sm text-gray-600 mt-1">Total medali berdasarkan jenis</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
@@ -80,6 +135,7 @@ export default function MedalBarChart() {
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loading}
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -88,55 +144,47 @@ export default function MedalBarChart() {
               ))}
             </select>
           </div>
+        </div>
+      </div>
 
-          {/* Filter Lembaga */}
-          <div className="flex flex-col">
-            <label className="text-sm font-medium text-gray-700 mb-1">Lembaga</label>
-            <select
-              value={selectedInstitutionType}
-              onChange={(e) => setSelectedInstitutionType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Semua Lembaga</option>
-              {institutionTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+      {/* Loading State */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-gray-100 rounded-lg p-4 h-24"></div>
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Medal Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {medalTypes.map((medal) => {
+              const colors = medalColors[medal.key as keyof typeof medalColors];
+
+              return (
+                <div
+                  key={medal.key}
+                  className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-4"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-4 h-4 rounded ${colors.bg}`}></div>
+                    <span className="font-medium text-gray-700">{medal.key}</span>
+                  </div>
+                  <div className={`text-3xl font-bold ${colors.text}`}>{medal.value}</div>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </div>
 
-      {/* Medal Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {medalTypes.map((medalType) => {
-          const count = medalCounts[medalType];
-          const colors = medalColors[medalType];
-
-          return (
-            <div key={medalType} className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`w-4 h-4 rounded ${colors.bg}`}></div>
-                <span className="font-medium text-gray-700">{medalType}</span>
-              </div>
-              <div className={`text-3xl font-bold ${colors.text}`}>
-                {count}
-              </div>
+          {/* Total Summary */}
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gray-900">Total Medali</span>
+              <span className="text-3xl font-bold text-gray-900">{medalSummary.totalMedals}</span>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Total Summary */}
-      <div className="pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-gray-900">Total Medali</span>
-          <span className="text-3xl font-bold text-gray-900">
-            {medalCounts['Emas'] + medalCounts['Perak'] + medalCounts['Perunggu']}
-          </span>
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

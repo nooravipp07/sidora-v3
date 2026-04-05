@@ -82,7 +82,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     }
 
     // Role 3: Admin - Lembaga (KONI, NPCI dna BAPOPSI)
-    if (roleId === 4) {
+    if (roleId === 4 || roleId === 5) {
       return allMenuItems.filter(item => [
         'dashboard-lembaga',
         'athlete'
