@@ -46,7 +46,7 @@ const DataKeolahragaanPage: React.FC = () => {
       name: 'Data Grup Olahraga',
       description: 'Input data grup/organisasi olahraga',
       icon: <Trophy className="h-8 w-8" />,
-      path: '/admin/data-keolahragaan/sport-group',
+      path: '/admin/data-keolahragaan/sports-group',
       color: 'bg-orange-50 border-orange-200 text-orange-700',
     },
   ];

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Eye, Trash2, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth/useAuth';
 
 interface AthleteStaging {
@@ -25,6 +25,7 @@ interface AthleteStaging {
     year?: number;
   }>;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejectionReason?: string;
   createdAt: string;
   updatedAt?: string;
   desaKelurahanName: string;
@@ -117,6 +118,10 @@ const AthletePage: React.FC = () => {
     }
   };
 
+  const handleEdit = (id: number) => {
+    router.push(`/admin/data-keolahragaan/athlete/${id}/edit`);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -187,12 +192,20 @@ const AthletePage: React.FC = () => {
                         <Eye className="h-4 w-4" />
                       </button>
                       {record.status === 'REJECTED' && (
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleEdit(record.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -314,6 +327,13 @@ const AthletePage: React.FC = () => {
                   </dd>
                 </div>
               </dl>
+
+              {selectedRecord.status === 'REJECTED' && selectedRecord.rejectionReason && (
+                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm font-semibold text-red-900">Alasan Penolakan</p>
+                  <p className="mt-2 text-sm text-red-800">{selectedRecord.rejectionReason}</p>
+                </div>
+              )}
 
               {/* Photo Section */}
               {selectedRecord.photoUrl && (

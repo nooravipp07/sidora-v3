@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Eye, Trash2, Edit3, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth/useAuth';
 
 interface FacilityRecordPhoto {
@@ -116,6 +116,10 @@ const FacilityRecordPage: React.FC = () => {
     }
   };
 
+  const handleEdit = (id: number) => {
+    router.push(`/admin/data-keolahragaan/facility-record/${id}/edit`);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
@@ -187,14 +191,22 @@ const FacilityRecordPage: React.FC = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </button>
-                      {record.status === 'REJECTED' && (
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      {record.status === 'REJECTED' ? (
+                        <>
+                          <button
+                            onClick={() => handleEdit(record.id)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

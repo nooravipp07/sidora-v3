@@ -36,7 +36,12 @@ interface AthleteAchievement {
   year: number;
 }
 
-const AthleteInputForm: React.FC = () => {
+interface AthleteInputFormProps {
+  initialData?: any;
+  isEdit?: boolean;
+}
+
+const AthleteInputForm: React.FC<AthleteInputFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -45,10 +50,27 @@ const AthleteInputForm: React.FC = () => {
   const [sportList, setSportList] = useState<CabangOlahraga[]>([]);
   const [desaKelurahanList, setDesaKelurahanList] = useState<DesaKelurahan[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
-  const [photo, setPhoto] = useState<UploadedPhoto | null>(null);
+  const [photo, setPhoto] = useState<UploadedPhoto | null>(
+    initialData?.photoUrl ? {
+      id: 'existing',
+      fileUrl: initialData.photoUrl,
+      fileName: 'Existing Photo',
+      fileSize: 0,
+      mimeType: 'image/jpeg',
+      previewUrl: initialData.photoUrl,
+    } : null
+  );
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [achievements, setAchievements] = useState<AthleteAchievement[]>([]);
+  const [achievements, setAchievements] = useState<AthleteAchievement[]>(
+    initialData?.achievements?.map((achievement: any) => ({
+      id: achievement.id?.toString() || `temp-${Date.now()}-${Math.random()}`,
+      achievementName: achievement.achievementName || '',
+      category: achievement.category || '',
+      medal: achievement.medal || 'EMAS',
+      year: achievement.year || new Date().getFullYear(),
+    })) || []
+  );
   const [newAchievement, setNewAchievement] = useState({
     achievementName: '',
     category: '',
@@ -57,17 +79,17 @@ const AthleteInputForm: React.FC = () => {
   });
 
   const [formData, setFormData] = useState({
-    nationalId: '',
-    fullName: '',
-    birthPlace: '',
-    birthDate: '',
-    gender: 'MALE',
-    desaKelurahanId: '',
-    fullAddress: '',
-    organization: '',
-    sportId: '',
-    category: '',
-    statusAthlete: 'aktif',
+    nationalId: initialData?.nationalId || '',
+    fullName: initialData?.fullName || '',
+    birthPlace: initialData?.birthPlace || '',
+    birthDate: initialData?.birthDate || '',
+    gender: initialData?.gender || 'MALE',
+    desaKelurahanId: initialData?.desaKelurahanId || '',
+    fullAddress: initialData?.fullAddress || '',
+    organization: initialData?.organization || '',
+    sportId: initialData?.sportId || '',
+    category: initialData?.athleteCategory || initialData?.category || '',
+    statusAthlete: initialData?.statusAthlete || 'aktif',
   });
 
   // Fetch sports and desa/kelurahan lists
@@ -241,8 +263,11 @@ const AthleteInputForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/staging/athlete', {
-        method: 'POST',
+      const url = isEdit ? `/api/staging/athlete/${initialData.id}` : '/api/staging/athlete';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -262,6 +287,7 @@ const AthleteInputForm: React.FC = () => {
             medal: achievement.medal,
             year: achievement.year,
           })),
+          ...(isEdit && { actionType: 'UPDATE', referenceId: initialData.referenceId || initialData.id }),
         }),
       });
 
@@ -270,7 +296,7 @@ const AthleteInputForm: React.FC = () => {
         throw new Error(errorData.message || 'Gagal menyimpan data');
       }
 
-      setSuccess('Data atlet berhasil disubmit untuk verifikasi');
+      setSuccess(isEdit ? 'Data atlet berhasil diperbarui dan disubmit ulang untuk verifikasi' : 'Data atlet berhasil disubmit untuk verifikasi');
       setTimeout(() => {
         router.push('/admin/data-keolahragaan/athlete');
       }, 1500);

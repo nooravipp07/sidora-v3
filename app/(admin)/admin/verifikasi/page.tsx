@@ -75,6 +75,7 @@ interface SportsData {
   desaKelurahanName?: string;
   kecamatanName?: string;
   cabangOlahragaName?: string;
+  rejectionReason?: string;
 }
 
 const Verifikasi: React.FC = () => {
@@ -132,7 +133,7 @@ const Verifikasi: React.FC = () => {
 
   useEffect(() => {
     // Fetch sports data based on selected tab
-    if (sportsDataTab === 'facility' || sportsDataTab === 'athlete') {
+    if (sportsDataTab === 'facility' || sportsDataTab === 'athlete' || sportsDataTab === 'equipment' || sportsDataTab === 'sport_group') {
       fetchSportsData(1, sportsDataTab);
     } else {
       // Load dummy data for other types (not implemented yet)
@@ -176,6 +177,10 @@ const Verifikasi: React.FC = () => {
         url = `/api/verifikasi/facility-record?${params.toString()}`;
       } else if (type === 'athlete') {
         url = `/api/verifikasi/athlete?${params.toString()}`;
+      } else if (type === 'equipment') {
+        url = `/api/verifikasi/equipment?${params.toString()}`;
+      } else if (type === 'sport_group') {
+        url = `/api/verifikasi/sports-group?${params.toString()}`;
       } else {
         // Other types not implemented yet
         loadDummySportsData(type);
@@ -519,6 +524,21 @@ const Verifikasi: React.FC = () => {
     }
   };
 
+  const handleSportsEdit = (data: SportsData) => {
+    // Navigate to edit page based on data type
+    const editPaths = {
+      facility: `/admin/prasarana/${data.id}/edit`,
+      equipment: `/admin/equipment/${data.id}/edit`,
+      athlete: `/admin/athlete/${data.id}/edit`,
+      sport_group: `/admin/sports-group/${data.id}/edit`,
+    };
+
+    const path = editPaths[data.type];
+    if (path) {
+      window.open(path, '_blank');
+    }
+  };
+
   const getStatusBadge = (status: number) => {
     switch (status) {
       case 1:
@@ -606,6 +626,18 @@ const Verifikasi: React.FC = () => {
         });
 
         if (!response.ok) throw new Error('Gagal menyetujui data atlet');
+      } else if (sportsDataTab === 'equipment') {
+        const response = await fetch(`/api/verifikasi/equipment/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'APPROVED',
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menyetujui data peralatan');
       } else {
         // Simulate for other types
         setSportsData(sportsData.map(d => d.id === id ? { ...d, status: 2 } : d));
@@ -655,7 +687,7 @@ const Verifikasi: React.FC = () => {
 
     setSportsIsProcessing(true);
     try {
-      // For facility records, make real API call
+      // For facility records and equipment, make real API call
       if (sportsDataTab === 'facility') {
         const response = await fetch(`/api/verifikasi/facility-record/${sportsRejectingId}`, {
           method: 'POST',
@@ -672,11 +704,58 @@ const Verifikasi: React.FC = () => {
         
         // Refresh data after rejection
         fetchSportsData(sportsPagination.page, sportsDataTab);
-      } else {
-        // Simulate for other types
-        setSportsData(sportsData.map(d => d.id === sportsRejectingId ? { ...d, status: 3 } : d));
+      } else if (sportsDataTab === 'equipment') {
+        const response = await fetch(`/api/verifikasi/equipment/${sportsRejectingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'REJECTED',
+            rejectionReason: sportsRejectReason,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menolak data peralatan');
+        
+        // Refresh data after rejection
+        fetchSportsData(sportsPagination.page, sportsDataTab);
+      } else if (sportsDataTab === 'athlete') {
+        const response = await fetch(`/api/verifikasi/athlete/${sportsRejectingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'REJECTED',
+            rejectionReason: sportsRejectReason,
+          }),
+        });
+
+        if (!response.ok) throw new Error('Gagal menolak data atlet');
+        
+        // Refresh data after rejection
+        fetchSportsData(sportsPagination.page, sportsDataTab);
+      } else if (sportsDataTab === 'sport_group') {
+        const response = await fetch(`/api/verifikasi/sports-group/${sportsRejectingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'REJECTED',
+            rejectionReason: sportsRejectReason,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Gagal menolak data grup olahraga');
+        }
+
+        // Refresh data after rejection
+        fetchSportsData(sportsPagination.page, sportsDataTab);
       }
-      
+
       setIsSportsViewModalOpen(false);
       setSelectedSportsData(null);
       setIsSportsRejectModalOpen(false);
@@ -686,7 +765,7 @@ const Verifikasi: React.FC = () => {
         icon: 'success',
         title: 'Berhasil',
         text: 'Data keolahragaan telah ditolak',
-        confirmButtonColor: '#3b82f6'
+        confirmButtonColor: '#3b82f6',
       });
     } catch (err) {
       Swal.fire({
@@ -1082,6 +1161,7 @@ const Verifikasi: React.FC = () => {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tanggal Input</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Alasan Reject</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                     </tr>
                   </thead>
@@ -1120,6 +1200,17 @@ const Verifikasi: React.FC = () => {
                               {statusBadge.label}
                             </span>
                           </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                            {data.rejectionReason ? (
+                              <div className="truncate" title={data.rejectionReason}>
+                                {data.rejectionReason.length > 30 
+                                  ? `${data.rejectionReason.substring(0, 30)}...` 
+                                  : data.rejectionReason}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-sm">
                             <div className="flex gap-2">
                               <button
@@ -1151,6 +1242,17 @@ const Verifikasi: React.FC = () => {
                                     <XCircle className="w-4 h-4" />
                                   </button>
                                 </>
+                              )}
+                              {data.status === 3 && (
+                                <button
+                                  onClick={() => handleSportsEdit(data)}
+                                  className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                  title="Edit Data"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
                               )}
                             </div>
                           </td>
@@ -1247,6 +1349,13 @@ const Verifikasi: React.FC = () => {
                   </p>
                 </div>
 
+                {selectedSportsData.rejectionReason && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600">Alasan Penolakan</p>
+                    <p className="font-semibold text-red-600">{selectedSportsData.rejectionReason}</p>
+                  </div>
+                )}
+
                 {selectedSportsData.photos && selectedSportsData.photos.length > 0 && (
                   <div>
                     <p className="text-sm text-gray-600 mb-3">Lampiran Foto</p>
@@ -1312,6 +1421,13 @@ const Verifikasi: React.FC = () => {
                     <p className="font-semibold text-gray-900">{selectedSportsData.kecamatanName}</p>
                   </div>
                 </div>
+
+                {selectedSportsData.rejectionReason && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600">Alasan Penolakan</p>
+                    <p className="font-semibold text-red-600">{selectedSportsData.rejectionReason}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1374,6 +1490,13 @@ const Verifikasi: React.FC = () => {
                   <p className="text-sm text-gray-600">Alamat Lengkap</p>
                   <p className="font-semibold text-gray-900">{selectedSportsData.fullAddress || '-'}</p>
                 </div>
+
+                {selectedSportsData.rejectionReason && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600">Alasan Penolakan</p>
+                    <p className="font-semibold text-red-600">{selectedSportsData.rejectionReason}</p>
+                  </div>
+                )}
 
                 {selectedSportsData.achievements && selectedSportsData.achievements.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-gray-200">
@@ -1453,6 +1576,13 @@ const Verifikasi: React.FC = () => {
                   <p className="text-sm text-gray-600">Alamat Sekretariat</p>
                   <p className="font-semibold text-gray-900">{selectedSportsData.secretariatAddress || '-'}</p>
                 </div>
+
+                {selectedSportsData.rejectionReason && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-gray-600">Alasan Penolakan</p>
+                    <p className="font-semibold text-red-600">{selectedSportsData.rejectionReason}</p>
+                  </div>
+                )}
               </div>
             )}
 

@@ -28,7 +28,12 @@ interface UploadedPhoto {
   previewUrl: string;
 }
 
-const FacilityRecordInputForm: React.FC = () => {
+interface FacilityRecordInputFormProps {
+  initialData?: any;
+  isEdit?: boolean;
+}
+
+const FacilityRecordInputForm: React.FC<FacilityRecordInputFormProps> = ({ initialData, isEdit = false }) => {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -37,25 +42,57 @@ const FacilityRecordInputForm: React.FC = () => {
   const [prasaranaList, setPrasaranaList] = useState<Prasarana[]>([]);
   const [desaKelurahanList, setDesaKelurahanList] = useState<DesaKelurahan[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
-  const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
+  const [photos, setPhotos] = useState<UploadedPhoto[]>(
+    initialData?.photos?.map((photo: any) => ({
+      id: `${photo.id}`,
+      fileUrl: photo.fileUrl,
+      fileName: photo.fileName || 'Existing Photo',
+      fileSize: photo.fileSize || 0,
+      mimeType: photo.mimeType || 'image/jpeg',
+      previewUrl: photo.fileUrl,
+    })) || []
+  );
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    desaKelurahanId: '',
-    prasaranaId: '',
-    year: new Date().getFullYear(),
-    condition: '',
-    ownershipStatus: 'OWNED',
-    address: '',
-    notes: '',
-    isActive: true,
+    desaKelurahanId: initialData?.desaKelurahanId || '',
+    prasaranaId: initialData?.prasaranaId || '',
+    year: initialData?.year || new Date().getFullYear(),
+    condition: initialData?.condition || '',
+    ownershipStatus: initialData?.ownershipStatus || 'OWNED',
+    address: initialData?.address || '',
+    notes: initialData?.notes || '',
+    isActive: initialData?.isActive ?? true,
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        desaKelurahanId: initialData.desaKelurahanId || '',
+        prasaranaId: initialData.prasaranaId || '',
+        year: initialData.year || new Date().getFullYear(),
+        condition: initialData.condition || '',
+        ownershipStatus: initialData.ownershipStatus || 'OWNED',
+        address: initialData.address || '',
+        notes: initialData.notes || '',
+        isActive: initialData.isActive ?? true,
+      });
+      setPhotos(
+        initialData.photos?.map((photo: any) => ({
+          id: `${photo.id}`,
+          fileUrl: photo.fileUrl,
+          fileName: photo.fileName || 'Existing Photo',
+          fileSize: photo.fileSize || 0,
+          mimeType: photo.mimeType || 'image/jpeg',
+          previewUrl: photo.fileUrl,
+        })) || []
+      );
+    }
+  }, [initialData]);
 
   // Fetch prasarana and desa/kelurahan lists
   useEffect(() => {
-    if (authLoading) return;
-
     if (!user) {
       router.push('/login');
       return;
@@ -185,8 +222,10 @@ const FacilityRecordInputForm: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/staging/facility-record', {
-        method: 'POST',
+      const url = isEdit ? `/api/staging/facility-record/${initialData.id}` : '/api/staging/facility-record';
+      const method = isEdit ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -199,6 +238,10 @@ const FacilityRecordInputForm: React.FC = () => {
             fileSize: photo.fileSize,
             mimeType: photo.mimeType,
           })),
+          ...(isEdit && {
+            actionType: 'UPDATE',
+            referenceId: initialData.referenceId || initialData.id,
+          }),
         }),
       });
 
@@ -207,7 +250,7 @@ const FacilityRecordInputForm: React.FC = () => {
         throw new Error(errorData.message || 'Gagal menyimpan data');
       }
 
-      setSuccess('Data fasilitas berhasil disubmit untuk verifikasi');
+      setSuccess(isEdit ? 'Data fasilitas berhasil diperbarui dan disubmit ulang untuk verifikasi' : 'Data fasilitas berhasil disubmit untuk verifikasi');
       setTimeout(() => {
         router.push('/admin/data-keolahragaan/facility-record');
       }, 1500);
