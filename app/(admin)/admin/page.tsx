@@ -55,6 +55,23 @@ interface DashboardSummary {
   totalAchievement: number;
 }
 
+interface EquipmentDistributionData {
+  usable: number;
+  notUsable: number;
+  grant: number;
+  nonGrant: number;
+  totalRecords: number;
+}
+
+interface EquipmentTrendData {
+  years: number[];
+  series: {
+    name: string;
+    type?: string;
+    data: number[];
+  }[];
+}
+
 interface KecamatanDetail {
   kecamatan: {
     id: number;
@@ -193,8 +210,18 @@ const Dashboard: FC = () => {
   const [ownershipData, setOwnershipData] = useState<OwnershipData[]>([]);
   const [ownershipLoading, setOwnershipLoading] = useState(false);
 
+  // Equipment Distribution State
+  const [equipmentDistData, setEquipmentDistData] = useState<EquipmentDistributionData>({
+    usable: 0,
+    notUsable: 0,
+    grant: 0,
+    nonGrant: 0,
+    totalRecords: 0,
+  });
+  const [equipmentDistLoading, setEquipmentDistLoading] = useState(false);
+
   // Equipment Trends State
-  const [equipmentTrendData, setEquipmentTrendData] = useState<{ years: number[]; series: any[] }>({ years: [], series: [] });
+  const [equipmentTrendData, setEquipmentTrendData] = useState<EquipmentTrendData>({ years: [], series: [] });
   const [equipmentTrendLoading, setEquipmentTrendLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -503,13 +530,13 @@ const Dashboard: FC = () => {
     fetchOwnershipData();
   }, [selectedYear, selectedKecamatanId]);
 
-  // Fetch Equipment Trends
+  // Fetch Equipment Trends (Government Grant Only - 5 Years)
   useEffect(() => {
     const fetchEquipmentTrends = async () => {
       setEquipmentTrendLoading(true);
       try {
         const params = new URLSearchParams();
-        params.set('year', selectedYear.toString());
+        params.set('lastYears', '5');
         if (selectedKecamatanId) {
           params.set('kecamatanId', selectedKecamatanId.toString());
         }
@@ -517,8 +544,21 @@ const Dashboard: FC = () => {
         const response = await fetch(`/api/equipment/trends?${params.toString()}`);
         const data = await response.json();
 
-        if (data?.success && data?.data) {
-          setEquipmentTrendData(data.data);
+        if (data?.success && data?.data?.years && data.data.years.length > 0) {
+          // Get government grant data (first series)
+          const grantData = data.data.series && data.data.series.length > 0 
+            ? data.data.series[0].data 
+            : [];
+          
+          setEquipmentTrendData({
+            years: data.data.years,
+            series: [
+              {
+                name: 'Hibah Pemerintah',
+                data: grantData,
+              },
+            ],
+          });
         } else {
           setEquipmentTrendData({ years: [], series: [] });
         }
@@ -531,6 +571,35 @@ const Dashboard: FC = () => {
     };
 
     fetchEquipmentTrends();
+  }, [selectedKecamatanId]);
+
+  useEffect(() => {
+    const fetchEquipmentDistribution = async () => {
+      setEquipmentDistLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('year', selectedYear.toString());
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/equipment/distribution?${params.toString()}`);
+        const data = await response.json();
+
+        if (data?.success && data?.data) {
+          setEquipmentDistData(data.data);
+        } else {
+          setEquipmentDistData({ usable: 0, notUsable: 0, grant: 0, nonGrant: 0, totalRecords: 0 });
+        }
+      } catch (err) {
+        console.error('Failed to fetch equipment distribution:', err);
+        setEquipmentDistData({ usable: 0, notUsable: 0, grant: 0, nonGrant: 0, totalRecords: 0 });
+      } finally {
+        setEquipmentDistLoading(false);
+      }
+    };
+
+    fetchEquipmentDistribution();
   }, [selectedYear, selectedKecamatanId]);
 
   const supply = dashboardSummary?.totalEquipment ?? 0;
@@ -549,7 +618,7 @@ const Dashboard: FC = () => {
         },
         {
           label: 'Perlengkapan Olahraga',
-          value: dashboardSummary.totalEquipment,
+          value: dashboardSummary.totalEquipmentQuantity,
           trend: -0.5,
           status: 'negative' as const,
         },
@@ -695,7 +764,124 @@ const Dashboard: FC = () => {
           </div>
         </article>
         <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold mb-3">Tren Equipment (Hibah vs Non Hibah)</h2>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-lg font-bold">Distribusi Perlengkapan</h2>
+              <p className="text-sm text-slate-500">Proporsi kelayakan dan sumber perolehan perlengkapan.</p>
+            </div>
+            <PieChart className="w-5 h-5 text-sky-500" />
+          </div>
+
+          {equipmentDistLoading ? (
+            <div className="flex items-center justify-center h-80">
+              <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+          ) : equipmentDistData.totalRecords > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">Kelayakan Perlengkapan</h3>
+                      <p className="text-xs text-slate-500">Usable vs Tidak layak pakai</p>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-600">{equipmentDistData.totalRecords} item</span>
+                  </div>
+                  <ReactApexChart
+                    type="donut"
+                    width="100%"
+                    height={260}
+                    series={[equipmentDistData.usable, equipmentDistData.notUsable]}
+                    options={{
+                      chart: { type: 'donut' },
+                      labels: ['Layak Pakai', 'Tidak Layak Pakai'],
+                      colors: ['#10b981', '#ef4444'],
+                      legend: { position: 'bottom', fontSize: '12px' },
+                      plotOptions: {
+                        pie: {
+                          donut: {
+                            size: '60%',
+                            labels: {
+                              show: true,
+                              name: { show: true, fontSize: '14px', fontWeight: 600 },
+                              value: { show: true, fontSize: '18px', fontWeight: 700, formatter: (w: any) => `${w}` },
+                              total: {
+                                show: true,
+                                label: 'Total',
+                                formatter: (w: any) => w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString(),
+                              },
+                            },
+                          },
+                        },
+                      },
+                      dataLabels: { enabled: true, formatter: (val: number) => `${val.toFixed(1)}%` },
+                      tooltip: {
+                        y: { formatter: (value: number) => `${value} item` },
+                      },
+                    }}
+                  />
+                </div>
+
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">Sumber Perolehan</h3>
+                      <p className="text-xs text-slate-500">Hibah pemerintah vs Non-Hibah</p>
+                    </div>
+                    <span className="text-xs font-semibold text-slate-600">{equipmentDistData.totalRecords} item</span>
+                  </div>
+                  <ReactApexChart
+                    type="donut"
+                    width="100%"
+                    height={260}
+                    series={[equipmentDistData.grant, equipmentDistData.nonGrant]}
+                    options={{
+                      chart: { type: 'donut' },
+                      labels: ['Hibah Pemerintah', 'Non-Hibah'],
+                      colors: ['#3b82f6', '#f59e0b'],
+                      legend: { position: 'bottom', fontSize: '12px' },
+                      plotOptions: {
+                        pie: {
+                          donut: {
+                            size: '60%',
+                            labels: {
+                              show: true,
+                              name: { show: true, fontSize: '14px', fontWeight: 600 },
+                              value: { show: true, fontSize: '18px', fontWeight: 700, formatter: (w: any) => `${w}` },
+                              total: {
+                                show: true,
+                                label: 'Total',
+                                formatter: (w: any) => w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0).toString(),
+                              },
+                            },
+                          },
+                        },
+                      },
+                      dataLabels: { enabled: true, formatter: (val: number) => `${val.toFixed(1)}%` },
+                      tooltip: {
+                        y: { formatter: (value: number) => `${value} item` },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-80 text-slate-500">
+              <p>Tidak ada data distribusi perlengkapan</p>
+            </div>
+          )}
+        </article>
+
+        <article className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-lg font-bold">Total Hibah Perlengkapan 5 Tahun Terakhir</h2>
+              <p className="text-sm text-slate-500">Trend hibah pemerintah per tahun (tidak terpengaruh filter tahun)</p>
+            </div>
+            <BarChart3 className="w-5 h-5 text-emerald-500" />
+          </div>
+
           {equipmentTrendLoading ? (
             <div className="flex items-center justify-center h-80">
               <Loader className="w-8 h-8 text-blue-600 animate-spin" />
@@ -703,63 +889,83 @@ const Dashboard: FC = () => {
           ) : equipmentTrendData.years && equipmentTrendData.years.length > 0 ? (
             <div className="h-80 w-full">
               <ReactApexChart
-                type="line"
+                type="bar"
                 width="100%"
                 height={320}
-                series={equipmentTrendData.series}
+                series={[
+                  {
+                    name: 'Hibah Pemerintah',
+                    data: equipmentTrendData.series[0]?.data || [],
+                  },
+                ]}
                 options={{
                   chart: {
-                    type: 'line',
+                    type: 'bar',
                     toolbar: { show: true },
-                    sparkline: { enabled: false },
+                    zoom: { enabled: false },
+                    animations: {
+                      enabled: true,
+                    },
                   },
-                  stroke: {
-                    curve: 'smooth',
-                    width: 3,
-                    colors: ['#10b981', '#f59e0b'],
+                  colors: ['#10b981'],
+                  plotOptions: {
+                    bar: {
+                      columnWidth: '60%',
+                      dataLabels: {
+                        position: 'top',
+                      },
+                    },
                   },
-                  markers: {
-                    size: 5,
-                    colors: ['#10b981', '#f59e0b'],
-                    strokeColors: '#fff',
-                    strokeWidth: 2,
+                  dataLabels: {
+                    enabled: true,
+                    formatter: (val: any) => {
+                      const numVal = typeof val === 'number' ? val : 0;
+                      return numVal > 0 ? `${numVal}` : '';
+                    },
+                    style: {
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      colors: ['#10b981'],
+                    },
+                    offsetY: -10,
                   },
                   xaxis: {
-                    categories: equipmentTrendData.years,
+                    categories: equipmentTrendData.years.map(y => y.toString()),
                     title: {
                       text: 'Tahun',
                     },
-                    axisBorder: {
-                      show: true,
-                    },
-                    axisTicks: {
-                      show: true,
-                    },
+                    axisBorder: { show: true },
+                    axisTicks: { show: true },
                   },
                   yaxis: {
                     title: {
-                      text: 'Total Quantity',
+                      text: 'Total Quantity (Unit)',
                     },
                     min: 0,
+                    labels: {
+                      formatter: (val: number) => Math.floor(val).toString(),
+                    },
                   },
                   grid: {
                     show: true,
                     borderColor: '#e5e7eb',
                     strokeDashArray: 3,
+                    xaxis: {
+                      lines: { show: false },
+                    },
+                    yaxis: {
+                      lines: { show: true },
+                    },
                   },
                   tooltip: {
                     enabled: true,
                     theme: 'light',
-                    x: {
-                      format: 'yyyy',
-                    },
                     y: {
-                      formatter: (val: number) => `${val} unit`,
+                      formatter: (val: any) => {
+                        const numVal = typeof val === 'number' ? val : 0;
+                        return `${numVal} unit`;
+                      },
                     },
-                  },
-                  dataLabels: {
-                    enabled: true,
-                    formatter: (val: number) => `${val}`,
                   },
                   legend: {
                     position: 'top',
@@ -771,7 +977,7 @@ const Dashboard: FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center h-80 text-slate-500">
-              <p>Tidak ada data tren equipment</p>
+              <p>Tidak ada data trend hibah perlengkapan untuk 5 tahun terakhir</p>
             </div>
           )}
         </article>

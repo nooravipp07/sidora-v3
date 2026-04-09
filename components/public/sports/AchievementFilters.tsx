@@ -71,9 +71,9 @@ export default function AchievementFilters({
   const hasActiveFilters = selectedSport || selectedMedal || selectedYear || selectedDistrict;
 
   const medalOptions = [
-    { value: 'gold', label: 'Emas', color: 'bg-yellow-100 text-yellow-700' },
-    { value: 'silver', label: 'Perak', color: 'bg-gray-100 text-gray-700' },
-    { value: 'bronze', label: 'Perunggu', color: 'bg-orange-100 text-orange-700' }
+    { value: 'Emas', label: 'Emas', color: 'bg-yellow-100 text-yellow-700' },
+    { value: 'Perak', label: 'Perak', color: 'bg-gray-100 text-gray-700' },
+    { value: 'Perunggu', label: 'Perunggu', color: 'bg-orange-100 text-orange-700' }
   ];
 
   return (

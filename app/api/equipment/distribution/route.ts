@@ -4,24 +4,24 @@ import { EquipmentRepo } from '@/repositories/equipment.repository';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const year = searchParams.get('year');
     const kecamatanId = searchParams.get('kecamatanId');
-    const lastYears = searchParams.get('lastYears');
 
     const filters = {
+      year: year ? parseInt(year) : undefined,
       kecamatanId: kecamatanId ? parseInt(kecamatanId) : undefined,
-      lastYears: lastYears ? parseInt(lastYears) : 5,
     };
 
-    const data = await EquipmentRepo.getEquipmentTrends(filters);
+    const data = await EquipmentRepo.getEquipmentDistribution(filters);
 
     return NextResponse.json({
       success: true,
       data,
     });
   } catch (error) {
-    console.error('Error fetching equipment trends:', error);
+    console.error('Error fetching equipment distribution:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch equipment trends data' },
+      { success: false, error: 'Failed to fetch equipment distribution data' },
       { status: 500 }
     );
   }

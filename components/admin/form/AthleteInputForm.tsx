@@ -608,9 +608,9 @@ const AthleteInputForm: React.FC<AthleteInputFormProps> = ({ initialData, isEdit
                       onChange={handleAchievementChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     >
-                      <option value="EMAS">Emas</option>
-                      <option value="PERAK">Perak</option>
-                      <option value="PERUNGGU">Perunggu</option>
+                      <option value="Emas">Emas</option>
+                      <option value="Perak">Perak</option>
+                      <option value="Perunggu">Perunggu</option>
                     </select>
                   </div>
                   <div className="flex gap-2">

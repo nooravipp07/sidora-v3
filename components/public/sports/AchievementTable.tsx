@@ -89,11 +89,11 @@ export default function AchievementTable({
 
   const getMedalIcon = (medalValue: string) => {
     switch (medalValue) {
-      case 'gold':
+      case 'Emas':
         return <Trophy className="w-4 h-4 text-yellow-500" />;
-      case 'silver':
+      case 'Perak':
         return <Medal className="w-4 h-4 text-gray-400" />;
-      case 'bronze':
+      case 'Perunggu':
         return <Medal className="w-4 h-4 text-orange-600" />;
       default:
         return null;
@@ -102,11 +102,11 @@ export default function AchievementTable({
 
   const getMedalLabel = (medalValue: string) => {
     switch (medalValue) {
-      case 'gold':
+      case 'Emas':
         return { label: 'Emas', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' };
-      case 'silver':
+      case 'Perak':
         return { label: 'Perak', bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' };
-      case 'bronze':
+      case 'Perunggu':
         return { label: 'Perunggu', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' };
       default:
         return { label: '', bg: '', text: '', border: '' };
