@@ -433,7 +433,7 @@ const Equipment: React.FC = () => {
           <>
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-green-100 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Perlengkapan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>

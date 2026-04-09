@@ -467,19 +467,28 @@ export default function ClubTable({ clubs }: ClubTableProps) {
                     <ChevronLeft className="w-5 h-5 text-gray-600" />
                   </button>
                   <div className="flex gap-1">
-                    {Array.from({ length: paginationMeta.totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-1 rounded text-sm transition-colors ${
-                          currentPage === page
-                            ? 'bg-blue-600 text-white font-medium'
-                            : 'text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    {Array.from({ length: paginationMeta.totalPages }, (_, i) => i + 1)
+                      .filter(p => Math.abs(p - currentPage) <= 1 || p === 1 || p === paginationMeta.totalPages)
+                      .map((page, idx, arr) => {
+                        if (idx > 0 && arr[idx - 1] !== page - 1) {
+                          return (
+                            <span key={`dots-${page}`} className="px-2 py-1 text-gray-600">...</span>
+                          );
+                        }
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-3 py-1 rounded text-sm transition-colors ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white font-medium'
+                                : 'text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
                   </div>
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}

@@ -51,8 +51,8 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
     { id: 'sarana', label: 'Sarana', icon: Building2, href: '/admin/equipment' },
     { id: 'prasarana', label: 'Prasarana', icon: Hammer, href: '/admin/prasarana' },
     { id: 'kelompok-olahraga', label: 'Kelompok Olahraga', icon: Users, href: '/admin/sports-group' },
-    { id: 'data-keolahragaan', label: 'Facility Record', icon: Users, href: '/admin/data-keolahragaan/facility-record' },
     { id: 'athlete', label: 'Prestasi Atlet', icon: UserCheck, href: '/admin/athlete' },
+    { id: 'data-keolahragaan', label: 'Data Keolahragaan', icon: Users, href: '/admin/data-keolahragaan' },
     { id: 'kegiatan', label: 'Kegiatan', icon: Calendar, href: '/admin/kegiatan' },
     { id: 'verifikasi', label: 'Verifikasi', icon: CheckCircle, href: '/admin/verifikasi' },
     { id: 'user-management', label: 'User Management', icon: Users, href: '/admin/user-management' },
@@ -64,7 +64,7 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
   const getMenuItemsByRole = (roleId: number | null): MenuItem[] => {
     if (!roleId) return [];
 
-    const adminExceptions = ['dashboard-kecamatan', 'dashboard-lembaga']; // Roles that have access to admin menu
+    const adminExceptions = ['dashboard-kecamatan', 'dashboard-lembaga', 'data-keolahragaan']; // Roles that have access to admin menu
 
     // Role 1: Admin - semua menu
     if (roleId === 1) {

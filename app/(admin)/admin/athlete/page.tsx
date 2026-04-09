@@ -445,12 +445,13 @@ const Athlete: React.FC = () => {
           <>
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-green-100 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">NIK</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang Olahraga</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">JK</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Organisasi</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
@@ -464,6 +465,7 @@ const Athlete: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{(pagination.page - 1) * 10 + index + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">{athlete.fullName}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.nationalId}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{athlete.desaKelurahan?.kecamatan?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.sport?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.gender || '-'}</td>

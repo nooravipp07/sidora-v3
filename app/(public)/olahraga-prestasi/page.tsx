@@ -419,45 +419,107 @@ export default function OlahragaPrestasi() {
                   </table>
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination - Mobile */}
                 {totalPages > 1 && (
-                  <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
-                    <div className="text-sm text-gray-600">
-                      Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} dari {totalItems} data
+                  <div className="mt-4 p-4 lg:hidden bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} dari {totalItems} data
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <div className="flex gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(p => Math.abs(p - currentPage) <= 1 || p === 1 || p === totalPages)
+                            .map((page, idx, arr) => {
+                              if (idx > 0 && arr[idx - 1] !== page - 1) {
+                                return (
+                                  <span key={`dots-${page}`} className="px-1 text-gray-600">...</span>
+                                );
+                              }
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => handlePageChange(page)}
+                                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                                    currentPage === page
+                                      ? 'bg-blue-600 text-white font-medium'
+                                      : 'text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            })}
+                        </div>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="p-1 hover:bg-gray-200 disabled:hover:bg-gray-50 disabled:opacity-50 rounded transition-colors"
+                        >
+                          <ChevronRightIcon className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
                     </div>
+                  </div>
+                )}
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ChevronLeft className="w-5 h-5" />
-                      </button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`px-3 py-1 rounded-lg font-semibold transition-colors ${
-                              currentPage === page
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
+                {/* Pagination - Desktop */}
+                {totalPages > 1 && (
+                  <div className="hidden lg:block mt-6 border-t border-gray-200 pt-4">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div className="text-sm text-gray-600">
+                        Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} dari {totalItems} data
                       </div>
 
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ChevronRightIcon className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+
+                        <div className="flex gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter(p => Math.abs(p - currentPage) <= 1 || p === 1 || p === totalPages)
+                            .map((page, idx, arr) => {
+                              if (idx > 0 && arr[idx - 1] !== page - 1) {
+                                return (
+                                  <span key={`dots-${page}`} className="px-2 py-1 text-gray-600">...</span>
+                                );
+                              }
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => handlePageChange(page)}
+                                  className={`px-3 py-1 rounded-lg font-semibold transition-colors ${
+                                    currentPage === page
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            })}
+                        </div>
+
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronRightIcon className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

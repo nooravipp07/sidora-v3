@@ -317,7 +317,7 @@ const AthleteInputForm: React.FC<AthleteInputFormProps> = ({ initialData, isEdit
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -611,8 +611,6 @@ const AthleteInputForm: React.FC<AthleteInputFormProps> = ({ initialData, isEdit
                       <option value="EMAS">Emas</option>
                       <option value="PERAK">Perak</option>
                       <option value="PERUNGGU">Perunggu</option>
-                      <option value="JUARA">Juara</option>
-                      <option value="LAINNYA">Lainnya</option>
                     </select>
                   </div>
                   <div className="flex gap-2">

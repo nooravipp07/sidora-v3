@@ -89,7 +89,7 @@ export default function DistrictTable({
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Desa / Kelurahan</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Kecamatan</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Prasarana</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Kelompok Olahraga</th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Total Atlet</th>

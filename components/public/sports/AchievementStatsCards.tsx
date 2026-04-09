@@ -68,7 +68,7 @@ export default function AchievementStatsCards({
 
   const cards = [
     {
-      label: 'Total Atlet Berprestasi',
+      label: 'Total Atlet',
       value: stats.totalAthletes,
       icon: Users,
       color: 'bg-blue-100',

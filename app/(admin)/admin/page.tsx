@@ -170,6 +170,7 @@ const Dashboard: FC = () => {
 
   const [kecamatanData, setKecamatanData] = useState<KecamatanSummary[]>([]);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
+  const [totalAthletesAllYears, setTotalAthletesAllYears] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -354,7 +355,30 @@ const Dashboard: FC = () => {
     fetchDashboardData();
   }, [selectedYear, selectedKecamatanId]);
 
-  // Fetch achievement trends
+  // Fetch total athletes without year filter
+  useEffect(() => {
+    const fetchTotalAthletes = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('page', '1');
+        params.set('limit', '1');
+        if (selectedKecamatanId) {
+          params.set('kecamatanId', selectedKecamatanId.toString());
+        }
+
+        const response = await fetch(`/api/masterdata/athlete?${params.toString()}`);
+        const data = await response.json();
+        
+        if (data?.meta?.total !== undefined) {
+          setTotalAthletesAllYears(data.meta.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch total athletes:', err);
+      }
+    };
+
+    fetchTotalAthletes();
+  }, [selectedKecamatanId]);
   useEffect(() => {
     const fetchAchievementTrends = async () => {
       try {
@@ -510,7 +534,7 @@ const Dashboard: FC = () => {
   }, [selectedYear, selectedKecamatanId]);
 
   const supply = dashboardSummary?.totalEquipment ?? 0;
-  const demand = dashboardSummary?.totalAthletes ?? 0;
+  const demand = totalAthletesAllYears;
   const maxVal = Math.max(supply, demand, 1);
   const supplyPercent = Math.round((supply / maxVal) * 100);
   const demandPercent = Math.round((demand / maxVal) * 100);
@@ -518,10 +542,16 @@ const Dashboard: FC = () => {
   const topStats = dashboardSummary
     ? [
         {
-          label: 'Total Atlet',
-          value: dashboardSummary.totalAthletes,
-          trend: 8.2,
+          label: 'Fasilitas Olahraga',
+          value: dashboardSummary.totalPrasarana,
+          trend: 3.7,
           status: 'positive' as const,
+        },
+        {
+          label: 'Perlengkapan Olahraga',
+          value: dashboardSummary.totalEquipment,
+          trend: -0.5,
+          status: 'negative' as const,
         },
         {
           label: 'Kelompok Olahraga',
@@ -530,15 +560,9 @@ const Dashboard: FC = () => {
           status: 'positive' as const,
         },
         {
-          label: 'Sarana',
-          value: dashboardSummary.totalEquipment,
-          trend: -0.5,
-          status: 'negative' as const,
-        },
-        {
-          label: 'Prasarana',
-          value: dashboardSummary.totalPrasarana,
-          trend: 3.7,
+          label: 'Total Atlet',
+          value: totalAthletesAllYears,
+          trend: 8.2,
           status: 'positive' as const,
         },
         {
