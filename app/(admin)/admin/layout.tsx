@@ -71,7 +71,19 @@ const AdminLayout: FC<AdminLayoutProps> = ({ children }) => {
       return allMenuItems.filter(item => !adminExceptions.includes(item.id));
     }
 
-    // Role 2: Admin - Kecamatan
+    // Role 2: Admin - semua menu
+    if (roleId === 2) {
+      return allMenuItems.filter(item => [
+        'dashboard',
+        'sarana',
+        'prasarana',
+        'kelompok-olahraga',
+        'athlete',
+        'verifikasi'
+      ].includes(item.id));
+    }
+
+    // Role 3: Admin - Kecamatan
     if (roleId === 3) {
       return allMenuItems.filter(item => [
         'dashboard-kecamatan',
