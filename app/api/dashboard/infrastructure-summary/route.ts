@@ -34,17 +34,25 @@ export async function GET(request: NextRequest) {
       whereClause.desaKelurahanId = { in: desaIds };
     }
 
-    const [totalEquipment, totalPrasarana, totalSportsGroups, totalAthletes] = await Promise.all([
-      prisma.equipment.count({ where: equipmentWhere }),
+    const [equipmentData, totalPrasarana, totalSportsGroups, totalAthletes] = await Promise.all([
+      prisma.equipment.aggregate({
+        where: equipmentWhere,
+        _count: { id: true },
+        _sum: { quantity: true }
+      }),
       prisma.facilityRecord.count({ where: whereClause }),
       prisma.sportsGroup.count({ where: sportsGroupWhere }),
       prisma.athlete.count({ where: athleteWhere })
     ]);
 
+    const totalEquipment = equipmentData._count.id || 0;
+    const totalEquipmentQuantity = equipmentData._sum.quantity || 0;
+
     return NextResponse.json({
       success: true,
       data: {
         totalEquipment,
+        totalEquipmentQuantity,
         totalPrasarana,
         totalSportsGroups,
         totalAthletes

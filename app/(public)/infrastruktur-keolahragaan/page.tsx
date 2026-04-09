@@ -106,21 +106,7 @@ export default function InfrastructureKeolahraganPage() {
 
       {/* Content Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        {/* Summary Statistics Cards */}
-        <SummaryCards 
-          year={selectedYear} 
-          condition={selectedCondition}
-          kecamatanId={selectedKecamatanId}
-        />
-
-        {/* Data Visualization Section */}
-        <InfrastructureCharts 
-          year={selectedYear}
-          condition={selectedCondition}
-          kecamatanId={selectedKecamatanId}
-        />
-
-        {/* Filters Section */}
+                {/* Filters Section */}
         <div id="filters-section">
           <InfrastructureFilters
             onDistrictChange={(val) => {
@@ -146,6 +132,19 @@ export default function InfrastructureKeolahraganPage() {
             selectedYear={selectedYear}
           />
         </div>
+        {/* Summary Statistics Cards */}
+        <SummaryCards 
+          year={selectedYear} 
+          condition={selectedCondition}
+          kecamatanId={selectedKecamatanId}
+        />
+
+        {/* Data Visualization Section */}
+        <InfrastructureCharts 
+          year={selectedYear}
+          condition={selectedCondition}
+          kecamatanId={selectedKecamatanId}
+        />
 
         {/* Kecamatan Summary Table Section */}
         <div className="mb-12">

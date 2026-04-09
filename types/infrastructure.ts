@@ -24,6 +24,7 @@ export interface DistrictInfrastructure {
 
 export interface InfrastructureStats {
   totalEquipment: number;
+  totalEquipmentQuantity: number;
   totalPrasarana: number;
   totalSportsGroups: number;
   totalAthletes: number;

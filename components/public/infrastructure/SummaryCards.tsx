@@ -72,7 +72,7 @@ export default function SummaryCards({ year, kecamatanId, condition }: SummaryCa
     {
       icon: Wrench,
       label: 'Sarana (Equipment)',
-      value: stats.totalEquipment,
+      value: stats.totalEquipmentQuantity,
       color: 'bg-blue-500',
       lightColor: 'bg-blue-100'
     },
