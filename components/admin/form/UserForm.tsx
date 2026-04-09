@@ -89,12 +89,7 @@ const UserForm: React.FC<UserFormProps> = ({ initialData, isEdit = false }) => {
       setError('Password harus diisi');
       return;
     }
-
-    if (selectedRole === 2 && !formData.jenisAkun) {
-      setError('Lembaga harus dipilih');
-      return;
-    }
-
+    
     if (selectedRole === 3 && !formData.kecamatanId) {
       setError('Kecamatan harus dipilih');
       return;
