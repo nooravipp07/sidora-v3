@@ -167,17 +167,17 @@ export default function InfrastructureKeolahraganPage() {
 
           {/* Divider */}
           <div className="border-t-2 border-gray-300 pt-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Prestasi Atlet</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Penggiat Olahraga</h2>
             <p className="text-gray-600">Prestasi atlet dan perolehan medali dalam berbagai kejuaraan</p>
           </div>
 
           {/* Achievement Statistics Cards */}
-          <AchievementStatsCards 
+          {/* <AchievementStatsCards 
             sport={achievementSport}
             medal={achievementMedal}
             year={achievementYear}
             district={achievementDistrict}
-          />
+          /> */}
 
           {/* Achievement Filters */}
           <AchievementFilters
