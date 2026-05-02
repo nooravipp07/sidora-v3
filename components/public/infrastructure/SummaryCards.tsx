@@ -71,14 +71,14 @@ export default function SummaryCards({ year, kecamatanId, condition }: SummaryCa
   const cards: SummaryCard[] = [
     {
       icon: Wrench,
-      label: 'Sarana (Equipment)',
+      label: 'Sarana',
       value: stats.totalEquipmentQuantity,
       color: 'bg-blue-500',
       lightColor: 'bg-blue-100'
     },
     {
       icon: Building2,
-      label: 'Prasarana (Facility Record)',
+      label: 'Prasarana',
       value: stats.totalPrasarana,
       color: 'bg-green-500',
       lightColor: 'bg-green-100'

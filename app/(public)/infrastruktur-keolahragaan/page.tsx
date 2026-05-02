@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { ChevronRight, Download } from 'lucide-react';
-import Link from 'next/link';
+import { useState, useMemo } from 'react';
 import { useTrackPageView } from '@/lib/analytics/useTrackPageView';
-import { SummaryCards, InfrastructureTable, InfrastructureFilters, InfrastructureCharts, KecamatanSummaryTable } from '@/components/public/infrastructure';
-import { AthleteStatsCards, AchievementStatistics, ClubSummaryCards, ClubTable } from '@/components/ui/sports';
-import AchievementStatsCards from '@/components/public/sports/AchievementStatsCards';
+import { SummaryCards, InfrastructureFilters, InfrastructureCharts, KecamatanSummaryTable } from '@/components/public/infrastructure';
+import { ClubSummaryCards, ClubTable } from '@/components/ui/sports';
 import AchievementFilters from '@/components/public/sports/AchievementFilters';
 import AchievementTable from '@/components/public/sports/AchievementTable';
 import {
@@ -106,7 +103,12 @@ export default function InfrastructureKeolahraganPage() {
 
       {/* Content Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-                {/* Filters Section */}
+        {/* Summary Statistics Cards */}
+        <SummaryCards 
+          year={selectedYear} 
+          condition={selectedCondition}
+          kecamatanId={selectedKecamatanId}
+        />
         <div id="filters-section">
           <InfrastructureFilters
             onDistrictChange={(val) => {
@@ -132,12 +134,6 @@ export default function InfrastructureKeolahraganPage() {
             selectedYear={selectedYear}
           />
         </div>
-        {/* Summary Statistics Cards */}
-        <SummaryCards 
-          year={selectedYear} 
-          condition={selectedCondition}
-          kecamatanId={selectedKecamatanId}
-        />
 
         {/* Data Visualization Section */}
         <InfrastructureCharts 
@@ -170,14 +166,6 @@ export default function InfrastructureKeolahraganPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Penggiat Olahraga</h2>
             <p className="text-gray-600">Prestasi atlet dan perolehan medali dalam berbagai kejuaraan</p>
           </div>
-
-          {/* Achievement Statistics Cards */}
-          {/* <AchievementStatsCards 
-            sport={achievementSport}
-            medal={achievementMedal}
-            year={achievementYear}
-            district={achievementDistrict}
-          /> */}
 
           {/* Achievement Filters */}
           <AchievementFilters
