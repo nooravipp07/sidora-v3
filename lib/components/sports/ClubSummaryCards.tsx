@@ -10,7 +10,7 @@ interface ClubSummaryCardsProps {
 
 export default function ClubSummaryCards({ 
   kecamatanId,
-  year = new Date().getFullYear()
+  year
 }: ClubSummaryCardsProps) {
   const [stats, setStats] = useState({
     total: 0,
@@ -24,7 +24,9 @@ export default function ClubSummaryCards({
       try {
         setLoading(true);
         const params = new URLSearchParams();
-        params.set('year', year.toString());
+        if (typeof year === 'number') {
+          params.set('year', year.toString());
+        }
         if (kecamatanId) {
           params.set('kecamatanId', kecamatanId.toString());
         }

@@ -4,13 +4,20 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : new Date().getFullYear();
+    const yearParam = searchParams.get('year');
     const kecamatanId = searchParams.get('kecamatanId') ? parseInt(searchParams.get('kecamatanId')!) : null;
 
     // Build filter for sports groups
     const whereClause: any = {
-      year,
+      deletedAt: null,
     };
+
+    if (yearParam) {
+      const year = parseInt(yearParam);
+      if (!Number.isNaN(year)) {
+        whereClause.year = year;
+      }
+    }
 
     if (kecamatanId) {
       whereClause.desaKelurahan = {
