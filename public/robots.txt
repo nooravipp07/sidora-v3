@@ -1,0 +1,17 @@
+# SIDORA Robots Configuration
+# Allow all search engines to crawl public content
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private sections
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login/
+Disallow: /register/
+
+# Specify sitemap location for search engines
+Sitemap: https://sidora.bandungkab.go.id/sitemap.xml
+
+# Crawl delay to avoid overloading server (optional)
+Crawl-delay: 1
