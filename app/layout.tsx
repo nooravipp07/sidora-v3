@@ -14,8 +14,55 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "SIDORA - Sistem Informasi Data Keolahragaan",
-  description: "SIDORA adalah sistem informasi terintegrasi untuk mengelola dan mengakses data keolahragaan, atlet, infrastruktur, dan event olahraga secara komprehensif.",
-  keywords: ["sidora", "sidora kabupaten bandung", "keolahragaan", "data olahraga", "sistem informasi keolahragaan", "atlet", "infrastruktur olahraga kabupaten bandung", "agenda olahraga", "berita olahraga", "galeri olahraga", "pencapaian olahraga"],
+  description: "SIDORA (Sistem Informasi Data Olahraga Kabupaten Bandung) adalah platform terintegrasi untuk mengelola data atlet, cabang olahraga, sarana dan prasarana olahraga, prestasi, agenda event, serta informasi keolahragaan Kabupaten Bandung.",
+  keywords: [
+    // Brand
+    "sidora",
+    "sidora kabupaten bandung",
+    "sidora olahraga",
+
+    // Sistem dan data olahraga
+    "sistem informasi keolahragaan",
+    "sistem informasi olahraga",
+    "database olahraga",
+    "data keolahragaan",
+    "data olahraga kabupaten bandung",
+    "portal olahraga kabupaten bandung",
+
+    // Atlet
+    "data atlet",
+    "profil atlet",
+    "atlet kabupaten bandung",
+    "prestasi atlet",
+    "pembinaan atlet",
+
+    // Infrastruktur
+    "sarana olahraga",
+    "prasarana olahraga",
+    "fasilitas olahraga",
+    "infrastruktur olahraga",
+    "venue olahraga kabupaten bandung",
+
+    // Event
+    "agenda olahraga",
+    "event olahraga",
+    "jadwal pertandingan olahraga",
+    "kompetisi olahraga",
+    "turnamen olahraga",
+
+    // Informasi publik
+    "berita olahraga",
+    "informasi olahraga",
+    "galeri olahraga",
+    "prestasi olahraga",
+    "capaian olahraga",
+
+    // Lokasi
+    "olahraga kabupaten bandung",
+    "dispora kabupaten bandung",
+    "data olahraga jawa barat",
+    "informasi atlet kabupaten bandung"
+  ],
   authors: [{ name: "SIDORA" }],
   metadataBase: new URL("https://sidora.bandungkab.go.id"),
   icons: {
