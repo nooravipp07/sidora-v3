@@ -378,8 +378,8 @@ const SportsGroup: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua --</option>
-                <option value="true">Terverifikasi</option>
-                <option value="false">Belum Terverifikasi</option>
+                <option value="1">Terverifikasi</option>
+                <option value="2">Belum Terverifikasi</option>
               </select>
             </div>
 

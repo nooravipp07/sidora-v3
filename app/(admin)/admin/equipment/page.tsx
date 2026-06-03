@@ -401,8 +401,8 @@ const Equipment: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua --</option>
-                <option value="true">Dapat Digunakan</option>
-                <option value="false">Tidak Dapat Digunakan</option>
+                <option value="1">Dapat Digunakan</option>
+                <option value="0">Tidak Dapat Digunakan</option>
               </select>
             </div>
           </div>
@@ -455,11 +455,11 @@ const Equipment: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{equipment.year}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                        equipment.isUsable
+                        equipment.isUsable === '1'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {equipment.isUsable ? 'Dapat Digunakan' : 'Tidak Dapat Digunakan'}
+                        {equipment.isUsable === '1' ? 'Dapat Digunakan' : 'Tidak Dapat Digunakan'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">

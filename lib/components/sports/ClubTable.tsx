@@ -201,8 +201,8 @@ export default function ClubTable({ clubs }: ClubTableProps) {
               className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Semua Status</option>
-              <option value="true">Terverifikasi</option>
-              <option value="false">Belum Terverifikasi</option>
+              <option value="1">Terverifikasi</option>
+              <option value="2">Belum Terverifikasi</option>
             </select>
           </div>
 
@@ -254,7 +254,7 @@ export default function ClubTable({ clubs }: ClubTableProps) {
                   }}
                   className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full hover:bg-blue-200"
                 >
-                  {selectedStatus === 'true' ? 'Terverifikasi' : 'Belum Terverifikasi'}
+                  {selectedStatus === '1' ? 'Terverifikasi' : 'Belum Terverifikasi'}
                   <X className="w-3 h-3" />
                 </button>
               )}
