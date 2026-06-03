@@ -21,6 +21,9 @@ export const metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  verification: {
+    google: "r79FcYRd6RTyWnY07iWv6v7YC6aVVWa1WkdOOk__kY0",
+  },
   openGraph: {
     title: "SIDORA - Sistem Informasi Data Keolahragaan",
     description: "Sistem informasi terintegrasi untuk data keolahragaan, atlet, dan infrastruktur olahraga",
