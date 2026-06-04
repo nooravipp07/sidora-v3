@@ -66,7 +66,9 @@ export const metadata = {
   authors: [{ name: "SIDORA" }],
   metadataBase: new URL("https://sidora.bandungkab.go.id"),
   icons: {
-    icon: "/favicon.ico",
+    icon: "/dispora-logo.png",
+    shortcut: "/dispora-logo.png",
+    apple: "/dispora-logo.png",
   },
   verification: {
     google: "r79FcYRd6RTyWnY07iWv6v7YC6aVVWa1WkdOOk__kY0",
