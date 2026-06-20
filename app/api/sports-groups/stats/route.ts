@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const verified = await prisma.sportsGroup.count({
       where: {
         ...whereClause,
-        isVerified: true,
+        isVerified: 1,
         deletedAt: null,
       },
     });
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const unverified = await prisma.sportsGroup.count({
       where: {
         ...whereClause,
-        isVerified: false,
+        isVerified: 2,
         deletedAt: null,
       },
     });

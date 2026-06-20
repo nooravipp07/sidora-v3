@@ -7,7 +7,7 @@ interface SportsGroup {
     groupName: string;
     leaderName?: string | null;
     memberCount: number;
-    isVerified: boolean;
+    isVerified: number;
     decreeNumber?: string | null;
     secretariatAddress?: string | null;
     year?: number | null;

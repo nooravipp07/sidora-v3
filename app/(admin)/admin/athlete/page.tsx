@@ -399,8 +399,8 @@ const Athlete: React.FC = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Semua --</option>
-                <option value="aktif">Aktif</option>
-                <option value="non-aktif">Non-Aktif</option>
+                <option value="1">Aktif</option>
+                <option value="0">Non-Aktif</option>
               </select>
             </div>
 

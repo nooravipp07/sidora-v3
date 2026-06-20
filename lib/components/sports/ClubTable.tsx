@@ -8,7 +8,7 @@ interface SportsGroup {
   groupName: string;
   leaderName?: string | null;
   memberCount: number;
-  isVerified: boolean;
+  isVerified: number;
   desaKelurahanId: number;
   year?: number | null;
   sport?: {
@@ -427,15 +427,15 @@ export default function ClubTable({ clubs }: ClubTableProps) {
                         <p className="text-sm text-gray-700">{group.leaderName || '-'}</p>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {group.isVerified ? (
+                        {group.isVerified === 1 ? (
                           <div className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 rounded-full">
                             <CheckCircle className="w-4 h-4 text-green-600" />
                             <span className="text-xs font-medium text-green-700">Terverifikasi</span>
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-50 rounded-full">
-                            <Clock className="w-4 h-4 text-yellow-600" />
-                            <span className="text-xs font-medium text-yellow-700">Belum Verifikasi</span>
+                          <div className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 rounded-full">
+                            <Clock className="w-4 h-4 text-red-600" />
+                            <span className="text-xs font-medium text-red-700">Belum Verifikasi</span>
                           </div>
                         )}
                       </td>

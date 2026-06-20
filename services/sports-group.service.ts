@@ -47,7 +47,7 @@ export const SportsGroupService = {
         }
 
         if (filter.isVerified !== undefined && filter.isVerified !== '') {
-            where.isVerified = filter.isVerified === 'true';
+            where.isVerified = parseInt(filter.isVerified);
         }
 
         if (filter.sportId) {

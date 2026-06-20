@@ -352,7 +352,7 @@ model SportsGroup {
   groupName          String         @db.VarChar(150)
   leaderName         String?        @db.VarChar(150)
   memberCount        Int            @default(0)
-  isVerified         Boolean        @default(false)
+  isVerified         Int            @default(0) @db.TinyInt
   decreeNumber       String?        @db.VarChar(100)
   secretariatAddress String?        @db.VarChar(255)
   year               Int?

@@ -455,11 +455,11 @@ const SportsGroup: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.year}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                        sg.isVerified
+                        sg.isVerified == 1
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                       }`}>
-                        {sg.isVerified ? 'Terverifikasi' : 'Belum Terverifikasi'}
+                        {sg.isVerified == 1 ? 'Terverifikasi' : 'Belum Terverifikasi'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
