@@ -35,12 +35,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/olahraga-masyarakat`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
       url: `${baseUrl}/olahraga-prestasi`,
       lastModified: new Date(),
       changeFrequency: 'weekly',

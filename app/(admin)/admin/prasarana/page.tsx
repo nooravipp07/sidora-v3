@@ -36,12 +36,14 @@ const Prasarana: React.FC = () => {
     kecamatanId: '',
     desaKelurahanId: '',
     year: '',
+    prasaranaId: '',
   });
 
   // Filter dropdown data
   const [kecamatanList, setKecamatanList] = useState<any[]>([]);
   const [desaKelurahanList, setDesaKelurahanList] = useState<any[]>([]);
   const [yearList, setYearList] = useState<number[]>([]);
+  const [prasaranaList, setPrasaranaList] = useState<any[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
   const [pagination, setPagination] = useState<PaginationMeta>({
@@ -92,6 +94,13 @@ const Prasarana: React.FC = () => {
         setDesaKelurahanList(desaData.data || []);
       }
 
+      // Fetch prasarana list
+      const prasaranaRes = await fetch('/api/masterdata/prasarana?page=1&limit=1000');
+      if (prasaranaRes.ok) {
+        const prasaranaData = await prasaranaRes.json();
+        setPrasaranaList(prasaranaData.data || []);
+      }
+
       // Generate year list (current year and previous 9 years)
       const currentYear = new Date().getFullYear();
       const years = Array.from({ length: 10 }, (_, i) => currentYear - i).sort((a, b) => b - a);
@@ -123,6 +132,7 @@ const Prasarana: React.FC = () => {
 
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
+      if (filters.prasaranaId) params.append('prasaranaId', filters.prasaranaId);
 
       const response = await fetch(`/api/facility-records?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch facility records');
@@ -207,6 +217,7 @@ const Prasarana: React.FC = () => {
       kecamatanId: '',
       desaKelurahanId: '',
       year: '',
+      prasaranaId: '',
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -494,6 +505,25 @@ const Prasarana: React.FC = () => {
                 {yearList.map((year) => (
                   <option key={year} value={year}>
                     {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Prasarana Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Prasarana
+              </label>
+              <select
+                value={filters.prasaranaId}
+                onChange={(e) => handleFilterChange('prasaranaId', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua Prasarana --</option>
+                {prasaranaList.map((prasarana) => (
+                  <option key={prasarana.id} value={prasarana.id}>
+                    {prasarana.nama}
                   </option>
                 ))}
               </select>
