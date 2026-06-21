@@ -48,13 +48,18 @@ export default function AchievementTable({
         if (medal) params.append('medal', medal);
         if (year) params.append('year', year);
         if (district) params.append('kecamatanId', district);
+        //params.append('category', 'PEGIAT'); // Default filter: only fetch PEGIAT athletes
         params.append('page', page.toString());
         params.append('limit', itemsPerPage.toString());
+
+        console.log('=== Frontend: AchievementTable fetch ===');
+        console.log('URL:', `/api/sports/achievements?${params.toString()}`);
 
         const response = await fetch(`/api/sports/achievements?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch data');
 
         const result = await response.json();
+        console.log('Response from API:', result);
         if (result.success) {
           setAchievements(result.data);
           setTotalPages(result.pagination?.totalPages || 1);

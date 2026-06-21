@@ -38,7 +38,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
     groupName: initialData?.groupName || '',
     leaderName: initialData?.leaderName || '',
     memberCount: initialData?.memberCount || 0,
-    isVerified: initialData?.isVerified || false,
+    isVerified: initialData?.isVerified || 2,
     decreeNumber: initialData?.decreeNumber || '',
     secretariatAddress: initialData?.secretariatAddress || '',
     year: initialData?.year || new Date().getFullYear(),
@@ -223,7 +223,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
         {/* Cabang Olahraga */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cabang Olahraga
+            Cabang Olahraga <span className="text-red-500">*</span>
           </label>
           <select
             value={formData.sportId}
@@ -231,7 +231,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
             disabled={loading}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
           >
-            <option value="">-- Pilih Cabang Olahraga (Opsional) --</option>
+            <option value="">-- Pilih Cabang Olahraga --</option>
             {cabangOlahragaList.map((cabor) => (
               <option key={cabor.id} value={cabor.id}>
                 {cabor.nama}
@@ -259,7 +259,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
         {/* Leader Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Nama Ketua
+            Nama Ketua <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -275,7 +275,7 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Jumlah Anggota
+              Jumlah Anggota <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -307,10 +307,10 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
         </div>
 
         {/* Decree Number - Only show if verified */}
-        {formData.isVerified && (
+        {formData.isVerified === 1 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nomor SK (Surat Keputusan)
+              Nomor SK (Surat Keputusan) <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -342,13 +342,13 @@ const SportsGroupForm: React.FC<SportsGroupFormProps> = ({ initialData, isEdit =
           <input
             type="checkbox"
             id="isVerified"
-            checked={formData.isVerified}
-            onChange={(e) => setFormData({ ...formData, isVerified: e.target.checked })}
+            checked={formData.isVerified === 1 ? true : false}
+            onChange={(e) => setFormData({ ...formData, isVerified: e.target.checked ? 1 : 2 })}
             disabled={loading}
             className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
           />
           <label htmlFor="isVerified" className="text-sm font-medium text-gray-700 cursor-pointer">
-            Terverifikasi
+            Terverifikasi <span className="text-red-500">*</span>
           </label>
         </div>
       </div>

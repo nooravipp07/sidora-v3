@@ -2,7 +2,7 @@
 // Run with: npx prisma db seed
 
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from '@/lib/auth/bcrypt';
+import { hashPassword } from '../lib/auth/bcrypt';
 
 const prisma = new PrismaClient();
 

@@ -8,7 +8,7 @@ interface SportsGroupResponse {
   groupName: string;
   leaderName?: string;
   memberCount: number;
-  isVerified: boolean;
+  isVerified: number;
   decreeNumber?: string;
   secretariatAddress?: string;
   year?: number;
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
         groupName: groupName.trim(),
         leaderName: leaderName?.trim() || null,
         memberCount: parseInt(memberCount) || 0,
-        isVerified: Boolean(isVerified),
+        isVerified: isVerified ? parseInt(isVerified) : 2,
         decreeNumber: decreeNumber?.trim() || null,
         secretariatAddress: secretariatAddress?.trim() || null,
         year: year ? parseInt(year) : null,

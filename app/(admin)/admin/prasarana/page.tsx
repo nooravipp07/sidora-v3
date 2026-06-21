@@ -15,6 +15,33 @@ interface PaginationMeta {
   hasMore: boolean;
 }
 
+// Mapping for condition values
+const getConditionLabel = (condition: string | number | null | undefined): string => {
+  const conditionMap: { [key: string]: string } = {
+    '1': 'Baik',
+    '2': 'Cukup',
+    '3': 'Rusak Ringan',
+    '4': 'Rusak Berat',
+  };
+  
+  if (condition === null || condition === undefined) return '-';
+  return conditionMap[String(condition)] || '-';
+};
+
+// Mapping for ownership status
+const getOwnershipStatusLabel = (status: string | number | null | undefined): string => {
+  const statusMap: { [key: string]: string } = {
+    '1': 'Milik Sendiri',
+    '2': 'Sewa',
+    '3': 'Bersama',
+    '4': 'Pemerintah',
+    '5': 'Lainnya',
+  };
+
+  if (status === null || status === undefined) return '-';
+  return statusMap[String(status)] || '-';
+};
+
 const Prasarana: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +64,8 @@ const Prasarana: React.FC = () => {
     desaKelurahanId: '',
     year: '',
     prasaranaId: '',
+    condition: '',
+    ownershipStatus: '',
   });
 
   // Filter dropdown data
@@ -133,6 +162,8 @@ const Prasarana: React.FC = () => {
       if (filters.desaKelurahanId) params.append('desaKelurahanId', filters.desaKelurahanId);
       if (filters.year) params.append('year', filters.year);
       if (filters.prasaranaId) params.append('prasaranaId', filters.prasaranaId);
+      if (filters.condition) params.append('condition', filters.condition);
+      if (filters.ownershipStatus) params.append('ownershipStatus', filters.ownershipStatus);
 
       const response = await fetch(`/api/facility-records?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch facility records');
@@ -218,6 +249,8 @@ const Prasarana: React.FC = () => {
       desaKelurahanId: '',
       year: '',
       prasaranaId: '',
+      condition: '',
+      ownershipStatus: '',
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -528,6 +561,43 @@ const Prasarana: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            {/* Kondisi Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kondisi
+              </label>
+              <select
+                value={filters.condition}
+                onChange={(e) => handleFilterChange('condition', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua Kondisi --</option>
+                <option value="1">Baik</option>
+                <option value="2">Cukup</option>
+                <option value="3">Rusak Ringan</option>
+                <option value="4">Rusak Berat</option>
+              </select>
+            </div>
+
+            {/* Status Kepemilikan Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status Kepemilikan
+              </label>
+              <select
+                value={filters.ownershipStatus}
+                onChange={(e) => handleFilterChange('ownershipStatus', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua Status --</option>
+                <option value="1">Milik Sendiri</option>
+                <option value="2">Sewa</option>
+                <option value="3">Bersama</option>
+                <option value="4">Pemerintah</option>
+                <option value="5">Lainnya</option>
+              </select>
+            </div>
           </div>
 
           {/* Reset Button */}
@@ -562,9 +632,10 @@ const Prasarana: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kondisi</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Kondisi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status Kepemilikan</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -585,20 +656,25 @@ const Prasarana: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {record.year}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-                        {record.condition || '-'}
+                        {getConditionLabel(record.condition)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                        {getOwnershipStatusLabel(record.ownershipStatus)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         record.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
                         {record.isActive ? 'Aktif' : 'Tidak Aktif'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex space-x-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex space-x-2 text-center justify-center">
                         <button
                           onClick={() => handleView(record)}
                           className="text-green-600 hover:text-green-800 transition-colors"
@@ -730,7 +806,7 @@ const Prasarana: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500 mb-1">Kondisi</p>
-                  <p className="text-gray-900">{selectedRecord.condition || '-'}</p>
+                  <p className="text-gray-900">{getConditionLabel(selectedRecord.condition)}</p>
                 </div>
               </div>
 

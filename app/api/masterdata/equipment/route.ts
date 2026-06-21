@@ -11,9 +11,10 @@ export async function GET(request: NextRequest) {
     const saranaId = searchParams.get('saranaId') || undefined;
     const year = searchParams.get('year') || undefined;
     const isUsable = searchParams.get('isUsable') || undefined;
+    const isGovernmentGrant = searchParams.get('isGovernmentGrant') || undefined;
 
     const result = await EquipmentService.getAll(
-      { kecamatanId, desaKelurahanId, saranaId, year, isUsable },
+      { kecamatanId, desaKelurahanId, saranaId, year, isUsable, isGovernmentGrant },
       { page, limit }
     );
 

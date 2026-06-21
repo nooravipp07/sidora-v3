@@ -43,6 +43,14 @@ export const FacilityRecordService = {
             where.year = filter.year;
         }
 
+        if (filter.condition !== undefined) {
+            where.condition = filter.condition;
+        }
+
+        if (filter.ownershipStatus !== undefined) {
+            where.ownershipStatus = filter.ownershipStatus;
+        }
+
         if (filter.isActive !== undefined) {
             where.isActive = filter.isActive;
         }
@@ -62,22 +70,25 @@ export const FacilityRecordService = {
             condition,
             ownershipStatus,
             address,
+            kapasitasPenonton,
+            luasTanah,
+            luasBangunan,
             notes,
             isActive = true,
             createdBy
         } = data;
 
-        // Check if facility record already exists for this prasarana and year
-        const existing = await prisma.facilityRecord.findFirst({
-            where: {
-                prasaranaId,
-                year
-            }
-        });
+        // // Check if facility record already exists for this prasarana and year
+        // const existing = await prisma.facilityRecord.findFirst({
+        //     where: {
+        //         prasaranaId,
+        //         year
+        //     }
+        // });
 
-        if (existing) {
-            throw new Error(`Facility record untuk prasarana dan tahun ini sudah ada`);
-        }
+        // if (existing) {
+        //     throw new Error(`Facility record untuk prasarana dan tahun ini sudah ada`);
+        // }
 
         // Use transaction to create facility record with photos
         const facilityRecord = await prisma.$transaction(async (tx) => {
@@ -90,6 +101,9 @@ export const FacilityRecordService = {
                     condition: condition?.trim() || null,
                     ownershipStatus: ownershipStatus?.trim() || null,
                     address: address?.trim() || null,
+                    kapasitasPenonton: kapasitasPenonton || null,
+                    luasTanah: luasTanah || null,
+                    luasBangunan: luasBangunan || null,
                     notes: notes?.trim() || null,
                     isActive,
                     createdBy: createdBy || null
@@ -137,6 +151,9 @@ export const FacilityRecordService = {
             condition,
             ownershipStatus,
             address,
+            kapasitasPenonton,
+            luasTanah,
+            luasBangunan,
             notes,
             isActive,
             updatedBy
@@ -150,6 +167,9 @@ export const FacilityRecordService = {
         if (condition !== undefined) updateData.condition = condition?.trim() || null;
         if (ownershipStatus !== undefined) updateData.ownershipStatus = ownershipStatus?.trim() || null;
         if (address !== undefined) updateData.address = address?.trim() || null;
+        if (kapasitasPenonton !== undefined) updateData.kapasitasPenonton = kapasitasPenonton || null;
+        if (luasTanah !== undefined) updateData.luasTanah = luasTanah || null;
+        if (luasBangunan !== undefined) updateData.luasBangunan = luasBangunan || null;
         if (notes !== undefined) updateData.notes = notes?.trim() || null;
         if (isActive !== undefined) updateData.isActive = isActive;
         if (updatedBy) updateData.updatedBy = updatedBy;

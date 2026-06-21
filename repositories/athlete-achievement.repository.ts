@@ -17,14 +17,46 @@ class AthleteAchievementRepository extends AbstractRepository<any> {
     }) {
         const whereClause: any = {};
 
-        // Filter berdasarkan category (untuk backward compatibility) atau sportId
-        if (filters?.sportId) {
-            whereClause.athlete = {
-                sportId: filters.sportId
-            };
-        } else if (filters?.category) {
-            whereClause.category = filters.category;
+        // Filter berdasarkan ATHLETE category atau sportId (bukan achievementCategory)
+        if (filters?.category || filters?.sportId) {
+            whereClause.athlete = {};
+            if (filters?.category) {
+                whereClause.athlete.category = filters.category;  // Filter dari Athlete.category
+            }
+            if (filters?.sportId) {
+                whereClause.athlete.sportId = filters.sportId;
+            }
         }
+
+        console.log('=== DEBUG: getAchievementsWithFilters ===');
+        console.log('Incoming filters:', filters);
+        console.log('Generated whereClause for Prisma:', JSON.stringify(whereClause, null, 2));
+
+        // DEBUG: Cek unique athlete categories yang ada di database
+        const uniqueCategories = await prisma.athlete.findMany({
+            distinct: ['category'],
+            select: { category: true }
+        });
+        console.log('DEBUG: Unique athlete categories in DB:', uniqueCategories.map(a => a.category));
+
+        // DEBUG: Count total achievements
+        const totalCount = await prisma.athleteAchievement.count();
+        console.log(`DEBUG: Total achievements in DB: ${totalCount}`);
+
+        // DEBUG: Count achievements dengan filter
+        const filteredCount = await prisma.athleteAchievement.count({ where: whereClause });
+        console.log(`DEBUG: Achievements with filter applied: ${filteredCount}`);
+
+        if (filters?.category) {
+            const achievementsWithCategory = await prisma.athleteAchievement.findMany({
+                where: { athlete: { category: filters.category } },
+                take: 2,
+                include: { athlete: { select: { fullName: true, category: true } } }
+            });
+            console.log('DEBUG: Sample achievements with this category:', achievementsWithCategory);
+        }
+
+        console.log('');
 
         if (filters?.medal) {
             whereClause.medal = filters.medal;
@@ -60,6 +92,15 @@ class AthleteAchievementRepository extends AbstractRepository<any> {
             take: take
         });
 
+        console.log(`DEBUG: Found ${achievements.length} achievements with filter`);
+        if (achievements.length > 0) {
+            console.log('Sample achievement - athlete data:', {
+                athleteName: achievements[0]?.athlete?.fullName,
+                athleteCategory: achievements[0]?.athlete?.category,
+                achievementCategory: achievements[0]?.category
+            });
+        }
+
         // Filter by kecamatan if provided
         if (filters?.kecamatanId) {
             achievements = achievements.filter(
@@ -90,13 +131,20 @@ class AthleteAchievementRepository extends AbstractRepository<any> {
     }) {
         const whereClause: any = {};
 
-        if (filters?.sportId) {
-            whereClause.athlete = {
-                sportId: filters.sportId
-            };
-        } else if (filters?.category) {
-            whereClause.category = filters.category;
+        // Filter berdasarkan ATHLETE category atau sportId (bukan achievementCategory)
+        if (filters?.category || filters?.sportId) {
+            whereClause.athlete = {};
+            if (filters?.category) {
+                whereClause.athlete.category = filters.category;  // Filter dari Athlete.category
+            }
+            if (filters?.sportId) {
+                whereClause.athlete.sportId = filters.sportId;
+            }
         }
+
+        console.log('=== DEBUG: getAchievementsCount ===');
+        console.log('Incoming filters:', filters);
+        console.log('Generated whereClause:', JSON.stringify(whereClause, null, 2));
 
         if (filters?.medal) {
             whereClause.medal = filters.medal;
@@ -130,6 +178,7 @@ class AthleteAchievementRepository extends AbstractRepository<any> {
             ).length;
         }
 
+        console.log(`DEBUG: Count result = ${count} records`);
         return count;
     }
 

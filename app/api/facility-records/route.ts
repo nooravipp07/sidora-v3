@@ -10,11 +10,13 @@ export async function GET(request: NextRequest) {
         const desaKelurahanId = searchParams.get('desaKelurahanId') ? parseInt(searchParams.get('desaKelurahanId')!) : undefined;
         const prasaranaId = searchParams.get('prasaranaId') ? parseInt(searchParams.get('prasaranaId')!) : undefined;
         const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined;
+        const condition = searchParams.get('condition') || undefined;
+        const ownershipStatus = searchParams.get('ownershipStatus') || undefined;
         const isActiveParam = searchParams.get('isActive');
         const isActive = isActiveParam ? isActiveParam === 'true' : undefined;
 
         const result = await FacilityRecordService.getAll(
-            { kecamatanId, desaKelurahanId, prasaranaId, year, isActive },
+            { kecamatanId, desaKelurahanId, prasaranaId, year, condition, ownershipStatus, isActive },
             { page, limit }
         );
 
@@ -38,6 +40,9 @@ export async function POST(request: NextRequest) {
             condition,
             ownershipStatus,
             address,
+            luasTanah,
+            luasBangunan,
+            kapasitasPenonton,
             notes,
             isActive,
             photos = [] // Accept photos array
@@ -69,6 +74,9 @@ export async function POST(request: NextRequest) {
             condition,
             ownershipStatus,
             address,
+            luasTanah,
+            luasBangunan,
+            kapasitasPenonton,
             notes,
             isActive
         }, photos);

@@ -58,6 +58,9 @@ export async function PUT(
             condition,
             ownershipStatus,
             address,
+            luasTanah,
+            luasBangunan,
+            kapasitasPenonton,
             notes,
             isActive
         } = body;
@@ -69,6 +72,9 @@ export async function PUT(
             condition,
             ownershipStatus,
             address,
+            luasTanah,
+            luasBangunan,
+            kapasitasPenonton,
             notes,
             isActive
         });

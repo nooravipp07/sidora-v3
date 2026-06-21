@@ -21,7 +21,7 @@ export async function getOrganizationStats(organization: 'KONI' | 'NPCI'): Promi
     prisma.athlete.count({ where }),
     prisma.athlete.count({ where: { ...where, category: 'ATLET' } }),
     prisma.athlete.count({ where: { ...where, category: 'PELATIH' } }),
-    prisma.athlete.count({ where: { ...where, category: 'WASIT - JURI' } }),
+    prisma.athlete.count({ where: { ...where, category: 'WASIT' } }),
     prisma.athleteAchievement.count({
       where: {
         athlete: where

@@ -10,6 +10,7 @@ export const EquipmentService = {
             saranaId?: string;
             year?: string;
             isUsable?: string;
+            isGovernmentGrant?: string;
         },
         pagination: PaginationParams
     ) {
@@ -52,7 +53,11 @@ export const EquipmentService = {
         }
 
         if (filter.isUsable !== undefined && filter.isUsable !== '') {
-            where.isUsable = filter.isUsable === 'true';
+            where.isUsable = filter.isUsable === '1' || filter.isUsable === 'true';
+        }
+
+        if (filter.isGovernmentGrant !== undefined && filter.isGovernmentGrant !== '') {
+            where.isGovernmentGrant = filter.isGovernmentGrant === '1' || filter.isGovernmentGrant === 'true';
         }
 
         return EquipmentRepo.findAll(where, pagination);

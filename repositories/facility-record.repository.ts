@@ -262,16 +262,16 @@ class FacilityRecordRepository extends AbstractRepository<FacilityRecord> {
         const ownershipMap: Record<string, string> = {
             '1': 'Milik Pribadi',
             '2': 'Sewa',
-            '4': 'Bersama',
-            '5': 'Pemerintah'
+            '3': 'Bersama',
+            '4': 'Pemerintah'
         };
 
         // Group by ownership
         const grouped: Record<string, { label: string; count: number }> = {
             '1': { label: 'Milik Pribadi', count: 0 },
             '2': { label: 'Sewa', count: 0 },
-            '4': { label: 'Bersama', count: 0 },
-            '5': { label: 'Pemerintah', count: 0 }
+            '3': { label: 'Bersama', count: 0 },
+            '4': { label: 'Pemerintah', count: 0 }
         };
 
         facilities.forEach(facility => {

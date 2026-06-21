@@ -148,6 +148,9 @@ export interface FacilityRecord {
   condition?: string | null;
   ownershipStatus?: string | null; // OWNED, RENTED, SHARED
   address?: string | null;
+  luasTanah?: string | null;
+  luasBangunan?: string | null;
+  kapasitasPenonton?: number | null;
   notes?: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -166,6 +169,9 @@ export interface FacilityRecordCreateInput {
   condition?: string;
   ownershipStatus?: string;
   address?: string;
+  luasTanah?: string;
+  luasBangunan?: string;
+  kapasitasPenonton?: number;
   notes?: string;
   isActive?: boolean;
 }
@@ -177,6 +183,9 @@ export interface FacilityRecordUpdateInput {
   condition?: string;
   ownershipStatus?: string;
   address?: string;
+  luasTanah?: string;
+  luasBangunan?: string;
+  kapasitasPenonton?: number;
   notes?: string;
   isActive?: boolean;
 }
@@ -186,5 +195,7 @@ export interface FacilityRecordFilter {
   desaKelurahanId?: number;
   prasaranaId?: number;
   year?: number;
+  condition?: string;
+  ownershipStatus?: string;
   isActive?: boolean;
 }

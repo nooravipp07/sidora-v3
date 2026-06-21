@@ -24,6 +24,17 @@ export async function GET(request: NextRequest) {
       take: limit
     };
 
+    console.log('=== DEBUG: API /api/sports/achievements ===');
+    console.log('Query params from URL:', { 
+      category, 
+      sportId: sportId ? parseInt(sportId) : 'undefined', 
+      medal, 
+      year, 
+      kecamatanId 
+    });
+    console.log('Filters object sent to repo:', filters);
+    console.log('');
+
     const [achievements, total] = await Promise.all([
       AthleteAchievementRepo.getAchievementsWithFilters(filters),
       AthleteAchievementRepo.getAchievementsCount({

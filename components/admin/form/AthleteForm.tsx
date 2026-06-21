@@ -505,6 +505,7 @@ const AthleteForm: React.FC<AthleteFormProps> = ({ initialData, isEdit = false }
                 <option value="">-- Pilih Organisasi --</option>
                 <option value="KONI">KONI</option>
                 <option value="NPCI">NPCI</option>
+                <option value="PEGIAT">Pegiat Olahraga</option>
               </select>
             </div>
 

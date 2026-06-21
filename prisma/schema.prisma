@@ -288,6 +288,9 @@ model FacilityRecord {
   condition       String?
   ownershipStatus String?
   address         String?
+  luasTanah       String?               @db.VarChar(100)
+  luasBangunan    String?               @db.VarChar(100)
+  kapasitasPenonton Int?
   notes           String?
   isActive        Boolean               @default(true)
   createdAt       DateTime              @default(now())
@@ -470,6 +473,9 @@ model FacilityRecordStaging {
   condition       String?
   ownershipStatus String?
   address         String?
+  luasTanah       String?               @db.VarChar(100)
+  luasBangunan    String?               @db.VarChar(100)
+  kapasitasPenonton Int?
   notes           String?
   isActive        Boolean                      @default(true)
   actionType      StagingAction
@@ -566,7 +572,7 @@ model SportsGroupStaging {
   groupName          String
   leaderName         String?
   memberCount        Int           @default(0)
-  isVerified         Boolean       @default(false)
+  isVerified         Int           @default(0) @db.TinyInt
   decreeNumber       String?
   secretariatAddress String?
   year               Int?

@@ -61,11 +61,33 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
     prasaranaId: initialData?.prasaranaId || '',
     year: initialData?.year || new Date().getFullYear(),
     condition: initialData?.condition || '',
-    ownershipStatus: initialData?.ownershipStatus || 'OWNED',
+    ownershipStatus: initialData?.ownershipStatus || 5,
     address: initialData?.address || '',
+    luasTanah: initialData?.luasTanah ? String(initialData.luasTanah) : '',
+    luasBangunan: initialData?.luasBangunan ? String(initialData.luasBangunan) : '',
+    kapasitasPenonton: initialData?.kapasitasPenonton ? String(initialData.kapasitasPenonton) : '',
     notes: initialData?.notes || '',
     isActive: initialData?.isActive !== false,
   });
+
+  // Sync formData with initialData when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        desaKelurahanId: initialData.desaKelurahanId || '',
+        prasaranaId: initialData.prasaranaId || '',
+        year: initialData.year || new Date().getFullYear(),
+        condition: initialData.condition || '',
+        ownershipStatus: initialData.ownershipStatus || 'OWNED',
+        address: initialData.address || '',
+        luasTanah: initialData.luasTanah ? String(initialData.luasTanah) : '',
+        luasBangunan: initialData.luasBangunan ? String(initialData.luasBangunan) : '',
+        kapasitasPenonton: initialData.kapasitasPenonton ? String(initialData.kapasitasPenonton) : '',
+        notes: initialData.notes || '',
+        isActive: initialData.isActive !== false,
+      });
+    }
+  }, [initialData]);
 
   // Fetch prasarana and desa/kelurahan lists
   useEffect(() => {
@@ -151,7 +173,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
     if (!formData.prasaranaId) {
       setError('Prasarana tidak boleh kosong');
       return;
-    }
+    } 
 
     if (!formData.desaKelurahanId) {
       setError('Desa/Kelurahan tidak boleh kosong');
@@ -160,6 +182,11 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
 
     if (!formData.year) {
       setError('Tahun tidak boleh kosong');
+      return;
+    }
+
+    if (!formData.condition) {
+      setError('Kondisi prasarana tidak boleh kosong');
       return;
     }
 
@@ -177,9 +204,21 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
         condition: formData.condition.trim() || null,
         ownershipStatus: formData.ownershipStatus || null,
         address: formData.address.trim() || null,
+        luasTanah: formData.luasTanah.trim() ? formData.luasTanah.trim() : null,
+        luasBangunan: formData.luasBangunan.trim() ? formData.luasBangunan.trim() : null,
+        kapasitasPenonton: formData.kapasitasPenonton.trim() ? parseInt(formData.kapasitasPenonton.trim()) : null,
         notes: formData.notes.trim() || null,
         isActive: formData.isActive,
       };
+
+      // DEBUG: Log data before sending
+      console.log('=== FORM DATA DEBUG ===');
+      console.log('formData state:', formData);
+      console.log('requestBody:', requestBody);
+      console.log('luasTanah value:', formData.luasTanah, '→ request:', requestBody.luasTanah);
+      console.log('luasBangunan value:', formData.luasBangunan, '→ request:', requestBody.luasBangunan);
+      console.log('kapasitasPenonton value:', formData.kapasitasPenonton, '→ request:', requestBody.kapasitasPenonton);
+      console.log('======================');
 
       // Include pending photos in the request (for new records)
       if (!isEdit && pendingPhotos.length > 0) {
@@ -399,7 +438,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
             {/* Condition */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kondisi
+                Kondisi <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.condition}
@@ -418,7 +457,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
             {/* Ownership Status */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status Kepemilikan
+                Status Kepemilikan <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.ownershipStatus}
@@ -430,13 +469,14 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
                 <option value="2">Sewa</option>
                 <option value="3">Bersama</option>
                 <option value="4">Pemerintah</option>
+                <option value="5">Lainnya</option>
               </select>
             </div>
 
             {/* Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Alamat
+                Alamat <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -444,6 +484,51 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 disabled={loading}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
+
+            {/* Luas Tanah */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Luas Tanah
+              </label>
+              <input
+                type="text"
+                value={formData.luasTanah}
+                onChange={(e) => setFormData({ ...formData, luasTanah: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                placeholder="Contoh: 1000 m²"
+              />
+            </div>
+
+            {/* Luas Bangunan */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Luas Bangunan
+              </label>
+              <input
+                type="text"
+                value={formData.luasBangunan}
+                onChange={(e) => setFormData({ ...formData, luasBangunan: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                placeholder="Contoh: 500 m²"
+              />
+            </div>
+
+            {/* Kapasitas Penonton */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kapasitas Penonton
+              </label>
+              <input
+                type="number"
+                value={formData.kapasitasPenonton}
+                onChange={(e) => setFormData({ ...formData, kapasitasPenonton: e.target.value })}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                placeholder="Contoh: 5000"
               />
             </div>
           </div>
@@ -474,7 +559,7 @@ const FacilityRecordForm: React.FC<FacilityRecordFormProps> = ({ initialData, is
               className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
-              Aktif
+              Aktif <span className="text-red-500">*</span>
             </label>
           </div>
         </div>

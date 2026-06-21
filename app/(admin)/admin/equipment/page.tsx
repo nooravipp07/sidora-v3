@@ -34,6 +34,7 @@ const Equipment: React.FC = () => {
     saranaId: '',
     year: '',
     isUsable: '',
+    isGovernmentGrant: '',
   });
 
   // Filter dropdown data
@@ -120,6 +121,7 @@ const Equipment: React.FC = () => {
       if (filters.saranaId) params.append('saranaId', filters.saranaId);
       if (filters.year) params.append('year', filters.year);
       if (filters.isUsable) params.append('isUsable', filters.isUsable);
+      if (filters.isGovernmentGrant) params.append('isGovernmentGrant', filters.isGovernmentGrant);
 
       const response = await fetch(`/api/masterdata/equipment?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch equipment');
@@ -241,6 +243,7 @@ const Equipment: React.FC = () => {
       saranaId: '',
       year: '',
       isUsable: '',
+      isGovernmentGrant: '',
     });
     setPagination(prev => ({ ...prev, page: 1 }));
   };
@@ -402,10 +405,27 @@ const Equipment: React.FC = () => {
               >
                 <option value="">-- Semua --</option>
                 <option value="1">Dapat Digunakan</option>
-                <option value="0">Tidak Dapat Digunakan</option>
+                <option value="0">Tidak Layak Digunakan</option>
+              </select>
+            </div>
+
+            {/* Bantuan Pemerintah Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hibah Pemerintah
+              </label>
+              <select
+                value={filters.isGovernmentGrant}
+                onChange={(e) => handleFilterChange('isGovernmentGrant', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">-- Semua --</option>
+                <option value="1">Ya</option>
+                <option value="0">Tidak</option>
               </select>
             </div>
           </div>
+
 
           {/* Reset Button */}
           <div className="mt-4 flex justify-end">
@@ -438,10 +458,11 @@ const Equipment: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Perlengkapan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Jumlah</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Jumlah</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Hibah Pemerintah</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -451,19 +472,28 @@ const Equipment: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-900 font-medium">{equipment.sarana?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{equipment.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{equipment.desaKelurahan?.kecamatan?.nama}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{equipment.quantity} {equipment.unit}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{equipment.year}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{equipment.quantity} {equipment.unit}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{equipment.year}</td>
+                    <td className="px-6 py-4 text-sm text-center">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                         equipment.isUsable === '1'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {equipment.isUsable === '1' ? 'Dapat Digunakan' : 'Tidak Dapat Digunakan'}
+                        {equipment.isUsable === '1' ? 'Dapat Digunakan' : 'Tidak Layak Digunakan'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
+                    <td className="px-6 py-4 text-sm text-center">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                        equipment.isGovernmentGrant === '1'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {equipment.isGovernmentGrant === '1' ? 'Ya' : 'Tidak'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-center">
+                      <div className="flex gap-2 justify-center">
                         <button
                           onClick={() => {
                             setSelectedEquipment(equipment);
@@ -557,17 +587,23 @@ const Equipment: React.FC = () => {
                 <p className="text-sm text-gray-600">Status Kegunaan</p>
                 <p className="font-semibold">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    selectedEquipment.isUsable
+                    selectedEquipment.isUsable === 1
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {selectedEquipment.isUsable ? 'Dapat Digunakan' : 'Tidak Dapat Digunakan'}
+                    {selectedEquipment.isUsable ? 'Dapat Digunakan' : 'Tidak Layak Digunakan'}
                   </span>
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Bantuan Pemerintah</p>
-                <p className="font-semibold text-gray-900">{selectedEquipment.isGovernmentGrant ? 'Ya' : 'Tidak'}</p>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                    selectedEquipment.isGovernmentGrant  === 1
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedEquipment.isGovernmentGrant ? 'Ya' : 'Tidak'}
+                  </span>
               </div>
             </div>
             <div className="mt-6 flex gap-2">

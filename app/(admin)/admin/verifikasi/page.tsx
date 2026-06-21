@@ -1050,7 +1050,7 @@ const Verifikasi: React.FC = () => {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Fasilitas
+                Prasarana
               </button>
               <button
                 onClick={() => setSportsDataTab('equipment')}
@@ -1060,7 +1060,7 @@ const Verifikasi: React.FC = () => {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Peralatan
+                Sarana
               </button>
               <button
                 onClick={() => setSportsDataTab('athlete')}

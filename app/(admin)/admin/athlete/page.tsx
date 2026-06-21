@@ -452,11 +452,11 @@ const Athlete: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Cabang Olahraga</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">JK</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Organisasi</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Prestasi</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">JK</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Organisasi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Prestasi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -468,14 +468,14 @@ const Athlete: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.desaKelurahan?.kecamatan?.nama || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{athlete.sport?.nama || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{athlete.gender || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{athlete.organization || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{athlete.gender || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{athlete.organization || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${athlete.status === 'non-aktif' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {athlete.status ? (athlete.status === 'non-aktif' ? 'Non-Aktif' : 'Aktif') : '-'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">
                       {athlete.achievements?.length > 0 ? (
                         <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
                           {athlete.achievements.length}
@@ -485,7 +485,7 @@ const Athlete: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 text-center justify-center">
                         <button
                           onClick={() => {
                             setSelectedAthlete(athlete);

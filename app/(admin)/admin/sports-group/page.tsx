@@ -436,10 +436,10 @@ const SportsGroup: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Desa/Kelurahan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kecamatan</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ketua</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Anggota</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Anggota</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Tahun</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -451,9 +451,9 @@ const SportsGroup: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.desaKelurahan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.desaKelurahan?.kecamatan?.nama}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{sg.leaderName || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{sg.memberCount}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{sg.year}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{sg.memberCount}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">{sg.year}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 text-center">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                         sg.isVerified == 1
                           ? 'bg-green-100 text-green-800'
@@ -463,7 +463,7 @@ const SportsGroup: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 text-center justify-center">
                         <button
                           onClick={() => {
                             setSelectedSg(sg);
@@ -569,11 +569,11 @@ const SportsGroup: React.FC = () => {
                 <p className="text-sm text-gray-600">Status Verifikasi</p>
                 <p className="font-semibold">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    selectedSg.isVerified
+                    selectedSg.isVerified === 1
                       ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
                   }`}>
-                    {selectedSg.isVerified ? 'Terverifikasi' : 'Belum Terverifikasi'}
+                    {selectedSg.isVerified === 1 ? 'Terverifikasi' : 'Belum Terverifikasi'}
                   </span>
                 </p>
               </div>

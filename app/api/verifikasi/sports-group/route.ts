@@ -10,7 +10,7 @@ interface SportsGroupResponse {
   groupName: string;
   leaderName?: string;
   memberCount: number;
-  isVerified: boolean;
+  isVerified: number;
   decreeNumber?: string;
   secretariatAddress?: string;
   year?: number;
