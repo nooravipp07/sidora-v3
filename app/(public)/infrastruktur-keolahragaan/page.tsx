@@ -94,7 +94,7 @@ export default function InfrastructureKeolahraganPage() {
                 Infrastruktur Keolahragaan
               </h1>
               <p className="text-lg text-gray-600">
-                Dashboard komprehensif infrastruktur, atlet, prestasi, dan klub olahraga di seluruh kecamatan
+                Dashboard komprehensif infrastruktur, atlet, prestasi dan klub olahraga di seluruh kecamatan
               </p>
             </div>
           </div>
@@ -109,6 +109,7 @@ export default function InfrastructureKeolahraganPage() {
           condition={selectedCondition}
           kecamatanId={selectedKecamatanId}
         />
+
         <div id="filters-section">
           <InfrastructureFilters
             onDistrictChange={(val) => {
@@ -148,6 +149,7 @@ export default function InfrastructureKeolahraganPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Statistik Ringkas Kecamatan</h2>
             <p className="text-gray-600">Ringkasan total fasilitas, fasilitas berkondisi baik, dan rusak berat untuk setiap kecamatan</p>
           </div>
+          
           <KecamatanSummaryTable
             year={selectedYear}
             kecamatanId={selectedKecamatanId}
