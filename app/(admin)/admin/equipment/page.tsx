@@ -476,20 +476,20 @@ const Equipment: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600 text-center">{equipment.year}</td>
                     <td className="px-6 py-4 text-sm text-center">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                        equipment.isUsable === '1'
+                        equipment.isUsable == 1
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {equipment.isUsable === '1' ? 'Dapat Digunakan' : 'Tidak Layak Digunakan'}
+                        {equipment.isUsable == 1 ? 'Dapat Digunakan' : 'Tidak Layak Digunakan'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                        equipment.isGovernmentGrant === '1'
+                        equipment.isGovernmentGrant == 1
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {equipment.isGovernmentGrant === '1' ? 'Ya' : 'Tidak'}
+                        {equipment.isGovernmentGrant == 1 ? 'Ya' : 'Tidak'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-center">
